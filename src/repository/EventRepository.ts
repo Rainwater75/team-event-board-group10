@@ -14,3 +14,14 @@ export type Event = {
     attendingUsers: User[];
 };
 
+export type CreateEventInput = {
+    title: string;
+    description: string;
+    startDate: Date;
+    location: string;
+    category?: string; // update this too 
+    maxCapacity: number;
+};
+
+
+
