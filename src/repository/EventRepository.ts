@@ -1,4 +1,5 @@
 import { Result } from "../lib/result.js";
+import { EventError } from "../lib/errors.js";
 
 
 export type Event = {
@@ -23,5 +24,9 @@ export type CreateEventInput = {
     maxCapacity: number;
 };
 
-
-
+// functions for event handling, implement in the repository
+export interface IEventRepository {
+    add(input: CreateEventInput): Promise<Result<Event, EventError>>;
+    getById(id: number): Promise<Result<Event, EventError>>;
+    getAll(): Promise<Result<Event[], EventError>>;
+}
