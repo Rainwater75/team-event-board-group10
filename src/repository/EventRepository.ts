@@ -1,6 +1,8 @@
 import { Result } from "../lib/result.js";
 import { EventError } from "../lib/errors.js";
+import { IUserSummary } from "../auth/User.js";
 
+export type Category = "test1" | "test2" | "test3"; // ben i made this up, you can move and change the category types
 
 export type Event = {
     id: number;
@@ -8,11 +10,11 @@ export type Event = {
     description: string;
     startDate: Date;
     location: string;
-    category: string; // update to category object later @Ben
+    category: Category; 
     public: boolean;
     maxCapacity: number;
-    organizerId: number;
-    attendingUsers: User[];
+    organizerId: string; // CHANGE THIS TO UUID
+    attendingUsers: IUserSummary[];
 };
 
 export type CreateEventInput = {
@@ -20,7 +22,7 @@ export type CreateEventInput = {
     description: string;
     startDate: Date;
     location: string;
-    category?: string; // update this too 
+    category?: Category; 
     maxCapacity: number;
 };
 
