@@ -1,5 +1,3 @@
-import { Result } from "../lib/result.js";
-import { EventError } from "../lib/errors.js";
 import { IUserSummary } from "../auth/User.js";
 
 export type Category = "None" | "test1" | "test2" | "test3"; // ben i made this up, you can move and change the category types
