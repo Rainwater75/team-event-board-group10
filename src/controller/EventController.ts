@@ -16,6 +16,7 @@ export interface IEventController {
     ): Promise<void>;
 
     showCreateForm(res: Response, session: IAppBrowserSession): void;
+    displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError: string | null): void;
 }
 
 class EventController implements IEventController {
@@ -121,6 +122,22 @@ class EventController implements IEventController {
         }
 
         res.render("create", { pageError, session });
+    }
+
+    displayOrganizerDashboard(
+        res: Response, 
+        session: IAppBrowserSession,
+        pageError: string | null = null
+    ): void {
+        const currentUser = session.authenticatedUser;
+        if (!currentUser) {
+            res.status(401).render("partials/error", {
+                message: AuthenticationRequired("Please log in to continue.").message,
+                layout: false,
+            });
+            return;
+        }   
+        res.render("organizerDashboard", { pageError, session });
     }
 }
 
