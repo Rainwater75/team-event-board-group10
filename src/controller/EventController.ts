@@ -39,6 +39,10 @@ class EventController implements IEventController {
         return 500; // internal server error for unexpected errors
     }
 
+    private isHtmxRequest(res: Response): boolean {
+        return res.req?.get("HX-Request") === "true";
+    }
+
     async createFromForm(
         res: Response,
         session: IAppBrowserSession,
@@ -47,9 +51,15 @@ class EventController implements IEventController {
         category: Category,
     ): Promise<void> {
         this.logger.info("Creating event from form");
+        const isHtmx = this.isHtmxRequest(res);
 
         const currentUser = session.authenticatedUser;
         if (!currentUser) {
+            if (isHtmx) {
+                res.set("HX-Redirect", "/login");
+                res.status(204).send();
+                return;
+            }
             res.status(401).render("partials/error", {
                 message: AuthenticationRequired("Please log in to continue.").message,
                 layout: false,
@@ -72,7 +82,7 @@ class EventController implements IEventController {
             const status = this.mapErrorStatus(result.value);
             const log = status === 400 ? this.logger.warn : this.logger.error;
             log.call(this.logger, `Failed to create event: ${result.value.message}`);
-            res.status(status).render("partials/error", {
+            res.status(isHtmx ? 200 : status).render("partials/error", {
                 message: result.value.message,
                 layout: false,
             });
@@ -80,7 +90,7 @@ class EventController implements IEventController {
         }
 
         if(!result.ok) {
-            res.status(500).render("partials/error", {
+            res.status(isHtmx ? 200 : 500).render("partials/error", {
                 message: "An unexpected error occurred while creating the event.",
                 layout: false,
             });
@@ -88,6 +98,11 @@ class EventController implements IEventController {
         }
 
         this.logger.info(`Created event id: ${result.value.id} by organizer: ${currentUser.userId}`);
+        if (isHtmx) {
+            res.set("HX-Redirect", "/home");
+            res.status(204).send();
+            return;
+        }
         res.redirect("/home");
     }
 

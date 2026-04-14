@@ -5,12 +5,21 @@
         <p class="text-slate-500 mt-1">Fill out the form below to create a new event.</p>
     </div>
 
-    <% if (pageError) { %>
-        <%- include("partials/error", { message: pageError }) %>
-    <% } %>
+    <div id="event-form-feedback" class="mb-4">
+        <% if (pageError) { %>
+            <%- include("partials/error", { message: pageError }) %>
+        <% } %>
+    </div>
 
-    // styling subject to change to better match app theme
-    <form action="/events/new" method="POST" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+    <!-- styling subject to change to better match app theme -->
+    <form
+        action="/events/new"
+        method="POST"
+        hx-post="/events/new"
+        hx-target="#event-form-feedback"
+        hx-swap="innerHTML"
+        class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4"
+    >
         <div class="mb-4">
             <label for="title" class="block text-gray-700 text-sm font-bold mb-2">Title</label>
             <input type="text" id="title" name="title" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
@@ -26,7 +35,7 @@
             <select id="category" name="category" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 <option value="">Select a category</option>
                 <option value="none">PLACEHOLDER</option>
-                // TODO: add more categories, probably set up a partial that lists all the categories in the database 
+                <!-- TODO: add more categories, probably set up a partial that lists all categories in the database -->
             </select>
         </div>
 
