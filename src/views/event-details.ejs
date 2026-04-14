@@ -1,0 +1,21 @@
+# Work in Progress
+
+<% if (canRSVP) { %>
+  <button>RSVP</button>
+<% } %>
+
+<% if (canEdit) { %>
+  <a href="/events/<%= event.id %>/edit">Edit</a>
+<% } %>
+
+<% if (canCancel) { %>
+  <form method="POST" action="/events/<%= event.id %>/cancel">
+    <button>Cancel Event</button>
+  </form>
+<% } %>
+
+<% if (isDraft) { %>
+  <p>Draft Mode</p>
+<% } %>
+
+<p><%= attendingCount %> / <%= event.maxCapacity %> attending</p>
