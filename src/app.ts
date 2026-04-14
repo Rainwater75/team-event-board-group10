@@ -260,7 +260,17 @@ class ExpressApp implements IApp {
       "/events/new",
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) return;
-        await this.controller.createFromForm(res, sessionStore(req), req.body.title, req.body.description, req.body.category);
+        const browserSession = recordPageView(sessionStore(req));
+        await this.controller.createFromForm(res, browserSession, req.body.title, req.body.description, req.body.category);
+      }),
+    );
+
+    this.app.get(
+      "/events/new",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const browserSession = recordPageView(sessionStore(req));
+        this.controller.showCreateForm(res, browserSession);
       }),
     );
 

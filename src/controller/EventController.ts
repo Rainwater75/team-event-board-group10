@@ -1,7 +1,7 @@
 import type { Response } from "express";
 import { AuthenticationRequired } from "../auth/errors.js";
 import type { Category, CreateEventInput } from "../model/Event.js";
-import { getAuthenticatedUser, type AppSessionStore } from "../session/AppSession.js";
+import type { IAppBrowserSession } from "../session/AppSession.js";
 import type { IEventService } from "../service/EventService.js";
 import type { ILoggingService } from "../service/LoggingService.js";
 import { EventError } from "../lib/errors.js";
@@ -9,11 +9,13 @@ import { EventError } from "../lib/errors.js";
 export interface IEventController {
     createFromForm(
         res: Response,
-        store: AppSessionStore,
+        session: IAppBrowserSession,
         title: string,
         description: string,
         category: Category,
     ): Promise<void>;
+
+    showCreateForm(res: Response, session: IAppBrowserSession): void;
 }
 
 class EventController implements IEventController {
@@ -39,15 +41,14 @@ class EventController implements IEventController {
 
     async createFromForm(
         res: Response,
-        store: AppSessionStore,
+        session: IAppBrowserSession,
         title: string,
         description: string,
         category: Category,
     ): Promise<void> {
         this.logger.info("Creating event from form");
 
-        const currentUser = getAuthenticatedUser(store);
-        // maybe this should be a redirect 302
+        const currentUser = session.authenticatedUser;
         if (!currentUser) {
             res.status(401).render("partials/error", {
                 message: AuthenticationRequired("Please log in to continue.").message,
@@ -60,7 +61,8 @@ class EventController implements IEventController {
             title,
             description,
             category,
-            startDate: new Date(), // placeholder, can add date input later
+            // default to 1 hour in the future
+            startDate: new Date(Date.now() + 60 * 60 * 1000),
             location: "TBD",
             maxCapacity: 100, // placeholder, can add capacity input later
         };
@@ -87,6 +89,23 @@ class EventController implements IEventController {
 
         this.logger.info(`Created event id: ${result.value.id} by organizer: ${currentUser.userId}`);
         res.redirect("/home");
+    }
+
+    showCreateForm(
+        res: Response, 
+        session: IAppBrowserSession,
+        pageError: string | null = null
+    ): void {
+        const currentUser = session.authenticatedUser;
+        if (!currentUser) {
+            res.status(401).render("partials/error", {
+                message: AuthenticationRequired("Please log in to continue.").message,
+                layout: false,
+            });
+            return;
+        }
+
+        res.render("create", { pageError, session });
     }
 }
 
