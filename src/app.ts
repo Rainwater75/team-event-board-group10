@@ -274,6 +274,15 @@ class ExpressApp implements IApp {
       }),
     );
 
+    this.app.get(
+      "/dashboard/organizer",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const browserSession = recordPageView(sessionStore(req));
+        this.controller.displayOrganizerDashboard(res, browserSession);
+      }),
+    );
+
     // ── Error handler ────────────────────────────────────────────────
 
     this.app.use((err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {

@@ -15,8 +15,8 @@ export interface IEventController {
         category: Category,
     ): Promise<void>;
 
-    showCreateForm(res: Response, session: IAppBrowserSession): void;
-    displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError: string | null): void;
+    showCreateForm(res: Response, session: IAppBrowserSession, pageError?: string | null): void;
+    displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): void;
 }
 
 class EventController implements IEventController {
