@@ -1,0 +1,67 @@
+import type { Response } from "express";
+import type { ILoggingService } from "../service/LoggingService.js";
+import type { IRsvpService } from "../service/RsvpService.js";
+import type { RsvpError } from "../lib/RsvpErrors.js";
+
+export interface IRsvpController {
+  toggleFromRequest(
+    res: Response,
+    input: { eventIdRaw: string; userId: string },
+  ): Promise<void>;
+}
+
+class RsvpController implements IRsvpController {
+  constructor(
+    private readonly service: IRsvpService,
+    private readonly logger: ILoggingService,
+  ) {}
+
+  private mapErrorStatus(error: RsvpError): number {
+    if (error.name === "RsvpValidationError") return 400;
+    if (error.name === "RsvpNotAllowed") return 403;
+    if (error.name === "RsvpNotFound") return 404;
+    if (error.name === "RsvpInvalidState") return 409;
+    if (error.name === "RsvpCapacityError") return 409;
+    return 500;
+  }
+
+  async toggleFromRequest(
+    res: Response,
+    input: { eventIdRaw: string; userId: string },
+  ): Promise<void> {
+    const eventId = Number.parseInt(input.eventIdRaw, 10);
+
+    const result = await this.service.toggleRsvp({
+      eventId,
+      userId: input.userId,
+    });
+
+    if (result.ok === false) {
+      const status = this.mapErrorStatus(result.value);
+      const log = status >= 500 ? this.logger.error : this.logger.warn;
+      log.call(this.logger, `RSVP toggle failed: ${result.value.message}`);
+
+      res.status(status).json({
+        ok: false,
+        error: result.value,
+      });
+      return;
+    }
+
+    this.logger.info(
+      `RSVP toggled for user ${result.value.userId} on event ${result.value.eventId} -> ${result.value.rsvpStatus}`,
+    );
+
+    res.json({
+      ok: true,
+      value: result.value,
+    });
+  }
+}
+
+export function CreateRsvpController(
+  service: IRsvpService,
+  logger: ILoggingService,
+): IRsvpController {
+  return new RsvpController(service, logger);
+}
