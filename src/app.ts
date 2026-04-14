@@ -172,11 +172,6 @@ class ExpressApp implements IApp {
       }),
     );
 
-    this.app.get( "/events/:id", asyncHandler(async (req, res) => {
-        if (!this.requireAuthenticated(req, res)) return; // not authenticated
-        await this.controller.showEventDetails(res, recordPageView(sessionStore(req)), Number(req.params.id));
-      })
-    );
 
     // ── Admin routes ─────────────────────────────────────────────────
 
@@ -279,6 +274,13 @@ class ExpressApp implements IApp {
         this.controller.showCreateForm(res, browserSession);
       }),
     );
+
+    this.app.get( "/events/:id", asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return; // not authenticated
+        await this.controller.showEventDetails(res, recordPageView(sessionStore(req)), Number(req.params.id));
+      })
+    );
+
 
     // ── Error handler ────────────────────────────────────────────────
 
