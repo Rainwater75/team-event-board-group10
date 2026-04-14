@@ -136,8 +136,9 @@ class EventController implements IEventController {
                 layout: false,
             });
             return;
-        }   
-        res.render("organizerDashboard", { pageError, session });
+        }  
+        const events = this.service.getAllEventsByOrganizer(currentUser.userId);
+        res.render("organizerDashboard", { pageError, session, events });
     }
 }
 
