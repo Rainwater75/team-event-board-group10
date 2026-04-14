@@ -3,6 +3,7 @@ import { EventError } from "../lib/errors.js";
 import { Ok, Err, Result } from "../lib/result.js";
 import { CreateEventInput, Event, Category } from "../model/Event.js";
 import { ValidationError } from "../lib/errors.js";
+import { CreateInMemoryEventRepository } from "../repository/InMemoryEventRepository.js";
 
 export interface IEventService {
     createEvent(
@@ -73,4 +74,8 @@ export class EventService implements IEventService {
     async getAllEvents(): Promise<Result<Event[], EventError>> {
         return await this.repo.getAll();
     }
+}
+
+export function CreateEventService(repo: IEventRepository): IEventService {
+    return new EventService(repo);
 }

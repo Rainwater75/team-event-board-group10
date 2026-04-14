@@ -263,6 +263,7 @@ class ExpressApp implements IApp {
         await this.controller.createFromForm(res, sessionStore(req), req.body.title, req.body.description, req.body.category);
       }),
     );
+
     // ── Error handler ────────────────────────────────────────────────
 
     this.app.use((err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {
