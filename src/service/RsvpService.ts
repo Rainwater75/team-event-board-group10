@@ -124,17 +124,19 @@ class RsvpService implements IRsvpService {
         return Err(RsvpDependencyError(saveResult.value.message));
       }
 
+      const nextStatus: RsvpStatus = "cancelled";
+
       return Ok({
         eventId: input.eventId,
         userId: input.userId,
-        rsvpStatus: "cancelled",
+        rsvpStatus: nextStatus,
         attendeeCount:
           existing.status === "going"
             ? Math.max(0, currentAttendeeCount - 1)
             : currentAttendeeCount,
       });
     }
-
+    
     const reactivatedStatus: RsvpStatus = hasSpace ? "going" : "waitlisted";
     const reactivatedRecord: IRsvpRecord = {
       ...existing,
