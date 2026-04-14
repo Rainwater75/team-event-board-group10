@@ -23,8 +23,8 @@ export interface CreateEventInput {
     category?: Category; 
     maxCapacity: number;
     public?: boolean;
-};
-
+    organizerId?: string;  // optional because passed in service 
+}
 
 export class Event implements IEvent { 
     id: number;

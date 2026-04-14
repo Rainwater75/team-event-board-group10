@@ -54,6 +54,8 @@ export class EventService implements IEventService {
         const capacity = input.maxCapacity;
         if (capacity <= 0) return Err(ValidationError("Max capacity must be greater than 0"));
 
+        // ADD CHECK TO CHECK FOR VALID CATEGORY
+
         const eventInput: CreateEventInput = {
             title: title,
             description: description,
@@ -62,7 +64,7 @@ export class EventService implements IEventService {
             category: input.category,
             maxCapacity: capacity,
             public: input.public, // or set to to false by default 
-
+            organizerId: organizerId,
         };
         return await this.repo.add(eventInput);
     }
