@@ -9,8 +9,6 @@ import { CreateLoggingService } from "./service/LoggingService";
 import type { ILoggingService } from "./service/LoggingService";
 import { CreateEventService } from "./service/EventService";
 import { CreateEventController } from "./controller/EventController";
-import { Prisma } from "@prisma/client";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { CreateInMemoryEventRepository } from "./repository/InMemoryEventRepository";
 
 
