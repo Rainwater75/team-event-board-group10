@@ -43,7 +43,12 @@ class InMemoryEventRepository implements IEventRepository {
         return Ok(Array.from(this.events.values()));
     }
 
-    
+    async getAllByOrganizer(organizerId: string): Promise<Result<Event[], EventError>> {
+        const filteredEvents = Array.from(this.events.values()).filter(event => event.organizerId === organizerId);
+        return Ok(filteredEvents);
+    }
+
+
 }
 
 // factory function 

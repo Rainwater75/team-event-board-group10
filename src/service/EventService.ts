@@ -6,13 +6,10 @@ import { ValidationError } from "../lib/errors.js";
 import { CreateInMemoryEventRepository } from "../repository/InMemoryEventRepository.js";
 
 export interface IEventService {
-    createEvent(
-        input: CreateEventInput, 
-        organizerId: string
-    ): Promise<Result<Event, EventError>>;
-
+    createEvent(input: CreateEventInput, organizerId: string): Promise<Result<Event, EventError>>;
     getEvent(id: number): Promise<Result<Event, EventError>>;
     getAllEvents(): Promise<Result<Event[], EventError>>;
+    getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
 }
 
 // validation invariants 
@@ -70,11 +67,17 @@ export class EventService implements IEventService {
     }
 
     async getEvent(id: number): Promise<Result<Event, EventError>> {
+        if (id <= 0) return Err(ValidationError("Event ID must be a positive number"));
         return await this.repo.getById(id);
     }
 
     async getAllEvents(): Promise<Result<Event[], EventError>> {
         return await this.repo.getAll();
+    }
+
+    async getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>> {
+        if (!organizerId) return Err(ValidationError("Organizer ID is required"));
+        return await this.repo.getAllByOrganizer(organizerId);
     }
 }
 
