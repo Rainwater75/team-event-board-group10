@@ -22,8 +22,9 @@ class InMemoryEventRepository implements IEventRepository {
             return Err(ValidationError("Location is required."));
         }
 
-        // creates the event and adds to the map
-        const event = new Event(this.nextId++, input, "");
+        // Persist organizer id so organizer dashboard filtering works.
+        const organizerId = input.organizerId ?? "";
+        const event = new Event(this.nextId++, input, organizerId);
         this.events.set(event.id, event);
         return Ok(event);
     }

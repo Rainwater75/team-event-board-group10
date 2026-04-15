@@ -12,7 +12,7 @@
   <% } %>
 
   <!-- Action Bar with Alpine.js Controls -->
-  <div class="mb-6 p-4 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-between gap-4 flex-wrap" x-data="{ sortBy: 'date' }">
+  <div class="mb-6 p-4 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-between gap-4 flex-wrap">
     <div class="flex gap-3 flex-wrap">
       <a href="/events/new" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm">
         + New Event
@@ -143,12 +143,6 @@
             <button class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm font-medium" @click="editEvent($event, event)">
               Edit
             </button>
-            <button class="px-3 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition text-sm font-medium" @click="viewAnalytics($event, event)">
-              Analytics
-            </button>
-            <button class="px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition text-sm font-medium" @click="deleteEvent($event, event)">
-              Delete
-            </button>
           </div>
         </div>
       </div>
@@ -160,9 +154,10 @@
 <script>
   function eventsManager() {
     return {
-      events: <%= JSON.stringify(events || []) %>,
+      events: <%- JSON.stringify(events || []) %>,
       loading: false,
       expanded: {},
+      sortBy: 'date',
 
       init() {
         // Initialize expanded state for each event
@@ -203,21 +198,6 @@
         console.log('Edit event:', eventData);
         // TODO: Implement edit functionality (redirect to edit page or open modal)
         // window.location.href = `/events/${eventData.id}/edit`;
-      },
-
-      viewAnalytics(event, eventData) {
-        event.stopPropagation();
-        console.log('View analytics for event:', eventData);
-        // TODO: Implement analytics modal
-      },
-
-      deleteEvent(event, eventData) {
-        event.stopPropagation();
-        if (confirm(`Are you sure you want to delete "${eventData.title}"? This action cannot be undone.`)) {
-          console.log('Delete event:', eventData);
-          // TODO: Implement delete functionality
-          // fetch(`/events/${eventData.id}/delete`, { method: 'POST' })
-        }
       }
     };
   }

@@ -107,11 +107,11 @@ class EventController implements IEventController {
         res.redirect("/home");
     }
 
-    showCreateForm(
+    async showCreateForm(
         res: Response, 
         session: IAppBrowserSession,
         pageError: string | null = null
-    ): void {
+    ): Promise<void> {
         const currentUser = session.authenticatedUser;
         if (!currentUser) {
             res.status(401).render("partials/error", {
@@ -124,7 +124,7 @@ class EventController implements IEventController {
         res.render("create", { pageError, session });
     }
 
-    displayOrganizerDashboard(
+    async displayOrganizerDashboard(
         res: Response, 
         session: IAppBrowserSession,
         pageError: string | null = null
@@ -137,8 +137,17 @@ class EventController implements IEventController {
             });
             return;
         }  
-        const events = await this.service.getAllEventsByOrganizer(currentUser.userId);
-        res.render("organizerDashboard", { pageError, session, events });
+        const eventsResult = await this.service.getAllEventsByOrganizer(currentUser.userId);
+        if (!eventsResult.ok) {
+            const message = this.isEventError(eventsResult.value)
+                ? eventsResult.value.message
+                : "Failed to load organizer events.";
+            this.logger.error(`Failed to load organizer dashboard events: ${message}`);
+            res.render("organizerDashboard", { pageError: message, session, events: [] });
+            return;
+        }
+
+        res.render("organizerDashboard", { pageError, session, events: eventsResult.value });
     }
 }
 
