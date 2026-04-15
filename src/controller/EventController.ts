@@ -16,6 +16,18 @@ export interface IEventController {
     ): Promise<void>;
 
     showCreateForm(res: Response, session: IAppBrowserSession): void;
+
+    publishFromForm(
+        res: Response,
+        session: IAppBrowserSession,
+        eventIdRaw: string,
+    ): Promise<void>;
+
+    cancelFromForm(
+        res: Response,
+        session: IAppBrowserSession,
+        eventIdRaw: string,
+    ): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -121,6 +133,84 @@ class EventController implements IEventController {
         }
 
         res.render("create", { pageError, session });
+    }
+    
+    async publishFromForm(
+        res: Response,
+        session: IAppBrowserSession,
+        eventIdRaw: string,
+    ): Promise<void> {
+        const currentUser = session.authenticatedUser;
+        if (!currentUser) {
+            res.status(401).render("partials/error", {
+                message: AuthenticationRequired("Please log in to continue.").message,
+                layout: false,
+            });
+            return;
+        }
+
+        const eventId = Number(eventIdRaw);
+        if (Number.isNaN(eventId)) {
+            res.status(400).render("partials/error", {
+                message: "Invalid event id.",
+                layout: false,
+            });
+            return;
+        }
+
+        const result = await this.service.publishEvent(eventId, currentUser.userId);
+
+        if (!result.ok) {
+            const status = this.mapErrorStatus(result.error);
+            res.status(status).render("partials/error", {
+                message: result.error.message,
+                layout: false,
+            });
+            return;
+        }
+
+        res.redirect("/home");
+    }
+
+    async cancelFromForm(
+        res: Response,
+        session: IAppBrowserSession,
+        eventIdRaw: string,
+    ): Promise<void> {
+        const currentUser = session.authenticatedUser;
+        if (!currentUser) {
+            res.status(401).render("partials/error", {
+                message: AuthenticationRequired("Please log in to continue.").message,
+                layout: false,
+            });
+            return;
+        }
+
+        const eventId = Number(eventIdRaw);
+        if (Number.isNaN(eventId)) {
+            res.status(400).render("partials/error", {
+                message: "Invalid event id.",
+                layout: false,
+            });
+            return;
+        }
+
+        const result = await this.service.cancelEvent(
+            eventId,
+            currentUser.userId,
+            currentUser.role,
+        );
+
+        if (!result.ok) {
+            const status = this.mapErrorStatus(result.error);
+            res.status(status).render("partials/error", {
+                message: result.error.message,
+                layout: false,
+            });
+            return;
+        }
+
+        res.redirect("/home");
     }
 }
 
