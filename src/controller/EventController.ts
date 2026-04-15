@@ -161,9 +161,9 @@ class EventController implements IEventController {
         const result = await this.service.publishEvent(eventId, currentUser.userId);
 
         if (!result.ok) {
-            const status = this.mapErrorStatus(result.error);
+            const status = this.mapErrorStatus(result.value);
             res.status(status).render("partials/error", {
-                message: result.error.message,
+                message: result.value.message,
                 layout: false,
             });
             return;
@@ -202,9 +202,9 @@ class EventController implements IEventController {
         );
 
         if (!result.ok) {
-            const status = this.mapErrorStatus(result.error);
+            const status = this.mapErrorStatus(result.value);
             res.status(status).render("partials/error", {
-                message: result.error.message,
+                message: result.value.message,
                 layout: false,
             });
             return;
