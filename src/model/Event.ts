@@ -1,6 +1,7 @@
 import { IUserSummary } from "../auth/User.js";
 
 export type Category = "None" | "test1" | "test2" | "test3"; // ben i made this up, you can move and change the category types
+export type EventStatus = "draft" | "published" | "cancelled";
 
 export interface IEvent {
     id: number;
@@ -13,6 +14,7 @@ export interface IEvent {
     maxCapacity: number;
     organizerId: string; // CHANGE THIS TO UUID
     attendingUsers: IUserSummary[];
+    status: EventStatus;
 };
 
 export interface CreateEventInput {
@@ -37,6 +39,7 @@ export class Event implements IEvent {
     maxCapacity: number;
     organizerId: string;
     attendingUsers: IUserSummary[];
+    status: EventStatus;
 
     constructor(id: number, data: CreateEventInput, organizerId: string) { //change organizerId to UUID
         this.id = id;
@@ -49,5 +52,6 @@ export class Event implements IEvent {
         this.maxCapacity = data.maxCapacity ;
         this.organizerId = organizerId;
         this.attendingUsers = [];
+        this.status = "draft";
     }
 }
