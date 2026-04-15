@@ -1,7 +1,11 @@
 import { Err, Ok, type Result } from "../lib/result.js";
 import type { RsvpError } from "../lib/RsvpErrors.js";
 import { RsvpDependencyError } from "../lib/RsvpErrors.js";
-import type { IRsvpRecord, IRsvpRepository } from "./RsvpRepository.js";
+import type {
+  IAttendeeListItem,
+  IRsvpRecord,
+  IRsvpRepository,
+} from "./RsvpRepository.js";
 
 class InMemoryRsvpRepository implements IRsvpRepository {
   constructor(private readonly rsvps: IRsvpRecord[] = []) {}
@@ -46,6 +50,22 @@ class InMemoryRsvpRepository implements IRsvpRepository {
       return Ok(count);
     } catch {
       return Err(RsvpDependencyError("Unable to count attendees."));
+    }
+  }
+
+  async listByEvent(eventId: number): Promise<Result<IAttendeeListItem[], RsvpError>> {
+    try {
+      const records = this.rsvps
+        .filter((rsvp) => rsvp.eventId === eventId)
+        .map((rsvp) => ({
+          userId: rsvp.userId,
+          status: rsvp.status,
+          createdAt: rsvp.createdAt,
+        }));
+
+      return Ok(records);
+    } catch {
+      return Err(RsvpDependencyError("Unable to load attendee list."));
     }
   }
 }
