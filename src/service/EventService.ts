@@ -3,7 +3,6 @@ import { EventError } from "../lib/errors.js";
 import { Ok, Err, Result } from "../lib/result.js";
 import { CreateEventInput, Event, Category } from "../model/Event.js";
 import { ValidationError } from "../lib/errors.js";
-import { CreateInMemoryEventRepository } from "../repository/InMemoryEventRepository.js";
 
 export interface IEventService {
     createEvent(
@@ -13,6 +12,17 @@ export interface IEventService {
 
     getEvent(id: number): Promise<Result<Event, EventError>>;
     getAllEvents(): Promise<Result<Event[], EventError>>;
+
+    publishEvent(
+        id: number,
+        actingUserId: string,
+    ): Promise<Result<Event, EventError>>;
+
+    cancelEvent(
+        id: number,
+        actingUserId: string,
+        actingUserRole: "admin" | "staff" | "user",
+    ): Promise<Result<Event, EventError>>;
 }
 
 // validation invariants 
@@ -73,6 +83,55 @@ export class EventService implements IEventService {
 
     async getAllEvents(): Promise<Result<Event[], EventError>> {
         return await this.repo.getAll();
+    }
+
+    async publishEvent(
+        id: number,
+        actingUserId: string,
+    ): Promise<Result<Event, EventError>> {
+        const found = await this.repo.getById(id);
+
+        if (!found.ok) {
+            return found;
+        }
+
+        const event = found.value;
+
+        if (event.organizerId !== actingUserId) {
+            return Err(ValidationError("Only the organizer can publish this event."));
+        }
+
+        if (event.status !== "draft") {
+            return Err(ValidationError("Only draft events can be published."));
+        }
+
+        return await this.repo.updateStatus(id, "published");
+    }
+
+    async cancelEvent(
+        id: number,
+        actingUserId: string,
+        actingUserRole: "admin" | "staff" | "user",
+    ): Promise<Result<Event, EventError>> {
+        const found = await this.repo.getById(id);
+
+        if (!found.ok) {
+            return found;
+        }
+
+        const event = found.value;
+        const isOwner = event.organizerId === actingUserId;
+        const isAdmin = actingUserRole === "admin";
+
+        if (!isOwner && !isAdmin) {
+            return Err(ValidationError("Only the organizer or an admin can cancel this event."));
+        }
+
+        if (event.status !== "published") {
+            return Err(ValidationError("Only published events can be cancelled."));
+        }
+
+        return await this.repo.updateStatus(id, "cancelled");
     }
 }
 
