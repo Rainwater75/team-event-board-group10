@@ -9,4 +9,5 @@ export interface IEventRepository {
     add(input: CreateEventInput): Promise<Result<Event, EventError>>;
     getById(id: number): Promise<Result<Event, EventError>>;
     getAll(): Promise<Result<Event[], EventError>>;
+    updateStatus(id: number, status: "draft" | "published" | "cancelled"): Promise<Result<Event, EventError>>;
 }
