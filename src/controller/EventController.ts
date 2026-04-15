@@ -15,8 +15,8 @@ export interface IEventController {
         category: Category,
     ): Promise<void>;
 
-    showCreateForm(res: Response, session: IAppBrowserSession, pageError?: string | null): void;
-    displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): void;
+    showCreateForm(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
+    displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -107,11 +107,11 @@ class EventController implements IEventController {
         res.redirect("/home");
     }
 
-    showCreateForm(
+    async showCreateForm(
         res: Response, 
         session: IAppBrowserSession,
         pageError: string | null = null
-    ): void {
+    ): Promise<void> {
         const currentUser = session.authenticatedUser;
         if (!currentUser) {
             res.status(401).render("partials/error", {
@@ -124,11 +124,11 @@ class EventController implements IEventController {
         res.render("create", { pageError, session });
     }
 
-    displayOrganizerDashboard(
+    async displayOrganizerDashboard(
         res: Response, 
         session: IAppBrowserSession,
         pageError: string | null = null
-    ): void {
+    ): Promise<void> {
         const currentUser = session.authenticatedUser;
         if (!currentUser) {
             res.status(401).render("partials/error", {
@@ -137,7 +137,7 @@ class EventController implements IEventController {
             });
             return;
         }  
-        const events = this.service.getAllEventsByOrganizer(currentUser.userId);
+        const events = await this.service.getAllEventsByOrganizer(currentUser.userId);
         res.render("organizerDashboard", { pageError, session, events });
     }
 }

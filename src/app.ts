@@ -270,7 +270,7 @@ class ExpressApp implements IApp {
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) return;
         const browserSession = recordPageView(sessionStore(req));
-        this.controller.showCreateForm(res, browserSession);
+        await this.controller.showCreateForm(res, browserSession);
       }),
     );
 
@@ -279,7 +279,7 @@ class ExpressApp implements IApp {
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) return;
         const browserSession = recordPageView(sessionStore(req));
-        this.controller.displayOrganizerDashboard(res, browserSession);
+        await this.controller.displayOrganizerDashboard(res, browserSession);
       }),
     );
 
