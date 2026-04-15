@@ -1,28 +1,24 @@
-<section class="max-w-6xl mx-auto">
-  <!-- Header -->
+<section class="max-w-6xl mx-auto" x-data="eventsManager()" x-init="init()">
   <div class="mb-8">
     <a href="/home" class="text-blue-600 hover:underline text-sm font-medium">← Back to home</a>
     <h1 class="text-4xl font-bold text-slate-900 mt-3">Organizer Dashboard</h1>
-    <p class="text-slate-500 mt-2">Manage and monitor your events</p>
+    <p class="text-slate-500 mt-2">Manage your events by status with quick actions.</p>
   </div>
 
-  <!-- Error Display -->
   <% if (pageError) { %>
     <%- include("partials/error", { message: pageError }) %>
   <% } %>
 
-  <!-- Action Bar with Alpine.js Controls -->
   <div class="mb-6 p-4 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-between gap-4 flex-wrap">
-    <div class="flex gap-3 flex-wrap">
-      <a href="/events/new" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm">
-        + New Event
-      </a>
-    </div>
-    
+    <a href="/events/new" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm">
+      + New Event
+    </a>
+
     <div class="flex items-center gap-2">
       <label for="sort-select" class="text-sm font-medium text-slate-600">Sort by:</label>
-      <select 
-        @change="sortBy = $el.value"
+      <select
+        id="sort-select"
+        x-model="sortBy"
         class="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <option value="date">Start Date</option>
@@ -32,173 +28,186 @@
     </div>
   </div>
 
-  <!-- Events List Container with Alpine.js -->
-  <div x-data="eventsManager()" x-init="init()" class="space-y-4">
-    <!-- Loading State -->
-    <div x-show="loading" class="text-center py-12">
-      <div class="inline-block">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p class="mt-4 text-slate-600">Loading your events...</p>
+  <div x-show="events.length === 0" class="text-center py-12 bg-white rounded-xl border border-slate-200 shadow-sm">
+    <h3 class="text-lg font-semibold text-slate-900 mb-2">No events yet</h3>
+    <p class="text-slate-500 mb-4">Create your first event to get started</p>
+    <a href="/events/new" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+      Create Event
+    </a>
+  </div>
+
+  <div x-show="events.length > 0" class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-emerald-700">Published</h2>
+        <span class="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700" x-text="publishedEvents().length"></span>
       </div>
-    </div>
-
-    <!-- Empty State -->
-    <div x-show="!loading && events.length === 0" class="text-center py-12 bg-white rounded-xl border border-slate-200 shadow-sm">
-      <svg class="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-      </svg>
-      <h3 class="text-lg font-semibold text-slate-900 mb-2">No events yet</h3>
-      <p class="text-slate-500 mb-4">Create your first event to get started</p>
-      <a href="/events/new" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
-        Create Event
-      </a>
-    </div>
-
-    <!-- Events Grid -->
-    <template x-for="event in sortedEvents()" :key="event.id">
-      <div class="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition overflow-hidden" 
-           x-data="{ expanded: false }"
-           @click="expanded = !expanded"
-           :class="{ 'ring-2 ring-blue-500': expanded }">
-        
-        <!-- Event Card Header (Clickable) -->
-        <div class="p-5 cursor-pointer">
-          <div class="flex items-start justify-between gap-4">
-            <div class="flex-1 min-w-0">
-              <h3 class="text-xl font-bold text-slate-900 truncate" x-text="event.title"></h3>
-              <div class="flex items-center gap-4 mt-2 flex-wrap text-sm text-slate-600">
-                <span class="flex items-center gap-1">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                  </svg>
-                  <span x-text="formatDate(event.startDate)"></span>
-                </span>
-                <span class="flex items-center gap-1">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  </svg>
-                  <span x-text="event.location"></span>
-                </span>
-              </div>
-            </div>
-            
-            <div class="flex items-center gap-2">
-              <span class="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full" x-text="event.category"></span>
-              <svg class="w-5 h-5 text-slate-400 transition transform" :class="{ 'rotate-180': expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-              </svg>
+      <div class="space-y-3">
+        <template x-if="publishedEvents().length === 0">
+          <p class="text-sm text-slate-500">No published events.</p>
+        </template>
+        <template x-for="event in publishedEvents()" :key="`pub-${event.id}`">
+          <div class="border border-slate-200 rounded-lg p-3">
+            <h3 class="font-semibold text-slate-900" x-text="event.title"></h3>
+            <p class="text-xs text-slate-500 mt-1" x-text="formatDate(event.startDate)"></p>
+            <p class="text-xs text-slate-500" x-text="event.category"></p>
+            <p class="text-sm text-slate-700 mt-2">
+              Attending: <span class="font-semibold" x-text="attendeeCount(event)"></span>
+              / <span x-text="event.maxCapacity"></span>
+            </p>
+            <div class="mt-3">
+              <button
+                @click.stop="cancelEvent(event.id)"
+                class="px-3 py-1.5 text-xs rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
+              >
+                Cancel
+              </button>
             </div>
           </div>
-        </div>
-
-        <!-- Expanded Details (Collapsible) -->
-        <div x-show="expanded" x-transition class="border-t border-slate-200 bg-slate-50 p-5 space-y-4">
-          <!-- Description -->
-          <div>
-            <h4 class="text-sm font-semibold text-slate-700 mb-2">Description</h4>
-            <p class="text-slate-600 text-sm leading-relaxed" x-text="event.description"></p>
-          </div>
-
-          <!-- Event Stats -->
-          <div class="grid grid-cols-3 gap-4">
-            <div class="bg-white rounded-lg p-3 border border-slate-200">
-              <p class="text-xs text-slate-500 font-medium">Capacity</p>
-              <p class="text-lg font-bold text-slate-900 mt-1">
-                <span x-text="event.attendingUsers?.length || 0"></span> / <span x-text="event.maxCapacity"></span>
-              </p>
-            </div>
-            <div class="bg-white rounded-lg p-3 border border-slate-200">
-              <p class="text-xs text-slate-500 font-medium">Status</p>
-              <p class="text-lg font-bold mt-1" 
-                 :class="event.startDate > new Date() ? 'text-green-600' : 'text-slate-600'"
-                 x-text="event.startDate > new Date() ? 'Upcoming' : 'Past'"></p>
-            </div>
-            <div class="bg-white rounded-lg p-3 border border-slate-200">
-              <p class="text-xs text-slate-500 font-medium">Visibility</p>
-              <p class="text-lg font-bold text-slate-900 mt-1" x-text="event.public ? 'Public' : 'Private'"></p>
-            </div>
-          </div>
-
-          <!-- Attendees List (if applicable) -->
-          <template x-if="event.attendingUsers && event.attendingUsers.length > 0">
-            <div>
-              <h4 class="text-sm font-semibold text-slate-700 mb-2">Attendees</h4>
-              <div class="space-y-2 max-h-48 overflow-y-auto">
-                <template x-for="attendee in event.attendingUsers" :key="attendee.id">
-                  <div class="bg-white rounded-lg p-3 border border-slate-200 flex items-center justify-between text-sm">
-                    <div>
-                      <p class="font-medium text-slate-900" x-text="attendee.displayName"></p>
-                      <p class="text-xs text-slate-500" x-text="attendee.email"></p>
-                    </div>
-                    <span class="px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded" x-text="attendee.role"></span>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </template>
-
-          <!-- Action Buttons -->
-          <div class="flex gap-2 pt-4 border-t border-slate-200">
-            <button class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition text-sm font-medium" @click="editEvent($event, event)">
-              Edit
-            </button>
-          </div>
-        </div>
+        </template>
       </div>
-    </template>
+    </section>
+
+    <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-amber-700">Draft</h2>
+        <span class="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700" x-text="draftEvents().length"></span>
+      </div>
+      <div class="space-y-3">
+        <template x-if="draftEvents().length === 0">
+          <p class="text-sm text-slate-500">No draft events.</p>
+        </template>
+        <template x-for="event in draftEvents()" :key="`draft-${event.id}`">
+          <div class="border border-slate-200 rounded-lg p-3">
+            <h3 class="font-semibold text-slate-900" x-text="event.title"></h3>
+            <p class="text-xs text-slate-500 mt-1" x-text="formatDate(event.startDate)"></p>
+            <p class="text-xs text-slate-500" x-text="event.category"></p>
+            <p class="text-sm text-slate-700 mt-2">
+              Attending: <span class="font-semibold" x-text="attendeeCount(event)"></span>
+              / <span x-text="event.maxCapacity"></span>
+            </p>
+            <div class="mt-3">
+              <button
+                @click.stop="publishEvent(event.id)"
+                class="px-3 py-1.5 text-xs rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
+              >
+                Publish
+              </button>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-slate-700">Cancelled / Past</h2>
+        <span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700" x-text="cancelledOrPastEvents().length"></span>
+      </div>
+      <div class="space-y-3">
+        <template x-if="cancelledOrPastEvents().length === 0">
+          <p class="text-sm text-slate-500">No cancelled or past events.</p>
+        </template>
+        <template x-for="event in cancelledOrPastEvents()" :key="`cp-${event.id}`">
+          <div class="border border-slate-200 rounded-lg p-3">
+            <div class="flex items-start justify-between gap-2">
+              <h3 class="font-semibold text-slate-900" x-text="event.title"></h3>
+              <span class="text-[10px] px-2 py-1 rounded-full bg-slate-100 text-slate-700" x-text="labelForStatus(event)"></span>
+            </div>
+            <p class="text-xs text-slate-500 mt-1" x-text="formatDate(event.startDate)"></p>
+            <p class="text-xs text-slate-500" x-text="event.category"></p>
+            <p class="text-sm text-slate-700 mt-2">
+              Attending: <span class="font-semibold" x-text="attendeeCount(event)"></span>
+              / <span x-text="event.maxCapacity"></span>
+            </p>
+          </div>
+        </template>
+      </div>
+    </section>
   </div>
 </section>
 
-<!-- Inline Alpine.js Data Handler -->
 <script>
   function eventsManager() {
     return {
       events: <%- JSON.stringify(events || []) %>,
-      loading: false,
-      expanded: {},
-      sortBy: 'date',
+      sortBy: "date",
+      statusOverrides: {},
 
       init() {
-        // Initialize expanded state for each event
-        this.events.forEach(e => {
-          this.expanded[e.id] = false;
+        this.events = this.events.map((event) => ({
+          ...event,
+          startDate: new Date(event.startDate),
+        }));
+      },
+
+      attendeeCount(event) {
+        return Array.isArray(event.attendingUsers) ? event.attendingUsers.length : 0;
+      },
+
+      formatDate(dateValue) {
+        const date = new Date(dateValue);
+        return date.toLocaleDateString("en-US", {
+          weekday: "short",
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
         });
       },
 
-      sortedEvents() {
-        const sortBy = this.$data.sortBy || 'date';
-        const sorted = [...this.events];
-
-        switch (sortBy) {
-          case 'title':
-            return sorted.sort((a, b) => a.title.localeCompare(b.title));
-          case 'capacity':
-            return sorted.sort((a, b) => b.maxCapacity - a.maxCapacity);
-          case 'date':
-          default:
-            return sorted.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+      sortedEvents(source) {
+        const sorted = [...source];
+        if (this.sortBy === "title") {
+          return sorted.sort((a, b) => a.title.localeCompare(b.title));
         }
+        if (this.sortBy === "capacity") {
+          return sorted.sort((a, b) => this.attendeeCount(b) - this.attendeeCount(a));
+        }
+        return sorted.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
       },
 
-      formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-          weekday: 'short',
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
+      effectiveStatus(event) {
+        const override = this.statusOverrides[event.id];
+        if (override) return override;
+        const eventDate = new Date(event.startDate);
+        if (event.cancelled === true) return "cancelled";
+        if (eventDate < new Date()) return "past";
+        return event.public ? "published" : "draft";
       },
 
-      editEvent(event, eventData) {
-        event.stopPropagation();
-        console.log('Edit event:', eventData);
-        // TODO: Implement edit functionality (redirect to edit page or open modal)
-        // window.location.href = `/events/${eventData.id}/edit`;
-      }
+      labelForStatus(event) {
+        const status = this.effectiveStatus(event);
+        if (status === "cancelled") return "Cancelled";
+        if (status === "past") return "Past";
+        return status;
+      },
+
+      publishedEvents() {
+        return this.sortedEvents(this.events.filter((event) => this.effectiveStatus(event) === "published"));
+      },
+
+      draftEvents() {
+        return this.sortedEvents(this.events.filter((event) => this.effectiveStatus(event) === "draft"));
+      },
+
+      cancelledOrPastEvents() {
+        return this.sortedEvents(
+          this.events.filter((event) => {
+            const status = this.effectiveStatus(event);
+            return status === "cancelled" || status === "past";
+          }),
+        );
+      },
+
+      publishEvent(eventId) {
+        this.statusOverrides[eventId] = "published";
+      },
+
+      cancelEvent(eventId) {
+        this.statusOverrides[eventId] = "cancelled";
+      },
     };
   }
 </script>
