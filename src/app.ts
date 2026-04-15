@@ -282,6 +282,34 @@ class ExpressApp implements IApp {
       }),
     );
 
+     this.app.post(
+      "/events/:id/publish",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const browserSession = recordPageView(sessionStore(req));
+
+        await this.controller.publishFromForm(
+          res,
+          browserSession,
+          typeof req.params.id === "string" ? req.params.id : "",
+        );
+      }),
+    );
+
+    this.app.post(
+      "/events/:id/cancel",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const browserSession = recordPageView(sessionStore(req));
+
+        await this.controller.cancelFromForm(
+          res,
+          browserSession,
+          typeof req.params.id === "string" ? req.params.id : "",
+        );
+      }),
+    );
+
     // ── RSVP Routes ────────────────────────────────────────────────
     this.app.post(
       "/events/:id/rsvp",
