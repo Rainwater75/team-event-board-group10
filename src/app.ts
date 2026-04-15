@@ -304,6 +304,27 @@ class ExpressApp implements IApp {
       }),
     );
 
+    this.app.get(
+      "/events/:id/attendees",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+        if (!currentUser) {
+          res.status(401).render("partials/error", {
+            message: AuthenticationRequired("Please log in to continue.").message,
+            layout: false,
+          });
+          return;
+        }
+
+        await this.rsvpController.attendeeListFromRequest(res, {
+          eventIdRaw: typeof req.params.id === "string" ? req.params.id : "",
+          requesterId: currentUser.userId,
+        });
+      }),
+    );
+
     // ── Error handler ────────────────────────────────────────────────
 
     this.app.use((err: unknown, _req: Request, res: Response, _next: (value?: unknown) => void) => {
