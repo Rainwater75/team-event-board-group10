@@ -4,7 +4,8 @@ export type RsvpError =
   | { name: "RsvpNotFound"; message: string }
   | { name: "RsvpInvalidState"; message: string }
   | { name: "RsvpCapacityError"; message: string }
-  | { name: "RsvpDependencyError"; message: string };
+  | { name: "RsvpDependencyError"; message: string }
+  | { name: "RsvpResolutionError"; message: string };
 
 export const RsvpValidationError = (message: string): RsvpError => ({
   name: "RsvpValidationError",
@@ -33,5 +34,10 @@ export const RsvpCapacityError = (message: string): RsvpError => ({
 
 export const RsvpDependencyError = (message: string): RsvpError => ({
   name: "RsvpDependencyError",
+  message,
+});
+
+export const RsvpResolutionError = (message: string): RsvpError => ({
+  name: "RsvpResolutionError",
   message,
 });
