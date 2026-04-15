@@ -107,11 +107,11 @@ class EventController implements IEventController {
         res.redirect("/home");
     }
 
-    async showCreateForm(
+    showCreateForm(
         res: Response, 
         session: IAppBrowserSession,
         pageError: string | null = null
-    ): Promise<void> {
+    ): void {
         const currentUser = session.authenticatedUser;
         if (!currentUser) {
             res.status(401).render("partials/error", {
@@ -124,7 +124,7 @@ class EventController implements IEventController {
         res.render("create", { pageError, session });
     }
 
-    async displayOrganizerDashboard(
+    displayOrganizerDashboard(
         res: Response, 
         session: IAppBrowserSession,
         pageError: string | null = null
