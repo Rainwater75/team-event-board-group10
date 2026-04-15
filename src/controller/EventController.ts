@@ -160,10 +160,18 @@ class EventController implements IEventController {
 
         const result = await this.service.publishEvent(eventId, currentUser.userId);
 
-        if (!result.ok) {
+        if (!result.ok && this.isEventError(result.value)) {
             const status = this.mapErrorStatus(result.value);
             res.status(status).render("partials/error", {
                 message: result.value.message,
+                layout: false,
+            });
+            return;
+        }
+
+        if (!result.ok) {
+            res.status(500).render("partials/error", {
+                message: "An unexpected error occurred while publishing the event.",
                 layout: false,
             });
             return;
@@ -201,10 +209,18 @@ class EventController implements IEventController {
             currentUser.role,
         );
 
-        if (!result.ok) {
+        if (!result.ok && this.isEventError(result.value)) {
             const status = this.mapErrorStatus(result.value);
             res.status(status).render("partials/error", {
                 message: result.value.message,
+                layout: false,
+            });
+            return;
+        }
+
+        if (!result.ok) {
+            res.status(500).render("partials/error", {
+                message: "An unexpected error occurred while cancelling the event.",
                 layout: false,
             });
             return;
