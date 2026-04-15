@@ -22,8 +22,23 @@ export interface ToggleRsvpInput {
   userId: string;
 }
 
+export interface IAttendeeListGroup {
+  attending: { displayName: string; createdAt: Date }[];
+  waitlisted: { displayName: string; createdAt: Date }[];
+  cancelled: { displayName: string; createdAt: Date }[];
+}
+
+export interface GetAttendeeListInput {
+  eventId: number;
+  requesterId: string;
+}
+
 export interface IRsvpService {
   toggleRsvp(input: ToggleRsvpInput): Promise<Result<IRsvpToggleResult, RsvpError>>;
+
+  getAttendeeList(
+    input: GetAttendeeListInput,
+  ): Promise<Result<IAttendeeListGroup, RsvpError>>;
 }
 
 class RsvpService implements IRsvpService {
@@ -136,7 +151,7 @@ class RsvpService implements IRsvpService {
             : currentAttendeeCount,
       });
     }
-    
+
     const reactivatedStatus: RsvpStatus = hasSpace ? "going" : "waitlisted";
     const reactivatedRecord: IRsvpRecord = {
       ...existing,
@@ -158,6 +173,89 @@ class RsvpService implements IRsvpService {
           ? currentAttendeeCount + 1
           : currentAttendeeCount,
     });
+  }
+
+  async getAttendeeList(
+    input: GetAttendeeListInput,
+  ): Promise<Result<IAttendeeListGroup, RsvpError>> {
+    if (!Number.isInteger(input.eventId) || input.eventId <= 0) {
+      return Err(RsvpValidationError("A valid event ID is required."));
+    }
+
+    if (!input.requesterId.trim()) {
+      return Err(RsvpValidationError("A valid requester ID is required."));
+    }
+
+    const eventResult = await this.events.getById(input.eventId);
+    if (eventResult.ok === false) {
+      return Err(RsvpNotFound(`Event ${input.eventId} not found.`));
+    }
+
+    const event = eventResult.value;
+
+    const requesterResult = await this.users.findById(input.requesterId);
+    if (requesterResult.ok === false) {
+      return Err(RsvpDependencyError("Failed to resolve requester."));
+    }
+
+    const requester = requesterResult.value;
+    if (!requester) {
+      return Err(RsvpValidationError("Requester not found."));
+    }
+
+    const isOrganizer = event.organizerId === requester.id;
+    const isAdmin = requester.role === "admin";
+
+    if (!isOrganizer && !isAdmin) {
+      return Err(RsvpNotAllowed("Only organizer or admin can view attendees."));
+    }
+
+    const attendeeResult = await this.rsvps.listByEvent(input.eventId);
+    if (attendeeResult.ok === false) {
+      return Err(RsvpDependencyError("Failed to load attendee list."));
+    }
+
+    const grouped: IAttendeeListGroup = {
+      attending: [],
+      waitlisted: [],
+      cancelled: [],
+    };
+
+    for (const record of attendeeResult.value) {
+      const userResult = await this.users.findById(record.userId);
+
+      if (userResult.ok === false) {
+        return Err(RsvpDependencyError("Failed to resolve attendee user."));
+      }
+
+      if (!userResult.value) {
+        return Err(RsvpDependencyError("Failed to resolve attendee user."));
+      }
+
+      const entry = {
+        displayName: userResult.value.displayName,
+        createdAt: record.createdAt,
+      };
+
+      if (record.status === "going") {
+        grouped.attending.push(entry);
+      } else if (record.status === "waitlisted") {
+        grouped.waitlisted.push(entry);
+      } else {
+        grouped.cancelled.push(entry);
+      }
+    }
+
+    const sortByCreatedAt = (
+      a: { displayName: string; createdAt: Date },
+      b: { displayName: string; createdAt: Date },
+    ) => a.createdAt.getTime() - b.createdAt.getTime();
+
+    grouped.attending.sort(sortByCreatedAt);
+    grouped.waitlisted.sort(sortByCreatedAt);
+    grouped.cancelled.sort(sortByCreatedAt);
+
+    return Ok(grouped);
   }
 }
 
