@@ -42,7 +42,7 @@ class InMemoryEventRepository implements IEventRepository {
     async getAll(): Promise<Result<Event[], EventError>> {
         return Ok(Array.from(this.events.values()));
     }
-    
+
     async updateStatus(
         id: number,
         status: "draft" | "published" | "cancelled"
