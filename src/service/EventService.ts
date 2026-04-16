@@ -62,6 +62,7 @@ export class EventService implements IEventService {
             title: title,
             description: description,
             startDate: startDate,
+            endDate: input.endDate,
             location: location,
             category: input.category,
             status: input.status, // or set to to false by default 
@@ -69,6 +70,9 @@ export class EventService implements IEventService {
             organizerId: organizerId,
             organizerName: organizerDisplayName,
         };
+        return await this.repo.add(eventInput);
+    }
+
         return await this.repo.add(eventInput);
     }
 
