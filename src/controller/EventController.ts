@@ -224,7 +224,7 @@ class EventController implements IEventController {
             res.status(500).render("partials/error", { message, layout: false});
             return;
         }  
-        res.render("partials/event-list", { session, events: result.value, query });
+        res.render("event-list", { session, events: result.value, query });
     }
 }
 
