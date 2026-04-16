@@ -147,9 +147,8 @@ class EventController implements IEventController {
         const isOrganizer = currentUser?.userId === event.organizerId;
         const isAdmin = currentUser?.role === "admin";
         const isMember = currentUser?.role === "user";
-        const name = currentUser ? currentUser.displayName : "Guest";
 
-        res.render("event-detail", { // add event organizer name
+        res.render("event-detail", {
             session,
             event,
             attendingCount: event.attendingUsers.length,
@@ -157,7 +156,7 @@ class EventController implements IEventController {
             canCancel: isOrganizer || isAdmin,
             canRSVP: isMember,
             isDraft: event.status === "draft",
-            organizerName: name,
+            organizerName: event.organizerName,
         });
     }
 
