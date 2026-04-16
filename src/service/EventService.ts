@@ -8,7 +8,8 @@ import { ValidationError } from "../lib/errors.js";
 export interface IEventService {
     createEvent(
         input: CreateEventInput, 
-        organizerId: string
+        organizerId: string,
+        organizerDisplayName: string
     ): Promise<Result<Event, EventError>>;
 
     getEvent(id: number, currentUser: { userId: string; role: string } | null): Promise<Result<Event, EventError>>;
@@ -28,7 +29,7 @@ const LOCATION_MIN = 3;
 export class EventService implements IEventService {
     constructor(private readonly repo: IEventRepository) {}
 
-    async createEvent(input: CreateEventInput, organizerId: string): Promise<Result<Event, EventError>> {
+    async createEvent(input: CreateEventInput, organizerId: string, organizerDisplayName: string): Promise<Result<Event, EventError>> {
         // can add role permissions later
         
         //validations 
@@ -76,6 +77,7 @@ export class EventService implements IEventService {
             status: status,
             maxCapacity: capacity,
             organizerId: organizerId,
+            organizerName: organizerDisplayName,
         };
         return await this.repo.add(eventInput);
     }

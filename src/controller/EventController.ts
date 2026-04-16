@@ -21,7 +21,7 @@ export interface IEventController {
 
     showCreateForm(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
     displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
-    showEventDetails(res: Response, session: IAppBrowserSession, eventId: number,): Promise<void>;
+    showEventDetails(res: Response, session: IAppBrowserSession, eventId: number): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -90,9 +90,10 @@ class EventController implements IEventController {
             location,
             maxCapacity: Number(maxCapacityRaw),
             organizerId: currentUser.userId,
+            organizerName: currentUser.displayName,
         };
 
-        const result = await this.service.createEvent(input, currentUser.userId);
+        const result = await this.service.createEvent(input, currentUser.userId, currentUser.displayName);
         if (!result.ok && this.isEventError(result.value)) {
             const status = this.mapErrorStatus(result.value);
             const log = status === 400 ? this.logger.warn : this.logger.error;
@@ -156,7 +157,7 @@ class EventController implements IEventController {
         // Role logic
         const isOrganizer = currentUser?.userId === event.organizerId;
         const isAdmin = currentUser?.role === "admin";
-        const isMember = currentUser?.role === "user";
+        // we can later check if member before allowing RSVP, but for now anyone can RSVP to published events
 
         res.render("event-detail", {
             session,
@@ -164,8 +165,9 @@ class EventController implements IEventController {
             attendingCount: event.attendingUsers.length,
             canEdit: isOrganizer || isAdmin,
             canCancel: isOrganizer || isAdmin,
-            canRSVP: isMember,
+            canRSVP: true, // Later we should check if user is member and event is published before allowing RSVP
             isDraft: event.status === "draft",
+            organizerName: event.organizerName,
         });
     }
 
@@ -180,10 +182,11 @@ class EventController implements IEventController {
                 message: AuthenticationRequired("Please log in to continue.").message,
                 layout: false,
             });
-            return;
+            return Promise.resolve();
         }
 
         res.render("create", { pageError, session });
+        return Promise.resolve(); // returning here to fix typing error
     }
 
     async displayOrganizerDashboard(
@@ -197,7 +200,7 @@ class EventController implements IEventController {
                 message: AuthenticationRequired("Please log in to continue.").message,
                 layout: false,
             });
-            return;
+            return Promise.resolve();
         }  
         const eventsResult = await this.service.getAllEventsByOrganizer(currentUser.userId);
         if (!eventsResult.ok) {
