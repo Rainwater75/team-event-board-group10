@@ -302,6 +302,17 @@ class ExpressApp implements IApp {
       })
     );
 
+    this.app.get(
+      "/events",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+      
+        const session = touchAppSession(sessionStore(req));
+        const query = typeof req.query.q === "string" ? req.query.q : "";
+      
+        await this.controller.searchEvents(res, session, query);
+      })
+    );
     // ── RSVP Routes ────────────────────────────────────────────────
     this.app.post(
       "/events/:id/rsvp",
