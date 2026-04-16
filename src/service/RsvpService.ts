@@ -80,11 +80,11 @@ class RsvpService implements IRsvpService {
     if (event.organizerId === input.userId) {
       return Err(RsvpNotAllowed("Organizers cannot RSVP to their own events."));
     }
-
-    if ((event as { cancelled?: boolean }).cancelled === true) {
+    
+    if (event.status === "cancelled") {
       return Err(RsvpInvalidState("Cancelled events cannot accept RSVPs."));
     }
-
+    
     if (event.startDate.getTime() <= Date.now()) {
       return Err(RsvpInvalidState("Past events cannot accept RSVPs."));
     }
