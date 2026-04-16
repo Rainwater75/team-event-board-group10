@@ -16,6 +16,7 @@ export interface IEvent {
     organizerId: string; // CHANGE THIS TO UUID
     organizerName?: string;
     attendingUsers: IUserSummary[];
+    status: EventStatus;
 };
 
 export interface CreateEventInput {
@@ -45,7 +46,8 @@ export class Event implements IEvent {
     organizerId: string;
     organizerName?: string;
     attendingUsers: IUserSummary[];
-    
+    status: EventStatus;
+
     constructor(id: number, data: CreateEventInput, organizerId: string) { //change organizerId to UUID
         this.id = id;
         this.title = data.title;
