@@ -174,6 +174,7 @@ class ExpressApp implements IApp {
       }),
     );
 
+
     // ── Admin routes ─────────────────────────────────────────────────
 
     this.app.get(
@@ -269,6 +270,10 @@ class ExpressApp implements IApp {
           req.body.title,
           req.body.description,
           req.body.category,
+          req.body.location,
+          req.body.startDate,
+          req.body.endDate,
+          req.body.maxCapacity,
         );
       }),
     );
@@ -278,10 +283,36 @@ class ExpressApp implements IApp {
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) return;
         const browserSession = recordPageView(sessionStore(req));
-        this.controller.showCreateForm(res, browserSession);
+        await this.controller.showCreateForm(res, browserSession);
       }),
     );
 
+    this.app.get(
+      "/dashboard/organizer",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const browserSession = recordPageView(sessionStore(req));
+        await this.controller.displayOrganizerDashboard(res, browserSession);
+      }),
+    );
+
+    this.app.get( "/events/:id", asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return; // not authenticated
+        await this.controller.showEventDetails(res, recordPageView(sessionStore(req)), Number(req.params.id));
+      })
+    );
+
+    this.app.get(
+      "/events",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+      
+        const session = touchAppSession(sessionStore(req));
+        const query = typeof req.query.q === "string" ? req.query.q : "";
+      
+        await this.controller.searchEvents(res, session, query);
+      })
+    );
     // ── RSVP Routes ────────────────────────────────────────────────
     this.app.post(
       "/events/:id/rsvp",
