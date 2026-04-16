@@ -46,7 +46,7 @@ class InMemoryEventRepository implements IEventRepository {
 
     async updateStatus(
         id: number,
-        status: "draft" | "published" | "cancelled"
+        status: "draft" | "published" | "cancelled" | "past"
     ): Promise<Result<Event, EventError>> {
         const event = this.events.get(id);
 
