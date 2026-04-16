@@ -4,11 +4,18 @@ import { Ok, Err, Result } from "../lib/result.js";
 import { CreateEventInput, Event, Category, EditEventInput } from "../model/Event.js";
 import { ValidationError } from "../lib/errors.js";
 
+//Add filter types for category and timeframe
+export type EventTimeframe = "upcoming" | "week" | "weekend";
+
+export interface EventFilter {
+    category?: Category | "all";
+    timeframe?: EventTimeframe;
+}
+
 export interface IEventService {
     createEvent(
         input: CreateEventInput, 
-        organizerId: string,
-        organizerDisplayName: string
+        organizerId: string
     ): Promise<Result<Event, EventError>>;
     editEvent(
         id: number, 
@@ -17,8 +24,19 @@ export interface IEventService {
 
     getEvent(id: number, currentUser: { userId: string; role: string } | null): Promise<Result<Event, EventError>>;
     getAllEvents(): Promise<Result<Event[], EventError>>;
-    getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
-    searchEvents(query: string): Promise<Result<Event[], EventError>>;
+
+    publishEvent(
+        id: number,
+        actingUserId: string,
+    ): Promise<Result<Event, EventError>>;
+
+    cancelEvent(
+        id: number,
+        actingUserId: string,
+        actingUserRole: "admin" | "staff" | "user",
+    ): Promise<Result<Event, EventError>>;
+    
+    filterEvents(filter: EventFilter): Promise<Result<Event[], EventError>>;
 }
 
 // validation invariants 
@@ -32,8 +50,30 @@ const LOCATION_MIN = 3;
 
 export class EventService implements IEventService {
     constructor(private readonly repo: IEventRepository) {}
+    //Added helper methods for filter to check this week and this weekend
+    private isThisWeek(date: Date): boolean {
+        const now = new Date();
+        const end = new Date(now);
+        end.setDate(now.getDate() + 7);
+        return date >= now && date <= end;
+    }
 
-    async createEvent(input: CreateEventInput, organizerId: string, organizerDisplayName: string): Promise<Result<Event, EventError>> {
+    private isThisWeekend(date: Date): boolean {
+        const now = new Date();
+        const day = now.getDay(); // 0 = Sun, 6 = Sat
+
+        const saturday = new Date(now);
+        saturday.setDate(now.getDate() + ((6 - day + 7) % 7));
+        saturday.setHours(0, 0, 0, 0);
+
+        const sunday = new Date(saturday);
+        sunday.setDate(saturday.getDate() + 1);
+        sunday.setHours(23, 59, 59, 999);
+
+        return date >= saturday && date <= sunday;
+    }
+
+    async createEvent(input: CreateEventInput, organizerId: string): Promise<Result<Event, EventError>> {
         // can add role permissions later
         
         //validations 
@@ -45,23 +85,28 @@ export class EventService implements IEventService {
         
         const location = input.location.trim();
         if (!location) return Err(ValidationError("Location is required"));   
+        if (location.length < LOCATION_MIN) {
+            return Err(ValidationError(`Location must be at least ${LOCATION_MIN} characters`));
+        }
 
-        const validationError = this.validateEventInput(input);
-        if (validationError !== undefined) return Err(validationError);
+        const startDate = input.startDate;
+        if (isNaN(startDate.getTime())) return Err(ValidationError("Start date is invalid"));
+        if (startDate < new Date()) return Err(ValidationError("Start date must be in the future"));
+
+        const capacity = input.maxCapacity;
+        if (capacity <= 0) return Err(ValidationError("Max capacity must be greater than 0"));
 
         // ADD CHECK TO CHECK FOR VALID CATEGORY
 
         const eventInput: CreateEventInput = {
             title: title,
             description: description,
-            startDate: input.startDate,
-            endDate: input.endDate,
+            startDate: startDate,
             location: location,
             category: input.category,
-            status: input.status,
-            maxCapacity: input.maxCapacity,
+            status: input.status, // or set to to false by default 
+            maxCapacity: capacity,
             organizerId: organizerId,
-            organizerName: organizerDisplayName,
         };
         return await this.repo.add(eventInput);
     }
@@ -146,13 +191,79 @@ export class EventService implements IEventService {
         return await this.repo.getAll();
     }
 
-    async getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>> {
-        if (!organizerId) return Err(ValidationError("Organizer ID is required"));
-        return await this.repo.getAllByOrganizer(organizerId);
+    async filterEvents(filter: EventFilter): Promise<Result<Event[], EventError>> {
+        const found = await this.repo.getAll();
+
+        if (!found.ok) {
+            return found;
+        }
+
+        const now = new Date();
+
+        let events = found.value.filter((event) => {
+            return event.status === "published" && event.startDate >= now;
+        });
+
+        if (filter.category && filter.category !== "all") {
+            events = events.filter((event) => event.category === filter.category);
+        }
+
+        if (filter.timeframe === "week") {
+            events = events.filter((event) => this.isThisWeek(event.startDate));
+        } else if (filter.timeframe === "weekend") {
+            events = events.filter((event) => this.isThisWeekend(event.startDate));
+        }
+
+        return Ok(events);
     }
 
-    async searchEvents(query: string): Promise<Result<Event[], EventError>> {
-        return await this.repo.search(query);
+    async publishEvent(
+        id: number,
+        actingUserId: string,
+    ): Promise<Result<Event, EventError>> {
+        const found = await this.repo.getById(id);
+
+        if (!found.ok) {
+            return found;
+        }
+
+        const event = found.value;
+
+        if (event.organizerId !== actingUserId) {
+            return Err(ValidationError("Only the organizer can publish this event."));
+        }
+
+        if (event.status !== "draft") {
+            return Err(ValidationError("Only draft events can be published."));
+        }
+
+        return await this.repo.updateStatus(id, "published");
+    }
+
+    async cancelEvent(
+        id: number,
+        actingUserId: string,
+        actingUserRole: "admin" | "staff" | "user",
+    ): Promise<Result<Event, EventError>> {
+        const found = await this.repo.getById(id);
+
+        if (!found.ok) {
+            return found;
+        }
+
+        const event = found.value;
+        const isOwner = event.organizerId === actingUserId;
+        const isAdmin = actingUserRole === "admin";
+
+        if (!isOwner && !isAdmin) {
+            return Err(ValidationError("Only the organizer or an admin can cancel this event."));
+        }
+
+        if (event.status !== "published") {
+            return Err(ValidationError("Only published events can be cancelled."));
+        }
+
+        return await this.repo.updateStatus(id, "cancelled");
     }
 }
 
