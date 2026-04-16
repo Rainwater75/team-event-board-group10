@@ -400,6 +400,8 @@ class EventController implements IEventController {
                 category,
                 timeframe,
             },
+            //Passes pageError to home view to adjust for new changes for filter
+            pageError: null,
         });
     }
 }
