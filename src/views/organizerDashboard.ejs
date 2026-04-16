@@ -116,10 +116,10 @@
       },
 
       getStatus(event) {
-        if (event && event.cancelled === true) return "cancelled";
+				if (event?.status === "cancelled") return "cancelled";
         const start = new Date(event?.startDate);
         if (!Number.isNaN(start.getTime()) && start < new Date()) return "past";
-        if (event?.public) return "published";
+				if (event?.status === "published") return "published";
         return "draft";
       },
 

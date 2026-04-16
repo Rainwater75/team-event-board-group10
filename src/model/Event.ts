@@ -23,7 +23,7 @@ export interface CreateEventInput {
     location: string;
     category?: Category; 
     maxCapacity: number;
-    status: EventStatus;
+    status?: EventStatus;
     organizerId: string; //required
 
 };

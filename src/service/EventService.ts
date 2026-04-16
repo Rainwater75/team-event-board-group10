@@ -55,6 +55,11 @@ export class EventService implements IEventService {
         const capacity = input.maxCapacity;
         if (capacity <= 0) return Err(ValidationError("Max capacity must be greater than 0"));
 
+        const status = input.status ?? "draft";
+        if (input.status !== undefined && input.status !== "published" && input.status !== "cancelled") {
+            return Err(ValidationError("Status input can only be set to published or cancelled"));
+        }
+
         // ADD CHECK TO CHECK FOR VALID CATEGORY
 
         const eventInput: CreateEventInput = {
@@ -63,7 +68,7 @@ export class EventService implements IEventService {
             startDate: startDate,
             location: location,
             category: input.category,
-            status: input.status, // or set to to false by default 
+            status: status,
             maxCapacity: capacity,
             organizerId: organizerId,
         };

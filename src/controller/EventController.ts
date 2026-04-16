@@ -77,7 +77,6 @@ class EventController implements IEventController {
             startDate: new Date(Date.now() + 60 * 60 * 1000),
             location: "TBD",
             maxCapacity: 100, // placeholder, can add capacity input later
-            status: "draft",
             organizerId: currentUser.userId,
         };
 
