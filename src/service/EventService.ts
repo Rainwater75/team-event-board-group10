@@ -1,13 +1,17 @@
 import { IEventRepository } from "../repository/EventRepository.js";
-import { EventError } from "../lib/errors.js";
+import { EventError, EventNotFound, InvalidContent } from "../lib/errors.js";
 import { Ok, Err, Result } from "../lib/result.js";
 import { CreateEventInput, Event, Category } from "../model/Event.js";
 import { ValidationError } from "../lib/errors.js";
-import { CreateInMemoryEventRepository } from "../repository/InMemoryEventRepository.js";
+// import { CreateInMemoryEventRepository } from "../repository/InMemoryEventRepository.js";
 
 export interface IEventService {
-    createEvent(input: CreateEventInput, organizerId: string): Promise<Result<Event, EventError>>;
-    getEvent(id: number): Promise<Result<Event, EventError>>;
+    createEvent(
+        input: CreateEventInput, 
+        organizerId: string
+    ): Promise<Result<Event, EventError>>;
+
+    getEvent(id: number, currentUser: { userId: string; role: string } | null): Promise<Result<Event, EventError>>;
     getAllEvents(): Promise<Result<Event[], EventError>>;
     getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
 }
@@ -59,16 +63,33 @@ export class EventService implements IEventService {
             startDate: startDate,
             location: location,
             category: input.category,
+            status: input.status, // or set to to false by default 
             maxCapacity: capacity,
-            public: input.public, // or set to to false by default 
             organizerId: organizerId,
         };
         return await this.repo.add(eventInput);
     }
 
-    async getEvent(id: number): Promise<Result<Event, EventError>> {
-        if (id <= 0) return Err(ValidationError("Event ID must be a positive number"));
-        return await this.repo.getById(id);
+    // user role is now passed to getEvent()
+    async getEvent(id: number, currentUser: { userId: string; role: string }): Promise<Result<Event, EventError>> {
+        
+        var event = await this.repo.getById(id);
+        if (!event.ok) return event; // pass on repository errors
+
+        // Draft visibility rule: only organizers and admins can see draft events
+        const isAdmin = currentUser.role === "admin";
+        if (event.value.status === "draft") {
+          const isOrganizer = currentUser.userId === event.value.organizerId;
+          if (!isOrganizer && !isAdmin) {
+            return { ok: false, value: EventNotFound("Event not found") };
+          }
+        }
+
+        // Invalid state: For now only admins can see cancelled events, maybe organizers later.
+        if (event.value.status === "cancelled" && !isAdmin) {
+          return { ok: false, value: InvalidContent("Event is cancelled") };
+        }
+        return event;
     }
 
     async getAllEvents(): Promise<Result<Event[], EventError>> {

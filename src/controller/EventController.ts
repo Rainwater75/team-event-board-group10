@@ -76,6 +76,8 @@ class EventController implements IEventController {
             startDate: new Date(Date.now() + 60 * 60 * 1000),
             location: "TBD",
             maxCapacity: 100, // placeholder, can add capacity input later
+            status: "draft",
+            organizerId: currentUser.userId,
         };
 
         const result = await this.service.createEvent(input, currentUser.userId);
@@ -107,7 +109,55 @@ class EventController implements IEventController {
         res.redirect("/home");
     }
 
-    async showCreateForm(
+    async showEventDetails(
+        res: Response,
+        session: IAppBrowserSession,
+        eventId: number,
+    ): Promise<void> {
+        this.logger.info(`Fetching event details for id=${eventId}`);
+        //const isHtmx = this.isHtmxRequest(res);
+        const currentUser = session.authenticatedUser;
+        const result = await this.service.getEvent(eventId, currentUser);
+
+        // Error handling
+        if (!result.ok && this.isEventError(result.value)) {
+            const status = this.mapErrorStatus(result.value);
+
+            const log = status === 400 ? this.logger.warn : this.logger.error;
+            log.call(this.logger, `Failed to fetch event: ${result.value.message}`);
+
+            res.status(status).render("partials/error", {
+                message: result.value.message,
+                layout: false,
+            });
+            return;
+        }
+        if (!result.ok) {
+            res.status(500).render("partials/error", {
+                message: "Unexpected error fetching event.",
+                layout: false,
+            });
+            return;
+        }
+
+        const event = result.value;
+        // Role logic
+        const isOrganizer = currentUser?.userId === event.organizerId;
+        const isAdmin = currentUser?.role === "admin";
+        const isMember = currentUser?.role === "user";
+
+        res.render("event-detail", {
+            session,
+            event,
+            attendingCount: event.attendingUsers.length,
+            canEdit: isOrganizer || isAdmin,
+            canCancel: isOrganizer || isAdmin,
+            canRSVP: isMember,
+            isDraft: event.status === "draft",
+        });
+    }
+
+    showCreateForm(
         res: Response, 
         session: IAppBrowserSession,
         pageError: string | null = null

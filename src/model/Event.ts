@@ -1,6 +1,7 @@
 import { IUserSummary } from "../auth/User.js";
 
 export type Category = "None" | "test1" | "test2" | "test3"; // ben i made this up, you can move and change the category types
+export type EventStatus = "draft" | "published" | "cancelled"; // could change to enum later
 
 export interface IEvent {
     id: number;
@@ -9,7 +10,7 @@ export interface IEvent {
     startDate: Date;
     location: string;
     category: Category; 
-    public: boolean;
+    status: EventStatus; // Changed: was "public"
     maxCapacity: number;
     organizerId: string; // CHANGE THIS TO UUID
     attendingUsers: IUserSummary[];
@@ -22,9 +23,11 @@ export interface CreateEventInput {
     location: string;
     category?: Category; 
     maxCapacity: number;
-    public?: boolean;
-    organizerId?: string;  // optional because passed in service 
-}
+    status: EventStatus;
+    organizerId: string; //required
+
+};
+
 
 export class Event implements IEvent { 
     id: number;
@@ -33,7 +36,7 @@ export class Event implements IEvent {
     startDate: Date;
     location: string;
     category: Category;
-    public: boolean;
+    status: EventStatus;
     maxCapacity: number;
     organizerId: string;
     attendingUsers: IUserSummary[];
@@ -45,7 +48,7 @@ export class Event implements IEvent {
         this.startDate = data.startDate;
         this.location = data.location;
         this.category = data.category ?? "None";
-        this.public = data.public ?? false;
+        this.status = data.status ?? "draft";
         this.maxCapacity = data.maxCapacity ;
         this.organizerId = organizerId;
         this.attendingUsers = [];
