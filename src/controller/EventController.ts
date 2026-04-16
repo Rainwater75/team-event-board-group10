@@ -17,6 +17,7 @@ export interface IEventController {
 
     showCreateForm(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
     displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
+    showEventDetails(res: Response, session: IAppBrowserSession, eventId: number): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -74,6 +75,7 @@ class EventController implements IEventController {
             category,
             // default to 1 hour in the future
             startDate: new Date(Date.now() + 60 * 60 * 1000),
+            endDate: new Date(Date.now() + 2 * 60 * 60 * 1000), // default to 2 hours in the future
             location: "TBD",
             maxCapacity: 100, // placeholder, can add capacity input later
             status: "draft",
@@ -168,10 +170,11 @@ class EventController implements IEventController {
                 message: AuthenticationRequired("Please log in to continue.").message,
                 layout: false,
             });
-            return;
+            return Promise.resolve();
         }
 
         res.render("create", { pageError, session });
+        return Promise.resolve(); // returning here to fix typing error
     }
 
     async displayOrganizerDashboard(
@@ -185,7 +188,7 @@ class EventController implements IEventController {
                 message: AuthenticationRequired("Please log in to continue.").message,
                 layout: false,
             });
-            return;
+            return Promise.resolve();
         }  
         const eventsResult = await this.service.getAllEventsByOrganizer(currentUser.userId);
         if (!eventsResult.ok) {
