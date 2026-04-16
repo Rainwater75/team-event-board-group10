@@ -17,6 +17,7 @@ export interface IEventController {
 
     showCreateForm(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
     displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
+    showEventDetails(res: Response, session: IAppBrowserSession, eventId: number,): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -157,7 +158,7 @@ class EventController implements IEventController {
         });
     }
 
-    showCreateForm(
+    async showCreateForm(
         res: Response, 
         session: IAppBrowserSession,
         pageError: string | null = null
