@@ -1,212 +1,158 @@
-<section class="max-w-6xl mx-auto" x-data="eventsManager()" x-init="init()">
-  <div class="mb-8">
-    <a href="/home" class="text-blue-600 hover:underline text-sm font-medium">← Back to home</a>
-    <h1 class="text-4xl font-bold text-slate-900 mt-3">Organizer Dashboard</h1>
-    <p class="text-slate-500 mt-2">Manage your events by status with quick actions.</p>
-  </div>
+<section class="max-w-6xl mx-auto" x-data="dashboardEvents()" x-init="init()">
+	<div class="mb-6">
+		<a href="/home" class="text-blue-600 hover:underline text-sm font-medium">← Back to home</a>
+		<h1 class="text-3xl font-bold text-slate-900 mt-2">Organizer Dashboard</h1>
+		<p class="text-slate-500">Your events grouped by status.</p>
+	</div>
 
-  <% if (pageError) { %>
-    <%- include("partials/error", { message: pageError }) %>
-  <% } %>
+	<% if (pageError) { %>
+		<div class="mb-6">
+			<%- include("partials/error", { message: pageError }) %>
+		</div>
+	<% } %>
 
-  <div class="mb-6 p-4 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-between gap-4 flex-wrap">
-    <a href="/events/new" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm">
-      + New Event
-    </a>
+	<div class="mb-6">
+		<a href="/events/new" class="inline-block px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition">
+			+ New Event
+		</a>
+	</div>
 
-    <div class="flex items-center gap-2">
-      <label for="sort-select" class="text-sm font-medium text-slate-600">Sort by:</label>
-      <select
-        id="sort-select"
-        x-model="sortBy"
-        class="px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        <option value="date">Start Date</option>
-        <option value="title">Title (A-Z)</option>
-        <option value="capacity">Capacity</option>
-      </select>
-    </div>
-  </div>
+	<div x-show="events.length === 0" class="p-6 border border-slate-200 rounded-xl bg-white shadow-sm">
+		<section class="p-6 border border-slate-200 rounded-xl bg-white shadow-sm">
+			<h2 class="text-lg font-semibold text-slate-900">No events yet</h2>
+			<p class="text-slate-500 mt-1">Create your first event to get started.</p>
+		</section>
+	</div>
 
-  <div x-show="events.length === 0" class="text-center py-12 bg-white rounded-xl border border-slate-200 shadow-sm">
-    <h3 class="text-lg font-semibold text-slate-900 mb-2">No events yet</h3>
-    <p class="text-slate-500 mb-4">Create your first event to get started</p>
-    <a href="/events/new" class="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
-      Create Event
-    </a>
-  </div>
+	<div x-show="events.length > 0" class="space-y-5">
+		<section class="p-4 border border-slate-200 rounded-xl bg-white">
+			<div class="flex items-center justify-between mb-3">
+				<h2 class="text-lg font-semibold text-slate-800">Published</h2>
+				<span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700" x-text="publishedEvents().length"></span>
+			</div>
 
-  <div x-show="events.length > 0" class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-    <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-emerald-700">Published</h2>
-        <span class="text-xs px-2 py-1 rounded-full bg-emerald-100 text-emerald-700" x-text="publishedEvents().length"></span>
-      </div>
-      <div class="space-y-3">
-        <template x-if="publishedEvents().length === 0">
-          <p class="text-sm text-slate-500">No published events.</p>
-        </template>
-        <template x-for="event in publishedEvents()" :key="`pub-${event.id}`">
-          <div class="border border-slate-200 rounded-lg p-3">
-            <h3 class="font-semibold text-slate-900" x-text="event.title"></h3>
-            <p class="text-xs text-slate-500 mt-1" x-text="formatDate(event.startDate)"></p>
-            <p class="text-xs text-slate-500" x-text="event.category"></p>
-            <p class="text-sm text-slate-700 mt-2">
-              Attending: <span class="font-semibold" x-text="attendeeCount(event)"></span>
-              / <span x-text="event.maxCapacity"></span>
-            </p>
-            <div class="mt-3">
-              <button
-                @click.stop="cancelEvent(event.id)"
-                class="px-3 py-1.5 text-xs rounded-md bg-rose-100 text-rose-700 hover:bg-rose-200 transition"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </template>
-      </div>
-    </section>
+			<template x-if="publishedEvents().length === 0">
+				<p class="text-sm text-slate-500">No published events.</p>
+			</template>
 
-    <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-amber-700">Draft</h2>
-        <span class="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700" x-text="draftEvents().length"></span>
-      </div>
-      <div class="space-y-3">
-        <template x-if="draftEvents().length === 0">
-          <p class="text-sm text-slate-500">No draft events.</p>
-        </template>
-        <template x-for="event in draftEvents()" :key="`draft-${event.id}`">
-          <div class="border border-slate-200 rounded-lg p-3">
-            <h3 class="font-semibold text-slate-900" x-text="event.title"></h3>
-            <p class="text-xs text-slate-500 mt-1" x-text="formatDate(event.startDate)"></p>
-            <p class="text-xs text-slate-500" x-text="event.category"></p>
-            <p class="text-sm text-slate-700 mt-2">
-              Attending: <span class="font-semibold" x-text="attendeeCount(event)"></span>
-              / <span x-text="event.maxCapacity"></span>
-            </p>
-            <div class="mt-3">
-              <button
-                @click.stop="publishEvent(event.id)"
-                class="px-3 py-1.5 text-xs rounded-md bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
-              >
-                Publish
-              </button>
-            </div>
-          </div>
-        </template>
-      </div>
-    </section>
+			<div class="space-y-3">
+				<template x-for="event in publishedEvents()" :key="event.id">
+					<article class="p-3 border border-slate-200 rounded-lg bg-white">
+						<h3 class="font-semibold text-slate-900" x-text="event.title"></h3>
+						<p class="text-sm text-slate-500 mt-1" x-text="formatDate(event.startDate)"></p>
+						<p class="text-sm text-slate-600" x-text="event.category || 'None'"></p>
+						<p class="text-sm text-slate-700 mt-2">
+							Attending: <strong x-text="attendeeCount(event)"></strong> / <span x-text="event.maxCapacity"></span>
+						</p>
+					</article>
+				</template>
+			</div>
+		</section>
 
-    <section class="bg-white border border-slate-200 rounded-xl shadow-sm p-4">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-lg font-semibold text-slate-700">Cancelled / Past</h2>
-        <span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700" x-text="cancelledOrPastEvents().length"></span>
-      </div>
-      <div class="space-y-3">
-        <template x-if="cancelledOrPastEvents().length === 0">
-          <p class="text-sm text-slate-500">No cancelled or past events.</p>
-        </template>
-        <template x-for="event in cancelledOrPastEvents()" :key="`cp-${event.id}`">
-          <div class="border border-slate-200 rounded-lg p-3">
-            <div class="flex items-start justify-between gap-2">
-              <h3 class="font-semibold text-slate-900" x-text="event.title"></h3>
-              <span class="text-[10px] px-2 py-1 rounded-full bg-slate-100 text-slate-700" x-text="labelForStatus(event)"></span>
-            </div>
-            <p class="text-xs text-slate-500 mt-1" x-text="formatDate(event.startDate)"></p>
-            <p class="text-xs text-slate-500" x-text="event.category"></p>
-            <p class="text-sm text-slate-700 mt-2">
-              Attending: <span class="font-semibold" x-text="attendeeCount(event)"></span>
-              / <span x-text="event.maxCapacity"></span>
-            </p>
-          </div>
-        </template>
-      </div>
-    </section>
-  </div>
+		<section class="p-4 border border-slate-200 rounded-xl bg-white">
+			<div class="flex items-center justify-between mb-3">
+				<h2 class="text-lg font-semibold text-slate-800">Draft</h2>
+				<span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700" x-text="draftEvents().length"></span>
+			</div>
+
+			<template x-if="draftEvents().length === 0">
+				<p class="text-sm text-slate-500">No draft events.</p>
+			</template>
+
+			<div class="space-y-3">
+				<template x-for="event in draftEvents()" :key="event.id">
+					<article class="p-3 border border-slate-200 rounded-lg bg-white">
+						<h3 class="font-semibold text-slate-900" x-text="event.title"></h3>
+						<p class="text-sm text-slate-500 mt-1" x-text="formatDate(event.startDate)"></p>
+						<p class="text-sm text-slate-600" x-text="event.category || 'None'"></p>
+						<p class="text-sm text-slate-700 mt-2">
+							Attending: <strong x-text="attendeeCount(event)"></strong> / <span x-text="event.maxCapacity"></span>
+						</p>
+					</article>
+				</template>
+			</div>
+		</section>
+
+		<section class="p-4 border border-slate-200 rounded-xl bg-white">
+			<div class="flex items-center justify-between mb-3">
+				<h2 class="text-lg font-semibold text-slate-800">Cancelled / Past</h2>
+				<span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700" x-text="cancelledOrPastEvents().length"></span>
+			</div>
+
+			<template x-if="cancelledOrPastEvents().length === 0">
+				<p class="text-sm text-slate-500">No cancelled or past events.</p>
+			</template>
+
+			<div class="space-y-3">
+				<template x-for="event in cancelledOrPastEvents()" :key="event.id">
+					<article class="p-3 border border-slate-200 rounded-lg bg-white">
+						<h3 class="font-semibold text-slate-900" x-text="event.title"></h3>
+						<p class="text-sm text-slate-500 mt-1" x-text="formatDate(event.startDate)"></p>
+						<p class="text-sm text-slate-600" x-text="event.category || 'None'"></p>
+						<p class="text-sm text-slate-700 mt-2">
+							Attending: <strong x-text="attendeeCount(event)"></strong> / <span x-text="event.maxCapacity"></span>
+						</p>
+					</article>
+				</template>
+			</div>
+		</section>
+	</div>
 </section>
 
+<script type="application/json" id="dashboard-events-data"><%- JSON.stringify(Array.isArray(events) ? events : []) %></script>
 <script>
-  function eventsManager() {
+  function dashboardEvents() {
     return {
-      events: <%- JSON.stringify(events || []) %>,
-      sortBy: "date",
-      statusOverrides: {},
+      events: [],
 
       init() {
-        this.events = this.events.map((event) => ({
-          ...event,
-          startDate: new Date(event.startDate),
-        }));
+        const source = document.getElementById("dashboard-events-data");
+        if (!source) return;
+        try {
+          this.events = JSON.parse(source.textContent || "[]");
+        } catch {
+          this.events = [];
+        }
+      },
+
+      getStatus(event) {
+        if (event && event.cancelled === true) return "cancelled";
+        const start = new Date(event?.startDate);
+        if (!Number.isNaN(start.getTime()) && start < new Date()) return "past";
+        if (event?.public) return "published";
+        return "draft";
       },
 
       attendeeCount(event) {
-        return Array.isArray(event.attendingUsers) ? event.attendingUsers.length : 0;
+        return Array.isArray(event?.attendingUsers) ? event.attendingUsers.length : 0;
       },
 
-      formatDate(dateValue) {
-        const date = new Date(dateValue);
-        return date.toLocaleDateString("en-US", {
+      formatDate(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "Invalid date";
+        return date.toLocaleString("en-US", {
           weekday: "short",
-          year: "numeric",
           month: "short",
           day: "numeric",
+          year: "numeric",
           hour: "2-digit",
           minute: "2-digit",
         });
       },
 
-      sortedEvents(source) {
-        const sorted = [...source];
-        if (this.sortBy === "title") {
-          return sorted.sort((a, b) => a.title.localeCompare(b.title));
-        }
-        if (this.sortBy === "capacity") {
-          return sorted.sort((a, b) => this.attendeeCount(b) - this.attendeeCount(a));
-        }
-        return sorted.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-      },
-
-      effectiveStatus(event) {
-        const override = this.statusOverrides[event.id];
-        if (override) return override;
-        const eventDate = new Date(event.startDate);
-        if (event.cancelled === true) return "cancelled";
-        if (eventDate < new Date()) return "past";
-        return event.public ? "published" : "draft";
-      },
-
-      labelForStatus(event) {
-        const status = this.effectiveStatus(event);
-        if (status === "cancelled") return "Cancelled";
-        if (status === "past") return "Past";
-        return status;
-      },
-
       publishedEvents() {
-        return this.sortedEvents(this.events.filter((event) => this.effectiveStatus(event) === "published"));
+        return this.events.filter((event) => this.getStatus(event) === "published");
       },
 
       draftEvents() {
-        return this.sortedEvents(this.events.filter((event) => this.effectiveStatus(event) === "draft"));
+        return this.events.filter((event) => this.getStatus(event) === "draft");
       },
 
       cancelledOrPastEvents() {
-        return this.sortedEvents(
-          this.events.filter((event) => {
-            const status = this.effectiveStatus(event);
-            return status === "cancelled" || status === "past";
-          }),
-        );
-      },
-
-      publishEvent(eventId) {
-        this.statusOverrides[eventId] = "published";
-      },
-
-      cancelEvent(eventId) {
-        this.statusOverrides[eventId] = "cancelled";
+        return this.events.filter((event) => {
+          const status = this.getStatus(event);
+          return status === "cancelled" || status === "past";
+        });
       },
     };
   }
