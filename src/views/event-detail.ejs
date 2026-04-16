@@ -118,7 +118,7 @@
     </div>
     <div class="detail-box">
       <span class="detail-label">Attendance</span>
-      <span class="detail-value">🎟️ <%= event.attendingUsers.length %> / <%= event.maxCapacity %></span>
+      <span class="detail-value">🎟️ <%= attendingCount %> / <%= event.maxCapacity %></span>
     </div>
   </div>
 
@@ -138,10 +138,12 @@
     
     <div style="display: flex; gap: 12px; align-items: center;">
       <% if (canRSVP) { %>
-        <% if (event.attendingUsers.length >= event.maxCapacity) { %>
+        <% if (attendingCount >= event.maxCapacity) { %>
           <span style="background: #94a3b8; color: white; padding: 12px 24px; border-radius: 10px; font-weight: bold; cursor: not-allowed;">Sold Out</span>
         <% } else { %>
-          <a href="/events/<%= event.id %>/rsvp" class="btn btn-rsvp">RSVP Now</a>
+          <form method="POST" action="/events/<%= event.id %>/rsvp" style="margin: 0;">
+            <button type="submit" class="btn btn-rsvp">RSVP Now</button>
+          </form>
         <% } %>
       <% } %>
 

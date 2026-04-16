@@ -36,6 +36,8 @@ export interface GetAttendeeListInput {
 export interface IRsvpService {
   toggleRsvp(input: ToggleRsvpInput): Promise<Result<IRsvpToggleResult, RsvpError>>;
 
+  getGoingCount(eventId: number): Promise<Result<number, RsvpError>>;
+
   getAttendeeList(
     input: GetAttendeeListInput,
   ): Promise<Result<IAttendeeListGroup, RsvpError>>;
@@ -173,6 +175,14 @@ class RsvpService implements IRsvpService {
           ? currentAttendeeCount + 1
           : currentAttendeeCount,
     });
+  }
+
+  async getGoingCount(eventId: number): Promise<Result<number, RsvpError>> {
+    if (!Number.isInteger(eventId) || eventId <= 0) {
+      return Err(RsvpValidationError("A valid event ID is required."));
+    }
+
+    return await this.rsvps.countGoingByEvent(eventId);
   }
 
   async getAttendeeList(
