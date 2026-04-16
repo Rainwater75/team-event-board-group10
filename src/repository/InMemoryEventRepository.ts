@@ -22,8 +22,9 @@ class InMemoryEventRepository implements IEventRepository {
             return Err(ValidationError("Location is required."));
         }
 
-        // creates the event and adds to the map
-        const event = new Event(this.nextId++, input, "");
+        // Persist organizer id so organizer dashboard filtering works.
+        const organizerId = input.organizerId ?? "";
+        const event = new Event(this.nextId++, input, organizerId);
         this.events.set(event.id, event);
         return Ok(event);
     }
@@ -42,6 +43,13 @@ class InMemoryEventRepository implements IEventRepository {
     async getAll(): Promise<Result<Event[], EventError>> {
         return Ok(Array.from(this.events.values()));
     }
+
+    async getAllByOrganizer(organizerId: string): Promise<Result<Event[], EventError>> {
+        const filteredEvents = Array.from(this.events.values()).filter(event => event.organizerId === organizerId);
+        return Ok(filteredEvents);
+    }
+
+
 }
 
 // factory function 

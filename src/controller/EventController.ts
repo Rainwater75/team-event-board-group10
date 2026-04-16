@@ -15,8 +15,8 @@ export interface IEventController {
         category: Category,
     ): Promise<void>;
 
-    showCreateForm(res: Response, session: IAppBrowserSession): void;
-    showEventDetails(res: Response, session: IAppBrowserSession, eventId: number): Promise<void>;
+    showCreateForm(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
+    displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -161,7 +161,7 @@ class EventController implements IEventController {
         res: Response, 
         session: IAppBrowserSession,
         pageError: string | null = null
-    ): void {
+    ): Promise<void> {
         const currentUser = session.authenticatedUser;
         if (!currentUser) {
             res.status(401).render("partials/error", {
@@ -172,6 +172,32 @@ class EventController implements IEventController {
         }
 
         res.render("create", { pageError, session });
+    }
+
+    async displayOrganizerDashboard(
+        res: Response, 
+        session: IAppBrowserSession,
+        pageError: string | null = null
+    ): Promise<void> {
+        const currentUser = session.authenticatedUser;
+        if (!currentUser) {
+            res.status(401).render("partials/error", {
+                message: AuthenticationRequired("Please log in to continue.").message,
+                layout: false,
+            });
+            return;
+        }  
+        const eventsResult = await this.service.getAllEventsByOrganizer(currentUser.userId);
+        if (!eventsResult.ok) {
+            const message = this.isEventError(eventsResult.value)
+                ? eventsResult.value.message
+                : "Failed to load organizer events.";
+            this.logger.error(`Failed to load organizer dashboard events: ${message}`);
+            res.render("organizerDashboard", { pageError: message, session, events: [] });
+            return;
+        }
+
+        res.render("organizerDashboard", { pageError, session, events: eventsResult.value });
     }
 }
 

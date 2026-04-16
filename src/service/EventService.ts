@@ -13,6 +13,7 @@ export interface IEventService {
 
     getEvent(id: number, currentUser: { userId: string; role: string } | null): Promise<Result<Event, EventError>>;
     getAllEvents(): Promise<Result<Event[], EventError>>;
+    getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
 }
 
 // validation invariants 
@@ -54,6 +55,8 @@ export class EventService implements IEventService {
         const capacity = input.maxCapacity;
         if (capacity <= 0) return Err(ValidationError("Max capacity must be greater than 0"));
 
+        // ADD CHECK TO CHECK FOR VALID CATEGORY
+
         const eventInput: CreateEventInput = {
             title: title,
             description: description,
@@ -91,6 +94,11 @@ export class EventService implements IEventService {
 
     async getAllEvents(): Promise<Result<Event[], EventError>> {
         return await this.repo.getAll();
+    }
+
+    async getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>> {
+        if (!organizerId) return Err(ValidationError("Organizer ID is required"));
+        return await this.repo.getAllByOrganizer(organizerId);
     }
 }
 
