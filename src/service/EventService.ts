@@ -3,7 +3,6 @@ import { EventError, EventNotFound, InvalidContent } from "../lib/errors.js";
 import { Ok, Err, Result } from "../lib/result.js";
 import { CreateEventInput, Event, Category } from "../model/Event.js";
 import { ValidationError } from "../lib/errors.js";
-// import { CreateInMemoryEventRepository } from "../repository/InMemoryEventRepository.js";
 
 export interface IEventService {
     createEvent(
@@ -15,6 +14,7 @@ export interface IEventService {
     getEvent(id: number, currentUser: { userId: string; role: string } | null): Promise<Result<Event, EventError>>;
     getAllEvents(): Promise<Result<Event[], EventError>>;
     getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
+    searchEvents(query: string): Promise<Result<Event[], EventError>>;
 }
 
 // validation invariants 
@@ -111,6 +111,10 @@ export class EventService implements IEventService {
     async getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>> {
         if (!organizerId) return Err(ValidationError("Organizer ID is required"));
         return await this.repo.getAllByOrganizer(organizerId);
+    }
+
+    async searchEvents(query: string): Promise<Result<Event[], EventError>> {
+        return await this.repo.search(query);
     }
 }
 
