@@ -68,7 +68,7 @@ export class EventService implements IEventService {
 
         return date >= saturday && date <= sunday;
     }
-    
+
     async createEvent(input: CreateEventInput, organizerId: string): Promise<Result<Event, EventError>> {
         // can add role permissions later
         
@@ -135,6 +135,32 @@ export class EventService implements IEventService {
 
     async getAllEvents(): Promise<Result<Event[], EventError>> {
         return await this.repo.getAll();
+    }
+
+    async filterEvents(filter: EventFilter): Promise<Result<Event[], EventError>> {
+        const found = await this.repo.getAll();
+
+        if (!found.ok) {
+            return found;
+        }
+
+        const now = new Date();
+
+        let events = found.value.filter((event) => {
+            return event.status === "published" && event.startDate >= now;
+        });
+
+        if (filter.category && filter.category !== "all") {
+            events = events.filter((event) => event.category === filter.category);
+        }
+
+        if (filter.timeframe === "week") {
+            events = events.filter((event) => this.isThisWeek(event.startDate));
+        } else if (filter.timeframe === "weekend") {
+            events = events.filter((event) => this.isThisWeekend(event.startDate));
+        }
+
+        return found.ok ? { ok: true, value: events } : found;
     }
 
     async publishEvent(
