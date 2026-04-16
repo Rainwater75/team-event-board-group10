@@ -47,7 +47,7 @@ const LOCATION_MIN = 3;
 export class EventService implements IEventService {
     constructor(private readonly repo: IEventRepository) {}
     //Added helper methods for filter to check this week and this weekend
-        private isThisWeek(date: Date): boolean {
+    private isThisWeek(date: Date): boolean {
         const now = new Date();
         const end = new Date(now);
         end.setDate(now.getDate() + 7);
@@ -68,6 +68,7 @@ export class EventService implements IEventService {
 
         return date >= saturday && date <= sunday;
     }
+    
     async createEvent(input: CreateEventInput, organizerId: string): Promise<Result<Event, EventError>> {
         // can add role permissions later
         
