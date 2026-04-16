@@ -85,7 +85,7 @@ class RsvpService implements IRsvpService {
       return Err(RsvpInvalidState("Cancelled events cannot accept RSVPs."));
     }
     
-    if (event.startDate.getTime() <= Date.now()) {
+    if (event.status === "past" || event.startDate.getTime() <= Date.now()) {
       return Err(RsvpInvalidState("Past events cannot accept RSVPs."));
     }
 
