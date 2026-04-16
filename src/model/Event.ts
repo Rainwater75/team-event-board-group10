@@ -31,6 +31,17 @@ export interface CreateEventInput {
     organizerName?: string;
 };
 
+export interface EditEventInput {
+    title?: string;
+    description?: string;
+    startDate?: Date;
+    endDate?: Date;
+    location?: string;
+    category?: Category; 
+    maxCapacity?: number;
+    status?: EventStatus;
+};
+
 
 export class Event implements IEvent { 
     id: number;
@@ -59,6 +70,16 @@ export class Event implements IEvent {
         this.organizerId = organizerId;
         this.organizerName = data.organizerName;
         this.attendingUsers = [];
-        this.status = "draft";
+    }
+
+    public applyEdits(input: EditEventInput) {
+        if (input.title !== undefined) this.title = input.title;
+        if (input.description !== undefined) this.description = input.description;
+        if (input.startDate !== undefined) this.startDate = input.startDate;
+        if (input.endDate !== undefined) this.endDate = input.endDate;
+        if (input.location !== undefined) this.location = input.location;
+        if (input.category !== undefined) this.category = input.category;
+        if (input.maxCapacity !== undefined) this.maxCapacity = input.maxCapacity;
+        if (input.status !== undefined) this.status = input.status;
     }
 }

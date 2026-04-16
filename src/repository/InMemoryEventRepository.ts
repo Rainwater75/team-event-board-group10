@@ -1,5 +1,5 @@
 import { Ok, Err, type Result } from "../lib/result.js";
-import { Event, type CreateEventInput } from "../model/Event.js";
+import { EditEventInput, Event, type CreateEventInput } from "../model/Event.js";
 import { type EventError, EventNotFound, ValidationError } from "../lib/errors.js";
 import type { IEventRepository } from "./EventRepository.js";
 
@@ -29,6 +29,25 @@ class InMemoryEventRepository implements IEventRepository {
         return Ok(event);
     }
 
+    async edit(id: number, input: EditEventInput): Promise<Result<Event, EventError>> {
+        const event = this.events.get(id);
+        if (!event) {
+            return Err(EventNotFound(`Event ${id} not found.`));
+        }
+        
+        for (const key of Object.keys(input) as Array<keyof EditEventInput>) {
+            const value = input[key];
+            if (typeof value === "string") {
+                if (value.trim() === "") {
+                    return Err(ValidationError(`${key} cannot be empty.`));
+                }
+            }
+        }
+
+        event.applyEdits(input);
+        return Ok(event);
+    }
+
     // can search up a specific event by id 
     async getById(id: number): Promise<Result<Event, EventError>> {
         const event = this.events.get(id);
@@ -46,7 +65,7 @@ class InMemoryEventRepository implements IEventRepository {
 
     async updateStatus(
         id: number,
-        status: "draft" | "published" | "cancelled"
+        status: "draft" | "published" | "cancelled" | "past"
     ): Promise<Result<Event, EventError>> {
         const event = this.events.get(id);
 
@@ -67,14 +86,14 @@ class InMemoryEventRepository implements IEventRepository {
     async search(query: string): Promise<Result<Event[], EventError>> {
         const lowerQuery = query.toLowerCase();
         const now = new Date();
-        if (!lowerQuery.trim()) {
-            return Ok(Array.from(this.events.values()).filter(event => event.status === "published" && event.endDate > now));
+        if (!lowerQuery.trim()) { // change to only allow published events status later
+            return Ok(Array.from(this.events.values()).filter(event => event.status !== undefined && event.endDate > now));
         }
         const filteredEvents = Array.from(this.events.values()).filter((event) => {
-            ( event.title.toLowerCase().includes(lowerQuery) ||
+          return ((event.title.toLowerCase().includes(lowerQuery) ||
             event.description.toLowerCase().includes(lowerQuery) ||
-            event.location.toLowerCase().includes(lowerQuery)
-            ) && event.status === "published" && event.endDate > now;
+            event.location.toLowerCase().includes(lowerQuery)) &&
+            event.status !== undefined && event.endDate > now); // change to only allow published events status later
         });
         return Ok(filteredEvents);
     }
