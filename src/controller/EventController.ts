@@ -80,9 +80,10 @@ class EventController implements IEventController {
             maxCapacity: 100, // placeholder, can add capacity input later
             status: "draft",
             organizerId: currentUser.userId,
+            organizerName: currentUser.displayName,
         };
 
-        const result = await this.service.createEvent(input, currentUser.userId);
+        const result = await this.service.createEvent(input, currentUser.userId, currentUser.displayName);
         if (!result.ok && this.isEventError(result.value)) {
             const status = this.mapErrorStatus(result.value);
             const log = status === 400 ? this.logger.warn : this.logger.error;
