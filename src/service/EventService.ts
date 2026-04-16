@@ -61,6 +61,7 @@ export class EventService implements IEventService {
             title: title,
             description: description,
             startDate: startDate,
+            endDate: input.endDate || new Date(Date.now() + 2 * 60 * 60 * 1000), // default to 2 hours in the future
             location: location,
             category: input.category,
             status: input.status, // or set to to false by default 
