@@ -10,6 +10,10 @@ export interface IEventService {
         organizerId: string,
         organizerDisplayName: string
     ): Promise<Result<Event, EventError>>;
+    editEvent(
+        id: number, 
+        input: EditEventInput
+    ): Promise<Result<Event, EventError>>,
 
     getEvent(id: number, currentUser: { userId: string; role: string } | null): Promise<Result<Event, EventError>>;
     getAllEvents(): Promise<Result<Event[], EventError>>;
