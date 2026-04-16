@@ -35,7 +35,6 @@ export interface IEventController {
     showCreateForm(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
     displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
     showEventDetails(res: Response, session: IAppBrowserSession, eventId: number): Promise<void>;
-    searchEvents(res: Response, session: IAppBrowserSession, query: string): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -130,11 +129,11 @@ class EventController implements IEventController {
 
         this.logger.info(`Created event id: ${result.value.id} by organizer: ${currentUser.userId}`);
         if (isHtmx) {
-            res.set("HX-Redirect", "/events");
+            res.set("HX-Redirect", "/home");
             res.status(204).send();
             return;
         }
-        res.redirect("/events");
+        res.redirect("/home");
     }
     
     async editFromForm(
@@ -326,18 +325,6 @@ class EventController implements IEventController {
         }
 
         res.render("organizerDashboard", { pageError, session, events: eventsResult.value });
-    }
-
-    async searchEvents( res: Response, session: IAppBrowserSession, query: string): Promise<void> {
-        this.logger.info(`Searching events with query: "${query}"`);
-        const result = await this.service.searchEvents(query);
-        if (!result.ok) {
-            const message = this.isEventError(result.value) ? result.value.message : "Failed to search events.";
-            this.logger.error(`Event search failed: ${message}`);
-            res.status(500).render("partials/error", { message, layout: false});
-            return;
-        }  
-        res.render("event-list", { session, events: result.value, query });
     }
 }
 
