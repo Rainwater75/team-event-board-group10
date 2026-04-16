@@ -13,10 +13,15 @@ export interface IEventController {
         title: string,
         description: string,
         category: Category,
+        location: string,
+        startDateRaw: string,
+        endDateRaw: string,
+        maxCapacityRaw: string,
     ): Promise<void>;
 
     showCreateForm(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
     displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
+    showEventDetails(res: Response, session: IAppBrowserSession, eventId: number,): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -50,6 +55,10 @@ class EventController implements IEventController {
         title: string,
         description: string,
         category: Category,
+        location: string,
+        startDateRaw: string,
+        endDateRaw: string,
+        maxCapacityRaw: string,
     ): Promise<void> {
         this.logger.info("Creating event from form");
         const isHtmx = this.isHtmxRequest(res);
@@ -72,11 +81,14 @@ class EventController implements IEventController {
             title,
             description,
             category,
-            // default to 1 hour in the future
-            startDate: new Date(Date.now() + 60 * 60 * 1000),
-            location: "TBD",
-            maxCapacity: 100, // placeholder, can add capacity input later
-            status: "draft",
+            startDate: startDateRaw
+                ? new Date(startDateRaw)
+                : new Date(Date.now() + 60 * 60 * 1000),
+            endDate: endDateRaw
+                ? new Date(endDateRaw)
+                : new Date(Date.now() + 2 * 60 * 60 * 1000),
+            location,
+            maxCapacity: Number(maxCapacityRaw),
             organizerId: currentUser.userId,
         };
 
@@ -157,7 +169,7 @@ class EventController implements IEventController {
         });
     }
 
-    showCreateForm(
+    async showCreateForm(
         res: Response, 
         session: IAppBrowserSession,
         pageError: string | null = null

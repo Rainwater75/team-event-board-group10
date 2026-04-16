@@ -52,8 +52,17 @@ export class EventService implements IEventService {
         if (isNaN(startDate.getTime())) return Err(ValidationError("Start date is invalid"));
         if (startDate < new Date()) return Err(ValidationError("Start date must be in the future"));
 
+        const endDate = input.endDate;
+        if (isNaN(endDate.getTime())) return Err(ValidationError("End date is invalid"));
+        if (endDate <= startDate) return Err(ValidationError("End date must be after start date"));
+
         const capacity = input.maxCapacity;
         if (capacity <= 0) return Err(ValidationError("Max capacity must be greater than 0"));
+
+        const status = input.status ?? "draft";
+        if (input.status !== undefined && input.status !== "published" && input.status !== "cancelled") {
+            return Err(ValidationError("Status input can only be set to published or cancelled"));
+        }
 
         // ADD CHECK TO CHECK FOR VALID CATEGORY
 
@@ -61,9 +70,10 @@ export class EventService implements IEventService {
             title: title,
             description: description,
             startDate: startDate,
+            endDate: endDate,
             location: location,
             category: input.category,
-            status: input.status, // or set to to false by default 
+            status: status,
             maxCapacity: capacity,
             organizerId: organizerId,
         };
