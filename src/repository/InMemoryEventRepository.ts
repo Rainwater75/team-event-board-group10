@@ -66,11 +66,16 @@ class InMemoryEventRepository implements IEventRepository {
 
     async search(query: string): Promise<Result<Event[], EventError>> {
         const lowerQuery = query.toLowerCase();
-        const filteredEvents = Array.from(this.events.values()).filter(event =>
-            event.title.toLowerCase().includes(lowerQuery) ||
+        const now = new Date();
+        if (!lowerQuery.trim()) {
+            return Ok(Array.from(this.events.values()).filter(event => event.status === "published" && event.endDate > now));
+        }
+        const filteredEvents = Array.from(this.events.values()).filter((event) => {
+            ( event.title.toLowerCase().includes(lowerQuery) ||
             event.description.toLowerCase().includes(lowerQuery) ||
             event.location.toLowerCase().includes(lowerQuery)
-        );
+            ) && event.status === "published" && event.endDate > now;
+        });
         return Ok(filteredEvents);
     }
 
