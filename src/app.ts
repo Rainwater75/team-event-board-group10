@@ -18,6 +18,7 @@ import {
 } from "./session/AppSession";
 import { ILoggingService } from "./service/LoggingService";
 import { IEventController } from "./controller/EventController";
+import { IRsvpController } from "./controller/RsvpController";
 
 type AsyncRequestHandler = RequestHandler;
 
@@ -38,6 +39,7 @@ class ExpressApp implements IApp {
     private readonly authController: IAuthController,
     private readonly logger: ILoggingService,
     private readonly controller: IEventController,
+    private readonly rsvpController: IRsvpController,
   ) {
     this.app = express();
     this.registerMiddleware();
@@ -262,7 +264,17 @@ class ExpressApp implements IApp {
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) return;
         const browserSession = recordPageView(sessionStore(req));
-        await this.controller.createFromForm(res, browserSession, req.body.title, req.body.description, req.body.category);
+        await this.controller.createFromForm(
+          res,
+          browserSession,
+          req.body.title,
+          req.body.description,
+          req.body.category,
+          req.body.location,
+          req.body.startDate,
+          req.body.endDate,
+          req.body.maxCapacity,
+        );
       }),
     );
 
@@ -271,7 +283,16 @@ class ExpressApp implements IApp {
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) return;
         const browserSession = recordPageView(sessionStore(req));
-        this.controller.showCreateForm(res, browserSession);
+        await this.controller.showCreateForm(res, browserSession);
+      }),
+    );
+
+    this.app.get(
+      "/dashboard/organizer",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const browserSession = recordPageView(sessionStore(req));
+        await this.controller.displayOrganizerDashboard(res, browserSession);
       }),
     );
 
@@ -281,6 +302,59 @@ class ExpressApp implements IApp {
       })
     );
 
+    this.app.get(
+      "/events",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+      
+        const session = touchAppSession(sessionStore(req));
+        const query = typeof req.query.q === "string" ? req.query.q : "";
+      
+        await this.controller.searchEvents(res, session, query);
+      })
+    );
+    // ── RSVP Routes ────────────────────────────────────────────────
+    this.app.post(
+      "/events/:id/rsvp",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+        if (!currentUser) {
+          res.status(401).render("partials/error", {
+            message: AuthenticationRequired("Please log in to continue.").message,
+            layout: false,
+          });
+          return;
+        }
+
+        await this.rsvpController.toggleFromRequest(res, {
+          eventIdRaw: typeof req.params.id === "string" ? req.params.id : "",
+          userId: currentUser.userId,
+        });
+      }),
+    );
+
+    this.app.get(
+      "/events/:id/attendees",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+        if (!currentUser) {
+          res.status(401).render("partials/error", {
+            message: AuthenticationRequired("Please log in to continue.").message,
+            layout: false,
+          });
+          return;
+        }
+
+        await this.rsvpController.attendeeListFromRequest(res, {
+          eventIdRaw: typeof req.params.id === "string" ? req.params.id : "",
+          requesterId: currentUser.userId,
+        });
+      }),
+    );
 
     // ── Error handler ────────────────────────────────────────────────
 
@@ -303,6 +377,7 @@ export function CreateApp(
   authController: IAuthController,
   logger: ILoggingService,
   controller: IEventController,
+  rsvpController: IRsvpController,
 ): IApp {
-  return new ExpressApp(authController, logger, controller);
+  return new ExpressApp(authController, logger, controller, rsvpController);
 }

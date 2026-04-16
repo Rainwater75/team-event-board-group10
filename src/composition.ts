@@ -10,8 +10,9 @@ import type { ILoggingService } from "./service/LoggingService";
 import { CreateEventService } from "./service/EventService";
 import { CreateEventController } from "./controller/EventController";
 import { CreateInMemoryEventRepository } from "./repository/InMemoryEventRepository";
-
-
+import { CreateInMemoryRsvpRepository } from "./repository/InMemoryRsvpRepository";
+import { CreateRsvpService } from "./service/RsvpService";
+import { CreateRsvpController } from "./controller/RsvpController";
 
 export function createComposedApp(
 //   mode: "memory" | "prisma",
@@ -19,7 +20,7 @@ export function createComposedApp(
 ): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
 
-  // UNCOMMENT WHEN PRISMA IS IMPLEMENTED and imported 
+  // UNCOMMENT WHEN PRISMA IS IMPLEMENTED and imported
 //   const repository = 
 //     mode === "prisma" 
 //       ? CreatePrismaEventRepository(
@@ -33,9 +34,6 @@ export function createComposedApp(
 
   const repository = CreateInMemoryEventRepository();
 
-
-  
-  
   // Authentication & authorization wiring
   const authUsers = CreateInMemoryUserRepository();
   const passwordHasher = CreatePasswordHasher();
@@ -44,7 +42,12 @@ export function createComposedApp(
   const authController = CreateAuthController(authService, adminUserService, resolvedLogger);
 
   const service = CreateEventService(repository);
-  const controller = CreateEventController(service, resolvedLogger);
 
-  return CreateApp(authController, resolvedLogger, controller);
+  // RSVP wiring
+  const rsvpRepository = CreateInMemoryRsvpRepository();
+  const rsvpService = CreateRsvpService(repository, rsvpRepository, authUsers);
+  const rsvpController = CreateRsvpController(rsvpService, resolvedLogger);
+  const controller = CreateEventController(service, rsvpService, resolvedLogger);
+
+  return CreateApp(authController, resolvedLogger, controller, rsvpController);
 }
