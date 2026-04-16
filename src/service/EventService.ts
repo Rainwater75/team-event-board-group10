@@ -1,7 +1,7 @@
 import { IEventRepository } from "../repository/EventRepository.js";
 import { EventError, EventNotFound, InvalidContent } from "../lib/errors.js";
 import { Ok, Err, Result } from "../lib/result.js";
-import { CreateEventInput, Event, Category } from "../model/Event.js";
+import { CreateEventInput, Event, Category, EditEventInput } from "../model/Event.js";
 import { ValidationError } from "../lib/errors.js";
 
 export interface IEventService {
@@ -35,51 +35,85 @@ export class EventService implements IEventService {
         //validations 
         const title = input.title.trim();
         if (!title) return Err(ValidationError("Title is required"));
-        if (title.length < TITLE_MIN || title.length > TITLE_MAX) {
-            return Err(ValidationError(`Title must be between ${TITLE_MIN} and ${TITLE_MAX} characters`));
-        }
+        
         const description = input.description.trim();
         if (!description) return Err(ValidationError("Description is required"));
-        if (description.length < DESC_MIN || description.length > DESC_MAX) {
-            return Err(ValidationError(`Description must be between ${DESC_MIN} and ${DESC_MAX} characters`));
-        }
+        
         const location = input.location.trim();
         if (!location) return Err(ValidationError("Location is required"));   
-        if (location.length < LOCATION_MIN) {
-            return Err(ValidationError(`Location must be at least ${LOCATION_MIN} characters`));
-        }
 
-        const startDate = input.startDate;
-        if (isNaN(startDate.getTime())) return Err(ValidationError("Start date is invalid"));
-        if (startDate < new Date()) return Err(ValidationError("Start date must be in the future"));
-
-        const endDate = input.endDate;
-        if (isNaN(endDate.getTime())) return Err(ValidationError("End date is invalid"));
-        if (endDate <= startDate) return Err(ValidationError("End date must be after start date"));
-
-        const capacity = input.maxCapacity;
-        if (capacity <= 0) return Err(ValidationError("Max capacity must be greater than 0"));
-
-        const status = input.status ?? "draft";
-        if (input.status !== undefined && input.status !== "published" && input.status !== "cancelled") {
-            return Err(ValidationError("Status input can only be set to published or cancelled"));
-        }
+        const validationError = this.validateEventInput(input);
+        if (validationError !== undefined) return Err(validationError);
 
         // ADD CHECK TO CHECK FOR VALID CATEGORY
 
         const eventInput: CreateEventInput = {
             title: title,
             description: description,
-            startDate: startDate,
-            endDate: endDate,
+            startDate: input.startDate,
+            endDate: input.endDate,
             location: location,
             category: input.category,
-            status: status,
-            maxCapacity: capacity,
+            status: input.status,
+            maxCapacity: input.maxCapacity,
             organizerId: organizerId,
             organizerName: organizerDisplayName,
         };
         return await this.repo.add(eventInput);
+    }
+
+    async editEvent(id: number, input: EditEventInput): Promise<Result<Event, EventError>> {
+        const validationError = this.validateEventInput(input);
+        if (validationError !== undefined) return Err(validationError);
+
+        return await this.repo.edit(id, input);
+    }
+
+    private validateEventInput(input: CreateEventInput | EditEventInput): EventError | undefined {
+        if (input.title !== undefined) {
+            const title = input.title.trim();
+            if (title.length < TITLE_MIN || title.length > TITLE_MAX) {
+                return ValidationError(`Title must be between ${TITLE_MIN} and ${TITLE_MAX} characters`);
+            }
+        }
+
+        if (input.description !== undefined) {
+            const description = input.description.trim();
+            if (description.length < DESC_MIN || description.length > DESC_MAX) {
+                return ValidationError(`Description must be between ${DESC_MIN} and ${DESC_MAX} characters`);
+            }
+        }
+
+        if (input.location !== undefined) {
+            const location = input.location.trim();
+            if (location.length < LOCATION_MIN) {
+                return ValidationError(`Location must be at least ${LOCATION_MIN} characters`);
+            }
+        }
+
+        if (input.startDate !== undefined) {
+            const startDate = input.startDate;
+            if (isNaN(startDate.getTime())) return ValidationError("Start date is invalid");
+            if (startDate < new Date()) return ValidationError("Start date must be in the future");
+        }
+
+        if (input.endDate !== undefined) {
+            const endDate = input.endDate;
+            if (isNaN(endDate.getTime())) return ValidationError("End date is invalid");
+            if (endDate < new Date()) return ValidationError("End date must be in the future");
+        }
+
+        if (input.maxCapacity !== undefined) {
+            const capacity = input.maxCapacity;
+            if (capacity <= 0) return ValidationError("Max capacity must be greater than 0");
+        }
+
+        if (input.status !== undefined) {
+            const status = input.status;
+            if (status !== "published" && status !== "cancelled") {
+                return ValidationError("Status input can only be set to published or cancelled");
+            }
+        }
     }
 
     // user role is now passed to getEvent()
