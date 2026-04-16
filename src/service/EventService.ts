@@ -4,17 +4,27 @@ import { Ok, Err, Result } from "../lib/result.js";
 import { CreateEventInput, Event, Category } from "../model/Event.js";
 import { ValidationError } from "../lib/errors.js";
 
+//Added filter type for category and timeframe
+
 export interface IEventService {
     createEvent(
         input: CreateEventInput, 
-        organizerId: string,
-        organizerDisplayName: string
+        organizerId: string
     ): Promise<Result<Event, EventError>>;
 
     getEvent(id: number, currentUser: { userId: string; role: string } | null): Promise<Result<Event, EventError>>;
     getAllEvents(): Promise<Result<Event[], EventError>>;
-    getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
-    searchEvents(query: string): Promise<Result<Event[], EventError>>;
+
+    publishEvent(
+        id: number,
+        actingUserId: string,
+    ): Promise<Result<Event, EventError>>;
+
+    cancelEvent(
+        id: number,
+        actingUserId: string,
+        actingUserRole: "admin" | "staff" | "user",
+    ): Promise<Result<Event, EventError>>;
 }
 
 // validation invariants 
@@ -29,7 +39,7 @@ const LOCATION_MIN = 3;
 export class EventService implements IEventService {
     constructor(private readonly repo: IEventRepository) {}
 
-    async createEvent(input: CreateEventInput, organizerId: string, organizerDisplayName: string): Promise<Result<Event, EventError>> {
+    async createEvent(input: CreateEventInput, organizerId: string): Promise<Result<Event, EventError>> {
         // can add role permissions later
         
         //validations 
@@ -53,17 +63,8 @@ export class EventService implements IEventService {
         if (isNaN(startDate.getTime())) return Err(ValidationError("Start date is invalid"));
         if (startDate < new Date()) return Err(ValidationError("Start date must be in the future"));
 
-        const endDate = input.endDate;
-        if (isNaN(endDate.getTime())) return Err(ValidationError("End date is invalid"));
-        if (endDate <= startDate) return Err(ValidationError("End date must be after start date"));
-
         const capacity = input.maxCapacity;
         if (capacity <= 0) return Err(ValidationError("Max capacity must be greater than 0"));
-
-        const status = input.status ?? "draft";
-        if (input.status !== undefined && input.status !== "published" && input.status !== "cancelled") {
-            return Err(ValidationError("Status input can only be set to published or cancelled"));
-        }
 
         // ADD CHECK TO CHECK FOR VALID CATEGORY
 
@@ -71,13 +72,11 @@ export class EventService implements IEventService {
             title: title,
             description: description,
             startDate: startDate,
-            endDate: endDate,
             location: location,
             category: input.category,
-            status: status,
+            status: input.status, // or set to to false by default 
             maxCapacity: capacity,
             organizerId: organizerId,
-            organizerName: organizerDisplayName,
         };
         return await this.repo.add(eventInput);
     }
@@ -108,13 +107,53 @@ export class EventService implements IEventService {
         return await this.repo.getAll();
     }
 
-    async getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>> {
-        if (!organizerId) return Err(ValidationError("Organizer ID is required"));
-        return await this.repo.getAllByOrganizer(organizerId);
+    async publishEvent(
+        id: number,
+        actingUserId: string,
+    ): Promise<Result<Event, EventError>> {
+        const found = await this.repo.getById(id);
+
+        if (!found.ok) {
+            return found;
+        }
+
+        const event = found.value;
+
+        if (event.organizerId !== actingUserId) {
+            return Err(ValidationError("Only the organizer can publish this event."));
+        }
+
+        if (event.status !== "draft") {
+            return Err(ValidationError("Only draft events can be published."));
+        }
+
+        return await this.repo.updateStatus(id, "published");
     }
 
-    async searchEvents(query: string): Promise<Result<Event[], EventError>> {
-        return await this.repo.search(query);
+    async cancelEvent(
+        id: number,
+        actingUserId: string,
+        actingUserRole: "admin" | "staff" | "user",
+    ): Promise<Result<Event, EventError>> {
+        const found = await this.repo.getById(id);
+
+        if (!found.ok) {
+            return found;
+        }
+
+        const event = found.value;
+        const isOwner = event.organizerId === actingUserId;
+        const isAdmin = actingUserRole === "admin";
+
+        if (!isOwner && !isAdmin) {
+            return Err(ValidationError("Only the organizer or an admin can cancel this event."));
+        }
+
+        if (event.status !== "published") {
+            return Err(ValidationError("Only published events can be cancelled."));
+        }
+
+        return await this.repo.updateStatus(id, "cancelled");
     }
 }
 
