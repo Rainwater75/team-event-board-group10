@@ -52,6 +52,10 @@ export class EventService implements IEventService {
         if (isNaN(startDate.getTime())) return Err(ValidationError("Start date is invalid"));
         if (startDate < new Date()) return Err(ValidationError("Start date must be in the future"));
 
+        const endDate = input.endDate;
+        if (isNaN(endDate.getTime())) return Err(ValidationError("End date is invalid"));
+        if (endDate <= startDate) return Err(ValidationError("End date must be after start date"));
+
         const capacity = input.maxCapacity;
         if (capacity <= 0) return Err(ValidationError("Max capacity must be greater than 0"));
 
@@ -66,6 +70,7 @@ export class EventService implements IEventService {
             title: title,
             description: description,
             startDate: startDate,
+            endDate: endDate,
             location: location,
             category: input.category,
             status: status,

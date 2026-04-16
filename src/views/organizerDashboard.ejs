@@ -115,7 +115,7 @@
         }
       },
 
-      getStatus(event) {
+      getStatus(event) { // determines event status ALSO CHECKS IF EVENT IS PAST
 				if (event?.status === "cancelled") return "cancelled";
         const start = new Date(event?.startDate);
         if (!Number.isNaN(start.getTime()) && start < new Date()) return "past";
