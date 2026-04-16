@@ -37,6 +37,13 @@ export interface IEventController {
     displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
     showEventDetails(res: Response, session: IAppBrowserSession, eventId: number): Promise<void>;
     searchEvents(res: Response, session: IAppBrowserSession, query: string): Promise<void>;
+
+    showFilteredEvents(
+        res: Response,
+        session: IAppBrowserSession,
+        categoryRaw?: string,
+        timeframeRaw?: string,
+    ): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -351,6 +358,64 @@ class EventController implements IEventController {
             return;
         }  
         res.render("event-list", { session, events: result.value, query });
+    }
+
+     async showFilteredEvents(
+        res: Response,
+        session: IAppBrowserSession,
+        categoryRaw?: string,
+        timeframeRaw?: string,
+    ): Promise<void> {
+        const currentUser = session.authenticatedUser;
+        if (!currentUser) {
+            res.status(401).render("partials/error", {
+                message: AuthenticationRequired("Please log in to continue.").message,
+                layout: false,
+            });
+            return;
+        }
+
+        // normalize inputs
+        const category =
+            categoryRaw && categoryRaw !== "all" ? (categoryRaw as Category) : "all";
+
+        const timeframe =
+            timeframeRaw === "week" || timeframeRaw === "weekend"
+                ? timeframeRaw
+                : "upcoming";
+
+        const result = await this.service.filterEvents({
+            category,
+            timeframe,
+        });
+
+        if (!result.ok && this.isEventError(result.value)) {
+            const status = this.mapErrorStatus(result.value);
+            res.status(status).render("partials/error", {
+                message: result.value.message,
+                layout: false,
+            });
+            return;
+        }
+
+        if (!result.ok) {
+            res.status(500).render("partials/error", {
+                message: "Failed to load filtered events.",
+                layout: false,
+            });
+            return;
+        }
+
+        res.render("home", {
+            session,
+            events: result.value,
+            filters: {
+                category,
+                timeframe,
+            },
+            //Passes pageError to home view to adjust for new changes for filter
+            pageError: null,
+        });
     }
 }
 
