@@ -60,7 +60,6 @@ export class EventService implements IEventService {
             category: input.category,
             status: input.status,
             maxCapacity: input.maxCapacity,
->>>>>>> 723a0471dc06f9d4979e6b48e748f271f25e1f3a
             organizerId: organizerId,
             organizerName: organizerDisplayName,
         };
