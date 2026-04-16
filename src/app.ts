@@ -174,6 +174,7 @@ class ExpressApp implements IApp {
       }),
     );
 
+
     // ── Admin routes ─────────────────────────────────────────────────
 
     this.app.get(
@@ -280,6 +281,12 @@ class ExpressApp implements IApp {
         const browserSession = recordPageView(sessionStore(req));
         this.controller.showCreateForm(res, browserSession);
       }),
+    );
+
+    this.app.get( "/events/:id", asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return; // not authenticated
+        await this.controller.showEventDetails(res, recordPageView(sessionStore(req)), Number(req.params.id));
+      })
     );
 
     // ── RSVP Routes ────────────────────────────────────────────────
