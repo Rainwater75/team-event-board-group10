@@ -1,5 +1,5 @@
 import { Ok, Err, type Result } from "../lib/result.js";
-import { Event, type CreateEventInput } from "../model/Event.js";
+import { EditEventInput, Event, type CreateEventInput } from "../model/Event.js";
 import { type EventError, EventNotFound, ValidationError } from "../lib/errors.js";
 import type { IEventRepository } from "./EventRepository.js";
 
@@ -26,6 +26,25 @@ class InMemoryEventRepository implements IEventRepository {
         const organizerId = input.organizerId ?? "";
         const event = new Event(this.nextId++, input, organizerId);
         this.events.set(event.id, event);
+        return Ok(event);
+    }
+
+    async edit(id: number, input: EditEventInput): Promise<Result<Event, EventError>> {
+        const event = this.events.get(id);
+        if (!event) {
+            return Err(EventNotFound(`Event ${id} not found.`));
+        }
+        
+        for (const key of Object.keys(input) as Array<keyof EditEventInput>) {
+            const value = input[key];
+            if (typeof value === "string") {
+                if (value.trim() === "") {
+                    return Err(ValidationError(`${key} cannot be empty.`));
+                }
+            }
+        }
+
+        event.applyEdits(input);
         return Ok(event);
     }
 
