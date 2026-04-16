@@ -8,6 +8,11 @@ export interface IRsvpController {
     res: Response,
     input: { eventIdRaw: string; userId: string },
   ): Promise<void>;
+
+  attendeeListFromRequest(
+    res: Response,
+    input: { eventIdRaw: string; requesterId: string },
+  ): Promise<void>;
 }
 
 class RsvpController implements IRsvpController {
@@ -51,6 +56,37 @@ class RsvpController implements IRsvpController {
     this.logger.info(
       `RSVP toggled for user ${result.value.userId} on event ${result.value.eventId} -> ${result.value.rsvpStatus}`,
     );
+
+    res.json({
+      ok: true,
+      value: result.value,
+    });
+  }
+
+  async attendeeListFromRequest(
+    res: Response,
+    input: { eventIdRaw: string; requesterId: string },
+  ): Promise<void> {
+    const eventId = Number.parseInt(input.eventIdRaw, 10);
+
+    const result = await this.service.getAttendeeList({
+      eventId,
+      requesterId: input.requesterId,
+    });
+
+    if (result.ok === false) {
+      const status = this.mapErrorStatus(result.value);
+      const log = status >= 500 ? this.logger.error : this.logger.warn;
+      log.call(this.logger, `Attendee list failed: ${result.value.message}`);
+
+      res.status(status).json({
+        ok: false,
+        error: result.value,
+      });
+      return;
+    }
+
+    this.logger.info(`Loaded attendee list for event ${eventId}`);
 
     res.json({
       ok: true,

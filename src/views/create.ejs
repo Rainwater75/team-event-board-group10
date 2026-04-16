@@ -39,6 +39,26 @@
             </select>
         </div>
 
+        <div class="mb-4">
+            <label for="location" class="block text-gray-700 text-sm font-bold mb-2">Location</label>
+            <input type="text" id="location" name="location" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+
+        <div class="mb-4">
+            <label for="startDate" class="block text-gray-700 text-sm font-bold mb-2">Start Date</label>
+            <input type="datetime-local" id="startDate" name="startDate" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+
+        <div class="mb-4">
+            <label for="endDate" class="block text-gray-700 text-sm font-bold mb-2">End Date</label>
+            <input type="datetime-local" id="endDate" name="endDate" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+
+        <div class="mb-6">
+            <label for="maxCapacity" class="block text-gray-700 text-sm font-bold mb-2">Max Capacity</label>
+            <input type="number" id="maxCapacity" name="maxCapacity" min="1" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+        </div>
+
         <div class="flex items-center justify-between">
             <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                 Create Event

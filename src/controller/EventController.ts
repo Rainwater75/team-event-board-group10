@@ -13,9 +13,15 @@ export interface IEventController {
         title: string,
         description: string,
         category: Category,
+        location: string,
+        startDateRaw: string,
+        endDateRaw: string,
+        maxCapacityRaw: string,
     ): Promise<void>;
 
-    showCreateForm(res: Response, session: IAppBrowserSession): void;
+    showCreateForm(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
+    displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
+    showEventDetails(res: Response, session: IAppBrowserSession, eventId: number,): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -49,6 +55,10 @@ class EventController implements IEventController {
         title: string,
         description: string,
         category: Category,
+        location: string,
+        startDateRaw: string,
+        endDateRaw: string,
+        maxCapacityRaw: string,
     ): Promise<void> {
         this.logger.info("Creating event from form");
         const isHtmx = this.isHtmxRequest(res);
@@ -71,10 +81,15 @@ class EventController implements IEventController {
             title,
             description,
             category,
-            // default to 1 hour in the future
-            startDate: new Date(Date.now() + 60 * 60 * 1000),
-            location: "TBD",
-            maxCapacity: 100, // placeholder, can add capacity input later
+            startDate: startDateRaw
+                ? new Date(startDateRaw)
+                : new Date(Date.now() + 60 * 60 * 1000),
+            endDate: endDateRaw
+                ? new Date(endDateRaw)
+                : new Date(Date.now() + 2 * 60 * 60 * 1000),
+            location,
+            maxCapacity: Number(maxCapacityRaw),
+            organizerId: currentUser.userId,
         };
 
         const result = await this.service.createEvent(input, currentUser.userId);
@@ -106,11 +121,59 @@ class EventController implements IEventController {
         res.redirect("/home");
     }
 
-    showCreateForm(
+    async showEventDetails(
+        res: Response,
+        session: IAppBrowserSession,
+        eventId: number,
+    ): Promise<void> {
+        this.logger.info(`Fetching event details for id=${eventId}`);
+        //const isHtmx = this.isHtmxRequest(res);
+        const currentUser = session.authenticatedUser;
+        const result = await this.service.getEvent(eventId, currentUser);
+
+        // Error handling
+        if (!result.ok && this.isEventError(result.value)) {
+            const status = this.mapErrorStatus(result.value);
+
+            const log = status === 400 ? this.logger.warn : this.logger.error;
+            log.call(this.logger, `Failed to fetch event: ${result.value.message}`);
+
+            res.status(status).render("partials/error", {
+                message: result.value.message,
+                layout: false,
+            });
+            return;
+        }
+        if (!result.ok) {
+            res.status(500).render("partials/error", {
+                message: "Unexpected error fetching event.",
+                layout: false,
+            });
+            return;
+        }
+
+        const event = result.value;
+        // Role logic
+        const isOrganizer = currentUser?.userId === event.organizerId;
+        const isAdmin = currentUser?.role === "admin";
+        const isMember = currentUser?.role === "user";
+
+        res.render("event-detail", {
+            session,
+            event,
+            attendingCount: event.attendingUsers.length,
+            canEdit: isOrganizer || isAdmin,
+            canCancel: isOrganizer || isAdmin,
+            canRSVP: isMember,
+            isDraft: event.status === "draft",
+        });
+    }
+
+    async showCreateForm(
         res: Response, 
         session: IAppBrowserSession,
         pageError: string | null = null
-    ): void {
+    ): Promise<void> {
         const currentUser = session.authenticatedUser;
         if (!currentUser) {
             res.status(401).render("partials/error", {
@@ -121,6 +184,32 @@ class EventController implements IEventController {
         }
 
         res.render("create", { pageError, session });
+    }
+
+    async displayOrganizerDashboard(
+        res: Response, 
+        session: IAppBrowserSession,
+        pageError: string | null = null
+    ): Promise<void> {
+        const currentUser = session.authenticatedUser;
+        if (!currentUser) {
+            res.status(401).render("partials/error", {
+                message: AuthenticationRequired("Please log in to continue.").message,
+                layout: false,
+            });
+            return;
+        }  
+        const eventsResult = await this.service.getAllEventsByOrganizer(currentUser.userId);
+        if (!eventsResult.ok) {
+            const message = this.isEventError(eventsResult.value)
+                ? eventsResult.value.message
+                : "Failed to load organizer events.";
+            this.logger.error(`Failed to load organizer dashboard events: ${message}`);
+            res.render("organizerDashboard", { pageError: message, session, events: [] });
+            return;
+        }
+
+        res.render("organizerDashboard", { pageError, session, events: eventsResult.value });
     }
 }
 

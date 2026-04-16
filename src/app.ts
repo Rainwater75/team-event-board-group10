@@ -174,6 +174,7 @@ class ExpressApp implements IApp {
       }),
     );
 
+
     // ── Admin routes ─────────────────────────────────────────────────
 
     this.app.get(
@@ -269,6 +270,10 @@ class ExpressApp implements IApp {
           req.body.title,
           req.body.description,
           req.body.category,
+          req.body.location,
+          req.body.startDate,
+          req.body.endDate,
+          req.body.maxCapacity,
         );
       }),
     );
@@ -278,8 +283,23 @@ class ExpressApp implements IApp {
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) return;
         const browserSession = recordPageView(sessionStore(req));
-        this.controller.showCreateForm(res, browserSession);
+        await this.controller.showCreateForm(res, browserSession);
       }),
+    );
+
+    this.app.get(
+      "/dashboard/organizer",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const browserSession = recordPageView(sessionStore(req));
+        await this.controller.displayOrganizerDashboard(res, browserSession);
+      }),
+    );
+
+    this.app.get( "/events/:id", asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return; // not authenticated
+        await this.controller.showEventDetails(res, recordPageView(sessionStore(req)), Number(req.params.id));
+      })
     );
 
     // ── RSVP Routes ────────────────────────────────────────────────
@@ -300,6 +320,27 @@ class ExpressApp implements IApp {
         await this.rsvpController.toggleFromRequest(res, {
           eventIdRaw: typeof req.params.id === "string" ? req.params.id : "",
           userId: currentUser.userId,
+        });
+      }),
+    );
+
+    this.app.get(
+      "/events/:id/attendees",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+
+        const currentUser = getAuthenticatedUser(sessionStore(req));
+        if (!currentUser) {
+          res.status(401).render("partials/error", {
+            message: AuthenticationRequired("Please log in to continue.").message,
+            layout: false,
+          });
+          return;
+        }
+
+        await this.rsvpController.attendeeListFromRequest(res, {
+          eventIdRaw: typeof req.params.id === "string" ? req.params.id : "",
+          requesterId: currentUser.userId,
         });
       }),
     );

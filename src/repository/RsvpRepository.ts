@@ -18,6 +18,12 @@ export interface IRsvpToggleResult {
   attendeeCount: number;
 }
 
+export interface IAttendeeListItem {
+  userId: string;
+  status: RsvpStatus;
+  createdAt: Date;
+}
+
 export interface IRsvpRepository {
   findByEventAndUser(
     eventId: number,
@@ -27,4 +33,7 @@ export interface IRsvpRepository {
   upsert(rsvp: IRsvpRecord): Promise<Result<IRsvpRecord, RsvpError>>;
 
   countGoingByEvent(eventId: number): Promise<Result<number, RsvpError>>;
+  
+  listByEvent(eventId: number): Promise<Result<IAttendeeListItem[], RsvpError>>;
 }
+
