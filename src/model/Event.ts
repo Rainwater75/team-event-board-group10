@@ -16,6 +16,7 @@ export interface IEvent {
     organizerId: string; // CHANGE THIS TO UUID
     organizerName?: string;
     attendingUsers: IUserSummary[];
+    status: EventStatus;
 };
 
 export interface CreateEventInput {
@@ -26,7 +27,7 @@ export interface CreateEventInput {
     location: string;
     category?: Category; 
     maxCapacity: number;
-    status: EventStatus;
+    status?: EventStatus;
     organizerId: string; //required
     organizerName?: string;
 };
@@ -45,6 +46,7 @@ export class Event implements IEvent {
     organizerId: string;
     organizerName?: string;
     attendingUsers: IUserSummary[];
+    status: EventStatus;
 
     constructor(id: number, data: CreateEventInput, organizerId: string) { //change organizerId to UUID
         this.id = id;
@@ -59,5 +61,6 @@ export class Event implements IEvent {
         this.organizerId = organizerId;
         this.organizerName = data.organizerName;
         this.attendingUsers = [];
+        this.status = "draft";
     }
 }

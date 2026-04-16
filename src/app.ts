@@ -270,6 +270,10 @@ class ExpressApp implements IApp {
           req.body.title,
           req.body.description,
           req.body.category,
+          req.body.location,
+          req.body.startDate,
+          req.body.endDate,
+          req.body.maxCapacity,
         );
       }),
     );
