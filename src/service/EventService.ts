@@ -160,7 +160,7 @@ export class EventService implements IEventService {
             events = events.filter((event) => this.isThisWeekend(event.startDate));
         }
 
-        return found.ok ? { ok: true, value: events } : found;
+        return Ok(events);
     }
 
     async publishEvent(
