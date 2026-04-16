@@ -36,6 +36,13 @@ export interface IEventController {
     displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
     showEventDetails(res: Response, session: IAppBrowserSession, eventId: number): Promise<void>;
     searchEvents(res: Response, session: IAppBrowserSession, query: string): Promise<void>;
+
+    showFilteredEvents(
+        res: Response,
+        session: IAppBrowserSession,
+        categoryRaw?: string,
+        timeframeRaw?: string,
+    ): Promise<void>;
 }
 
 class EventController implements IEventController {
