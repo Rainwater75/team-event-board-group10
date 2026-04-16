@@ -1,71 +1,159 @@
-<!-- Main Container -->
-<div style="max-width: 800px; margin: 0 auto; font-family: sans-serif; line-height: 1.6;">
+<style>
+  .event-details-container {
+    max-width: 850px;
+    margin: 40px auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  }
+
+  .detail-box {
+    background: #f8fafc;
+    border: 1px solid #edf2f7;
+    border-radius: 12px;
+    padding: 15px 20px;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .detail-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-color: #cbd5e0;
+  }
+
+  .detail-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .detail-value {
+    font-size: 1rem;
+    color: #1e293b;
+    font-weight: 500;
+  }
+
+  .category-badge {
+    background: #dcfce7;
+    color: #166534;
+    padding: 6px 14px;
+    border-radius: 99px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    display: inline-block;
+  }
+
+  .btn-home { color: #64748b; font-size: 0.9rem; }
+  .btn-home:hover { color: #1e293b; }
+
+  .btn-rsvp { background: #2563eb; color: white; }
+  .btn-rsvp:hover { background: #1d4ed8; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+
+  .btn-edit { background: white; color: #475569; border: 1px solid #cbd5e0; }
+  .btn-edit:hover { background: #f1f5f9; }
+
+  .btn-cancel { background: #ef4444; color: white; }
+  .btn-cancel:hover { background: #dc2626; }
+
+  .description-area {
+    background: #fff;
+    border-left: 4px solid #e2e8f0;
+    padding: 20px;
+    margin: 30px 0;
+    color: #475569;
+    font-size: 1.05rem;
+  }
+</style>
+
+<div class="event-details-container">
+  <!-- Header Section -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+    <div>
+      <h1 style="font-size: 2.75rem; margin: 0 0 15px 0; color: #0f172a; letter-spacing: -0.02em;"><%= event.title %></h1>
+      <span class="category-badge"><%= event.category %></span>
+    </div>
+    <a href="/events" class="btn-home">&larr; Back to Events</a>
+  </div>
+
+  <!-- Details Grid -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px;">
+    <div class="detail-box">
+      <span class="detail-label">Status</span>
+      <span class="detail-value"><%= event.status %></span>
+    </div>
+    <div class="detail-box">
+      <span class="detail-label">Date</span>
+      <span class="detail-value">📅 <%= event.startDate.toDateString() %></span>
+    </div>
+    <div class="detail-box">
+      <span class="detail-label">Time</span>
+      <span class="detail-value">⏰ <%= event.startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %> – <%= event.endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span>
+    </div>
+    <div class="detail-box">
+      <span class="detail-label">Location</span>
+      <span class="detail-value">📍 <%= event.location %></span>
+    </div>
+    <div class="detail-box">
+      <span class="detail-label">Organizer</span>
+      <span class="detail-value">👤 <%= event.organizerName %></span>
+    </div>
+    <div class="detail-box">
+      <span class="detail-label">Attendance</span>
+      <span class="detail-value">🎟️ <%= event.attendingUsers.length %> / <%= event.maxCapacity %></span>
+    </div>
+  </div>
+
+  <!-- Description Section -->
+  <div class="description-area">
+    <h4 style="margin-top:0; color: #1e293b; font-size: 1.1rem;">About this event</h4>
+    <%= event.description %>
+  </div>
+
+  <!-- Bottom Actions -->
+  <div style="display: flex; justify-content: space-between; align-items: center; border-top: 2px solid #f1f5f9; padding-top: 30px;">
+    <div>
+      <% if (isDraft) { %>
+        <span style="color: #92400e; background: #fef3c7; padding: 8px 16px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;">⚠️ Draft Mode</span>
+      <% } %>
+    </div>
     
-    <!-- Header Section -->
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-        <div>
-            <h1 style="font-size: 2.5rem; margin: 0 0 10px 0; color: #333;"><%= event.title %></h1>
-            <span style="background: #eee; padding: 4px 8px; border-radius: 4px; font-size: 0.9rem;"><%= event.category %></span>
-        </div>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <% if (canRSVP) { %>
+        <% if (event.attendingUsers.length >= event.maxCapacity) { %>
+          <span style="background: #94a3b8; color: white; padding: 12px 24px; border-radius: 10px; font-weight: bold; cursor: not-allowed;">Sold Out</span>
+        <% } else { %>
+          <a href="/events/<%= event.id %>/rsvp" class="btn btn-rsvp">RSVP Now</a>
+        <% } %>
+      <% } %>
 
-        <!-- Top Right Actions (Home Only) -->
-        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 10px;">
-            <a href="/home" style="color: #666; text-decoration: none; font-size: 0.9rem;">&larr; Return to Home</a>
-        </div>
+      <% if (canEdit) { %>
+        <a href="/events/<%= event.id %>/edit" class="btn btn-edit">Edit Event</a>
+      <% } %>
+
+      <% if (canCancel) { %>
+        <form method="POST" action="/events/<%= event.id %>/cancel" style="margin: 0;" onsubmit="return confirm('Are you sure?');">
+          <button type="submit" class="btn btn-cancel">Cancel Event</button>
+        </form>
+      <% } %>
     </div>
-
-    <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
-
-    <!-- Details Grid -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
-        <div>
-            <p><strong>Status:</strong> <%= event.status %></p>
-            <p><strong>Location:</strong> <%= event.location %></p>
-            <p><strong>Organizer:</strong> <%= event.organizerName %></p>
-        </div>
-        <div>
-            <p><strong>Date:</strong> <%= event.startDate.toDateString() %></p>
-            <p><strong>Time:</strong> 
-                <%= event.startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %> – 
-                <%= event.endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %>
-            </p>
-            <p><strong>Capacity:</strong> <%= event.attendingUsers.length %> / <%= event.maxCapacity %> attending</p>
-        </div>
-    </div>
-
-    <!-- Description Section -->
-    <div style="margin-bottom: 40px;">
-        <p><strong>Description:</strong></p>
-        <p style="color: #555;"><%= event.description %></p>
-    </div>
-
-    <!-- Bottom Actions -->
-    <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 20px;">
-        <div>
-            <% if (isDraft) { %>
-                <span style="color: #856404; background: #fff3cd; padding: 5px 10px; border-radius: 4px;"><strong>Note:</strong> Draft Mode</span>
-            <% } %>
-        </div>
-        
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <!-- RSVP / Sold Out Logic (Event capacity is Full) -->
-            <% if (canRSVP) { %>
-                <% if (event.attendingUsers.length >= event.maxCapacity) { %>
-                    <span style="background: #6c757d; color: white; padding: 8px 16px; border-radius: 4px; font-weight: bold; cursor: not-allowed; opacity: 0.7;">Event Full</span>
-                <% } else { %>
-                    <a href="/events/<%= event.id %>/rsvp" style="background: #007bff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-weight: bold;">RSVP Now</a>
-                <% } %>
-            <% } %>
-
-            <% if (canEdit) { %>
-                <a href="/events/<%= event.id %>/edit" style="background: #6c757d; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; border: 1px solid #5a6268;">Edit Event</a>
-            <% } %>
-
-            <% if (canCancel) { %>
-                <form method="POST" action="/events/<%= event.id %>/cancel" style="margin: 0;" onsubmit="return confirm('Are you sure you want to cancel this event? This action cannot be undone.');">
-                    <button type="submit" style="background: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;">Cancel Event</button>
-                </form>
-            <% } %>
-        </div>
-    </div>
+  </div>
 </div>
