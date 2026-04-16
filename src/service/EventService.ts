@@ -85,18 +85,27 @@ export class EventService implements IEventService {
         
         const location = input.location.trim();
         if (!location) return Err(ValidationError("Location is required"));   
+        if (location.length < LOCATION_MIN) {
+            return Err(ValidationError(`Location must be at least ${LOCATION_MIN} characters`));
+        }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e6e69cefc9e0d3922e0bd46080377765992756dd
         const startDate = input.startDate;
         if (isNaN(startDate.getTime())) return Err(ValidationError("Start date is invalid"));
         if (startDate < new Date()) return Err(ValidationError("Start date must be in the future"));
 
         const capacity = input.maxCapacity;
         if (capacity <= 0) return Err(ValidationError("Max capacity must be greater than 0"));
+<<<<<<< HEAD
 =======
         const validationError = this.validateEventInput(input);
         if (validationError !== undefined) return Err(validationError);
 >>>>>>> 723a0471dc06f9d4979e6b48e748f271f25e1f3a
+=======
+>>>>>>> e6e69cefc9e0d3922e0bd46080377765992756dd
 
         // ADD CHECK TO CHECK FOR VALID CATEGORY
 
@@ -104,11 +113,15 @@ export class EventService implements IEventService {
             title: title,
             description: description,
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> e6e69cefc9e0d3922e0bd46080377765992756dd
             startDate: startDate,
             location: location,
             category: input.category,
             status: input.status, // or set to to false by default 
             maxCapacity: capacity,
+<<<<<<< HEAD
 =======
             startDate: input.startDate,
             endDate: input.endDate,
@@ -117,6 +130,8 @@ export class EventService implements IEventService {
             status: input.status,
             maxCapacity: input.maxCapacity,
 >>>>>>> 723a0471dc06f9d4979e6b48e748f271f25e1f3a
+=======
+>>>>>>> e6e69cefc9e0d3922e0bd46080377765992756dd
             organizerId: organizerId,
         };
         return await this.repo.add(eventInput);
