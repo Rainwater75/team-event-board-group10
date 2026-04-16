@@ -70,7 +70,6 @@ export class Event implements IEvent {
         this.organizerId = organizerId;
         this.organizerName = data.organizerName;
         this.attendingUsers = [];
-        this.status = "draft";
     }
 
     public applyEdits(input: EditEventInput) {
