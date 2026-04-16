@@ -147,7 +147,7 @@ class EventController implements IEventController {
         // Role logic
         const isOrganizer = currentUser?.userId === event.organizerId;
         const isAdmin = currentUser?.role === "admin";
-        const isMember = currentUser?.role === "user";
+        // we can later check if member before allowing RSVP, but for now anyone can RSVP to published events
 
         res.render("event-detail", {
             session,
@@ -155,7 +155,7 @@ class EventController implements IEventController {
             attendingCount: event.attendingUsers.length,
             canEdit: isOrganizer || isAdmin,
             canCancel: isOrganizer || isAdmin,
-            canRSVP: isMember,
+            canRSVP: true, // Later we should check if user is member and event is published before allowing RSVP
             isDraft: event.status === "draft",
             organizerName: event.organizerName,
         });
