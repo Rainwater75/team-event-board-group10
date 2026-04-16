@@ -71,7 +71,7 @@ class InMemoryEventRepository implements IEventRepository {
             return Ok(Array.from(this.events.values()).filter(event => event.status === "published" && event.endDate > now));
         }
         const filteredEvents = Array.from(this.events.values()).filter((event) => {
-            ( event.title.toLowerCase().includes(lowerQuery) ||
+            return ( event.title.toLowerCase().includes(lowerQuery) ||
             event.description.toLowerCase().includes(lowerQuery) ||
             event.location.toLowerCase().includes(lowerQuery)
             ) && event.status === "published" && event.endDate > now;
