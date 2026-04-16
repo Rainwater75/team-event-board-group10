@@ -44,6 +44,21 @@ class InMemoryEventRepository implements IEventRepository {
         return Ok(Array.from(this.events.values()));
     }
 
+    async updateStatus(
+        id: number,
+        status: "draft" | "published" | "cancelled"
+    ): Promise<Result<Event, EventError>> {
+        const event = this.events.get(id);
+
+        if (!event) {
+            return Err(EventNotFound(`Event ${id} not found.`));
+        }
+
+        event.status = status;
+        this.events.set(id, event);
+
+        return Ok(event);
+    }
     async getAllByOrganizer(organizerId: string): Promise<Result<Event[], EventError>> {
         const filteredEvents = Array.from(this.events.values()).filter(event => event.organizerId === organizerId);
         return Ok(filteredEvents);
