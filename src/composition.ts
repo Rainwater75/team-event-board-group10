@@ -42,12 +42,12 @@ export function createComposedApp(
   const authController = CreateAuthController(authService, adminUserService, resolvedLogger);
 
   const service = CreateEventService(repository);
-  const controller = CreateEventController(service, resolvedLogger);
 
   // RSVP wiring
   const rsvpRepository = CreateInMemoryRsvpRepository();
   const rsvpService = CreateRsvpService(repository, rsvpRepository, authUsers);
   const rsvpController = CreateRsvpController(rsvpService, resolvedLogger);
+  const controller = CreateEventController(service, rsvpService, resolvedLogger);
 
   return CreateApp(authController, resolvedLogger, controller, rsvpController);
 }

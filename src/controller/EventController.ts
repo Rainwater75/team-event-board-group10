@@ -3,6 +3,7 @@ import { AuthenticationRequired, AuthError, AuthorizationRequired } from "../aut
 import { Category, CreateEventInput, EditEventInput, EventStatus } from "../model/Event.js";
 import type { IAppBrowserSession } from "../session/AppSession.js";
 import type { IEventService } from "../service/EventService.js";
+import type { IRsvpService } from "../service/RsvpService.js";
 import type { ILoggingService } from "../service/LoggingService.js";
 import { EventError } from "../lib/errors.js";
 
@@ -48,6 +49,7 @@ export interface IEventController {
 class EventController implements IEventController {
     constructor(
         private readonly service: IEventService,
+        private readonly rsvpService: IRsvpService,
         private readonly logger: ILoggingService,
     ) {}
 
@@ -178,11 +180,15 @@ class EventController implements IEventController {
         const eventResult = await this.service.getEvent(id, currentUser);
         if (!eventResult.ok) {
             //if getEvent failed, it means the event doesn't exist or the user doesn't have view permissions
-            const status = this.mapErrorStatus(eventResult.value);
+            const error = eventResult.value;
+            const status = this.isEventError(error) ? this.mapErrorStatus(error) : 500;
+            const message = this.isEventError(error)
+                ? error.message
+                : "An unexpected error occurred while loading the event.";
             const log = status === 400 ? this.logger.warn : this.logger.error;
-            log.call(this.logger, `Failed to retrieve event for editing: ${eventResult.value.message}`);
+            log.call(this.logger, `Failed to retrieve event for editing: ${message}`);
             res.status(isHtmx ? 200 : status).render("partials/error", {
-                message: eventResult.value.message,
+                message,
                 layout: false,
             });
             return;
@@ -274,6 +280,13 @@ class EventController implements IEventController {
         }
 
         const event = result.value;
+        const attendeeCountResult = await this.rsvpService.getGoingCount(eventId);
+        const attendingCount = attendeeCountResult.ok ? attendeeCountResult.value : event.attendingUsers.length;
+
+        if (attendeeCountResult.ok === false) {
+            this.logger.warn(`Failed to load attendee count for event ${eventId}: ${attendeeCountResult.value.message}`);
+        }
+
         // Role logic
         const isOrganizer = currentUser?.userId === event.organizerId;
         const isAdmin = currentUser?.role === "admin";
@@ -282,7 +295,7 @@ class EventController implements IEventController {
         res.render("event-detail", {
             session,
             event,
-            attendingCount: event.attendingUsers.length,
+            attendingCount,
             canEdit: isOrganizer || isAdmin,
             canCancel: isOrganizer || isAdmin,
             canRSVP: true, // Later we should check if user is member and event is published before allowing RSVP
@@ -408,7 +421,8 @@ class EventController implements IEventController {
 
 export function CreateEventController(
     service: IEventService,
+    rsvpService: IRsvpService,
     logger: ILoggingService,
 ): IEventController {
-    return new EventController(service, logger);
+    return new EventController(service, rsvpService, logger);
 }
