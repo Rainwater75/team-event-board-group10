@@ -11,4 +11,5 @@ export interface IEventRepository {
     getAll(): Promise<Result<Event[], EventError>>;
     updateStatus(id: number, status: "draft" | "published" | "cancelled"): Promise<Result<Event, EventError>>;
     getAllByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
+    search(query: string): Promise<Result<Event[], EventError>>;
 }
