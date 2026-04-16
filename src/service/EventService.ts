@@ -4,7 +4,13 @@ import { Ok, Err, Result } from "../lib/result.js";
 import { CreateEventInput, Event, Category } from "../model/Event.js";
 import { ValidationError } from "../lib/errors.js";
 
-//Added filter type for category and timeframe
+//Add filter types for category and timeframe
+export type EventTimeframe = "upcoming" | "week" | "weekend";
+
+export interface EventFilter {
+    category?: Category | "all";
+    timeframe?: EventTimeframe;
+}
 
 export interface IEventService {
     createEvent(
@@ -25,6 +31,8 @@ export interface IEventService {
         actingUserId: string,
         actingUserRole: "admin" | "staff" | "user",
     ): Promise<Result<Event, EventError>>;
+    
+    filterEvents(filter: EventFilter): Promise<Result<Event[], EventError>>;
 }
 
 // validation invariants 
