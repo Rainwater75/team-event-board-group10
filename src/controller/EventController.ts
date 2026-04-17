@@ -144,6 +144,35 @@ class EventController implements IEventController {
         }
         res.redirect("/events");
     }
+
+    async filterEvents(
+        res: Response,
+        session: IAppBrowserSession,
+        category: string,
+        startAfterRaw: string,
+    ): Promise<void> {
+        this.logger.info(`Filtering events with category="${category}" and startAfter="${startAfterRaw}"`);
+
+        const startAfter = startAfterRaw ? new Date(startAfterRaw) : undefined;
+        const result = await this.service.filterEvents(category, startAfter);
+
+        if (!result.ok) {
+            const message = this.isEventError(result.value)
+                ? result.value.message
+                : "Failed to filter events.";
+            this.logger.error(`Event filter failed: ${message}`);
+            res.status(500).render("partials/error", { message, layout: false });
+            return;
+        }
+
+        res.render("event-list", {
+            session,
+            events: result.value,
+            query: "",
+            category,
+            startAfter: startAfterRaw,
+        });
+}
     
     async editFromForm(
         res: Response,
