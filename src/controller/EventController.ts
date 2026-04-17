@@ -37,6 +37,18 @@ export interface IEventController {
     displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
     showEventDetails(res: Response, session: IAppBrowserSession, eventId: number): Promise<void>;
     searchEvents(res: Response, session: IAppBrowserSession, query: string): Promise<void>;
+
+    publishEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void>;
+
+cancelEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -65,6 +77,68 @@ class EventController implements IEventController {
     private isHtmxRequest(res: Response): boolean {
         return res.req?.get("HX-Request") === "true";
     }
+
+    async publishEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void> {
+    const currentUser = session.authenticatedUser;
+    if (!currentUser) {
+        res.status(401).render("partials/error", {
+            message: AuthenticationRequired("Please log in to continue.").message,
+            layout: false,
+        });
+        return;
+    }
+
+    const result = await this.service.publishEvent(id, currentUser.userId);
+
+    if (!result.ok) {
+        const message = this.isEventError(result.value)
+            ? result.value.message
+            : "Unexpected error publishing event.";
+
+        res.status(400).render("partials/error", {
+            message,
+            layout: false,
+        });
+        return;
+    }
+
+    res.redirect(`/events/${id}`);
+}
+
+async cancelEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void> {
+    const currentUser = session.authenticatedUser;
+    if (!currentUser) {
+        res.status(401).render("partials/error", {
+            message: AuthenticationRequired("Please log in to continue.").message,
+            layout: false,
+        });
+        return;
+    }
+
+    const result = await this.service.cancelEvent(id, currentUser.userId);
+
+    if (!result.ok) {
+        const message = this.isEventError(result.value)
+            ? result.value.message
+            : "Unexpected error cancelling event.";
+
+        res.status(400).render("partials/error", {
+            message,
+            layout: false,
+        });
+        return;
+    }
+
+    res.redirect(`/events/${id}`);
+}
 
     async createFromForm(
         res: Response,
