@@ -151,6 +151,12 @@
         <a href="/events/<%= event.id %>/edit" class="btn btn-edit">Edit Event</a>
       <% } %>
 
+      <% if (event.status === "draft") { %>
+          <form method="POST" action="/events/<%= event.id %>/publish" style="margin: 0;">
+            <button type="submit" class="btn btn-rsvp">Publish Event</button>
+          </form>
+        <% } %>
+        
       <% if (canCancel) { %>
         <form method="POST" action="/events/<%= event.id %>/cancel" style="margin: 0;" onsubmit="return confirm('Are you sure?');">
           <button type="submit" class="btn btn-cancel">Cancel Event</button>
