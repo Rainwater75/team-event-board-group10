@@ -37,7 +37,6 @@ export interface IEventController {
     displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
     showEventDetails(res: Response, session: IAppBrowserSession, eventId: number): Promise<void>;
     searchEvents(res: Response, session: IAppBrowserSession, query: string): Promise<void>;
-<<<<<<< HEAD
 
     publishEvent(
     res: Response,
@@ -45,18 +44,17 @@ export interface IEventController {
     id: number,
 ): Promise<void>;
 
-cancelEvent(
-    res: Response,
-    session: IAppBrowserSession,
-    id: number,
-=======
-    filterEvents(
-    res: Response,
-    session: IAppBrowserSession,
-    category: string,
-    startAfterRaw: string,
->>>>>>> task/event-routes-filter
-): Promise<void>;
+    cancelEvent(
+        res: Response,
+        session: IAppBrowserSession,
+        id: number): Promise<void>;
+        
+        filterEvents(
+        res: Response,
+        session: IAppBrowserSession,
+        category: string,
+        startAfterRaw: string,
+    ): Promise<void>;
 }
 
 class EventController implements IEventController {
