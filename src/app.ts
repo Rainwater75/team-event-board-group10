@@ -288,6 +288,19 @@ class ExpressApp implements IApp {
     );
 
     this.app.get(
+      "/events/filter",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+
+        const session = touchAppSession(sessionStore(req));
+        const category = typeof req.query.category === "string" ? req.query.category : "";
+        const startAfter = typeof req.query.startAfter === "string" ? req.query.startAfter : "";
+
+        await this.controller.filterEvents(res, session, category, startAfter);
+      }),
+);
+
+    this.app.get(
       "/dashboard/organizer",
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) return;
