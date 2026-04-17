@@ -19,6 +19,11 @@ export interface IEventService {
     getAllEvents(): Promise<Result<Event[], EventError>>;
     getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
     searchEvents(query: string): Promise<Result<Event[], EventError>>;
+
+    filterEvents(
+    category: string,
+    startAfter?: Date,
+    ): Promise<Result<Event[], EventError>>;
 }
 
 // validation invariants 
@@ -33,6 +38,27 @@ const LOCATION_MIN = 3;
 export class EventService implements IEventService {
     constructor(private readonly repo: IEventRepository) {}
 
+    async filterEvents(
+        category: string,
+        startAfter?: Date,
+    ): Promise<Result<Event[], EventError>> {
+        const result = await this.repo.getAll();
+        if (!result.ok) return result;
+
+        let events = result.value;
+
+        // filter by category
+        if (category.trim()) {
+            events = events.filter(event => event.category === category);
+        }
+
+        // filter by date
+        if (startAfter) {
+            events = events.filter(event => new Date(event.startDate) >= startAfter);
+        }
+
+        return Ok(events);
+    }
     async createEvent(input: CreateEventInput, organizerId: string, organizerDisplayName: string): Promise<Result<Event, EventError>> {
         // can add role permissions later
         
