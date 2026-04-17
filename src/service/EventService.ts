@@ -19,6 +19,8 @@ export interface IEventService {
     getAllEvents(): Promise<Result<Event[], EventError>>;
     getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
     searchEvents(query: string): Promise<Result<Event[], EventError>>;
+    publishEvent(id: number, userId: string): Promise<Result<Event, EventError>>;
+    cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>>;
 }
 
 // validation invariants 
@@ -32,6 +34,40 @@ const LOCATION_MIN = 3;
 
 export class EventService implements IEventService {
     constructor(private readonly repo: IEventRepository) {}
+
+    async publishEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
+    const result = await this.repo.getById(id);
+    if (!result.ok) return result;
+
+    const event = result.value;
+
+    if (event.organizerId !== userId) {
+        return Err(ValidationError("Only the organizer can publish this event"));
+    }
+
+    if (event.status !== "draft") {
+        return Err(ValidationError("Event must be draft to publish"));
+    }
+
+    return await this.repo.edit(id, { status: "published" });
+}
+
+async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
+    const result = await this.repo.getById(id);
+    if (!result.ok) return result;
+
+    const event = result.value;
+
+    if (event.organizerId !== userId) {
+        return Err(ValidationError("Only the organizer can cancel this event"));
+    }
+
+    if (event.status !== "published") {
+        return Err(ValidationError("Only published events can be cancelled"));
+    }
+
+    return await this.repo.edit(id, { status: "cancelled" });
+}
 
     async createEvent(input: CreateEventInput, organizerId: string, organizerDisplayName: string): Promise<Result<Event, EventError>> {
         // can add role permissions later
