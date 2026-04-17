@@ -21,6 +21,11 @@ export interface IEventService {
     searchEvents(query: string): Promise<Result<Event[], EventError>>;
     publishEvent(id: number, userId: string): Promise<Result<Event, EventError>>;
     cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>>;
+
+    filterEvents(
+    category: string,
+    startAfter?: Date,
+    ): Promise<Result<Event[], EventError>>;
 }
 
 // validation invariants 
@@ -69,6 +74,27 @@ async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>
     return await this.repo.edit(id, { status: "cancelled" });
 }
 
+    async filterEvents(
+        category: string,
+        startAfter?: Date,
+    ): Promise<Result<Event[], EventError>> {
+        const result = await this.repo.getAll();
+        if (!result.ok) return result;
+
+        let events = result.value;
+
+        // filter by category
+        if (category.trim()) {
+            events = events.filter(event => event.category === category);
+        }
+
+        // filter by date
+        if (startAfter) {
+            events = events.filter(event => new Date(event.startDate) >= startAfter);
+        }
+
+        return Ok(events);
+    }
     async createEvent(input: CreateEventInput, organizerId: string, organizerDisplayName: string): Promise<Result<Event, EventError>> {
         // can add role permissions later
         
