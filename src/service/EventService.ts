@@ -19,16 +19,14 @@ export interface IEventService {
     getAllEvents(): Promise<Result<Event[], EventError>>;
     getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
     searchEvents(query: string): Promise<Result<Event[], EventError>>;
-<<<<<<< HEAD
 
     filterEvents(
     category: string,
     startAfter?: Date,
     ): Promise<Result<Event[], EventError>>;
-=======
+    
     publishEvent(id: number, userId: string): Promise<Result<Event, EventError>>;
     cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>>;
->>>>>>> de23fa7c5146c4671ddf3f887aa8a410ffa249df
 }
 
 // validation invariants 
@@ -43,7 +41,6 @@ const LOCATION_MIN = 3;
 export class EventService implements IEventService {
     constructor(private readonly repo: IEventRepository) {}
 
-<<<<<<< HEAD
     async filterEvents(
         category: string,
         startAfter?: Date,
@@ -65,7 +62,6 @@ export class EventService implements IEventService {
 
         return Ok(events);
     }
-=======
     async publishEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
     const result = await this.repo.getById(id);
     if (!result.ok) return result;
@@ -100,7 +96,6 @@ async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>
     return await this.repo.edit(id, { status: "cancelled" });
 }
 
->>>>>>> de23fa7c5146c4671ddf3f887aa8a410ffa249df
     async createEvent(input: CreateEventInput, organizerId: string, organizerDisplayName: string): Promise<Result<Event, EventError>> {
         // can add role permissions later
         
