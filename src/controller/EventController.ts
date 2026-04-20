@@ -174,7 +174,7 @@ async cancelEvent(
             category,
             startDate: startDateRaw
                 ? new Date(startDateRaw)
-                : new Date(Date.now() + 60 * 60 * 1000),
+                : new Date(Date.now() + 60 * 60 * 1000), // double default. one in frontend one in backend
             endDate: endDateRaw
                 ? new Date(endDateRaw)
                 : new Date(Date.now() + 2 * 60 * 60 * 1000),

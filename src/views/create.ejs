@@ -67,3 +67,26 @@
     </form>
 
 </section>
+
+<script>
+    function toDateTimeLocal(date) {
+        const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+        return local.toISOString().slice(0, 16);
+    }
+
+    function setDefaultEventTimes() {
+        const startInput = document.getElementById("startDate");
+        const endInput = document.getElementById("endDate");
+        if (!startInput || !endInput) return;
+
+        const now = new Date();
+        if (!startInput.value) {
+            startInput.value = toDateTimeLocal(new Date(now.getTime() + 60 * 60 * 1000));
+        }
+        if (!endInput.value) {
+            endInput.value = toDateTimeLocal(new Date(now.getTime() + 2 * 60 * 60 * 1000));
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", setDefaultEventTimes);
+</script>
