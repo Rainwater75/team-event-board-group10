@@ -89,4 +89,11 @@
     }
 
     document.addEventListener("DOMContentLoaded", setDefaultEventTimes);
+
+    document.body.addEventListener("event-created", function () {
+        const form = document.querySelector('form[action="/events/new"]');
+        if (!form) return;
+        form.reset();
+        setDefaultEventTimes();
+    });
 </script>
