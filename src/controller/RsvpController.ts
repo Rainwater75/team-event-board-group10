@@ -39,6 +39,7 @@ class RsvpController implements IRsvpController {
     input: { eventIdRaw: string; userId: string },
   ): Promise<void> {
     const eventId = Number.parseInt(input.eventIdRaw, 10);
+
     const result = await this.service.toggleRsvp({
       eventId,
       userId: input.userId,
@@ -51,6 +52,7 @@ class RsvpController implements IRsvpController {
 
       if (this.isHtmxRequest(res)) {
         res.status(status).render("partials/rsvp-button", {
+          layout: false,
           eventId: Number.isNaN(eventId) ? 0 : eventId,
           attendeeCount: null,
           maxCapacity: null,
@@ -73,6 +75,7 @@ class RsvpController implements IRsvpController {
 
     if (this.isHtmxRequest(res)) {
       res.render("partials/rsvp-button", {
+        layout: false,
         eventId: result.value.eventId,
         attendeeCount: result.value.attendeeCount,
         maxCapacity: null,

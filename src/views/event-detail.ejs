@@ -138,7 +138,7 @@
 
     <div style="display: flex; gap: 12px; align-items: center;">
       <% if (canRSVP) { %>
-        <%- include("rsvp-button", {
+        <%- include("partials/rsvp-button", {
           eventId: event.id,
           attendeeCount: attendingCount,
           maxCapacity: event.maxCapacity,
