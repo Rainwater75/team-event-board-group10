@@ -82,7 +82,9 @@ async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>
         const location = input.location.trim();
         if (!location) return Err(ValidationError("Location is required"));
         
-        if(!input.maxCapacity) return Err(ValidationError("Max capacity is required"));
+        if (input.maxCapacity === undefined || input.maxCapacity === null) {
+            return Err(ValidationError("Max capacity is required"));
+        }
 
         const validationError = this.validateEventInput(input);
         if (validationError !== undefined) return Err(validationError);
