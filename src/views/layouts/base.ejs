@@ -18,6 +18,13 @@
           <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-b from-blue-400 to-blue-600"></span>
           Project Starter
         </a>
+        <% if (session?.authenticatedUser) { %>
+          <div class="flex items-center gap-2 flex-wrap">
+            <a href="/events" class="px-4 py-2.5 rounded-lg bg-white border border-slate-200 shadow-sm text-sm font-medium text-slate-700 no-underline hover:bg-slate-50 transition">Events</a>
+            <a href="/events/new" class="px-4 py-2.5 rounded-lg bg-blue-600 text-white shadow-sm text-sm font-medium no-underline hover:bg-blue-700 transition">Create Event</a>
+            <a href="/dashboard/organizer" class="px-4 py-2.5 rounded-lg bg-white border border-slate-200 shadow-sm text-sm font-medium text-slate-700 no-underline hover:bg-slate-50 transition">Organizer Dashboard</a>
+          </div>
+        <% } %>
         <div class="flex items-center gap-3 flex-wrap">
           <% if (session?.authenticatedUser) { %>
             <% if (session.authenticatedUser.role === "admin") { %>
