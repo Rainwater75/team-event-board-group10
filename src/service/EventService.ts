@@ -143,9 +143,17 @@ async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>
             if (endDate < new Date()) return ValidationError("End date must be in the future");
         }
 
+        if (input.startDate !== undefined && input.endDate !== undefined) {
+            if (input.endDate <= input.startDate) {
+                return ValidationError("End date must be after start date");
+            }
+        }
+
         if (input.maxCapacity !== undefined) {
             const capacity = input.maxCapacity;
-            if (capacity <= 0) return ValidationError("Max capacity must be greater than 0");
+            if (!Number.isFinite(capacity) || capacity <= 0) {
+                return ValidationError("Max capacity must be greater than 0");
+            }
         }
 
         if (input.status !== undefined) {
