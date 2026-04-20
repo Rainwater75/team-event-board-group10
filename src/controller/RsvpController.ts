@@ -30,12 +30,15 @@ class RsvpController implements IRsvpController {
     return 500;
   }
 
+  private isHtmxRequest(res: Response): boolean {
+    return res.req?.get("HX-Request") === "true";
+  }
+
   async toggleFromRequest(
     res: Response,
     input: { eventIdRaw: string; userId: string },
   ): Promise<void> {
     const eventId = Number.parseInt(input.eventIdRaw, 10);
-
     const result = await this.service.toggleRsvp({
       eventId,
       userId: input.userId,
@@ -45,6 +48,17 @@ class RsvpController implements IRsvpController {
       const status = this.mapErrorStatus(result.value);
       const log = status >= 500 ? this.logger.error : this.logger.warn;
       log.call(this.logger, `RSVP toggle failed: ${result.value.message}`);
+
+      if (this.isHtmxRequest(res)) {
+        res.status(status).render("partials/rsvp-button", {
+          eventId: Number.isNaN(eventId) ? 0 : eventId,
+          attendeeCount: null,
+          maxCapacity: null,
+          rsvpStatus: null,
+          pageError: result.value.message,
+        });
+        return;
+      }
 
       res.status(status).json({
         ok: false,
@@ -56,6 +70,17 @@ class RsvpController implements IRsvpController {
     this.logger.info(
       `RSVP toggled for user ${result.value.userId} on event ${result.value.eventId} -> ${result.value.rsvpStatus}`,
     );
+
+    if (this.isHtmxRequest(res)) {
+      res.render("partials/rsvp-button", {
+        eventId: result.value.eventId,
+        attendeeCount: result.value.attendeeCount,
+        maxCapacity: null,
+        rsvpStatus: result.value.rsvpStatus,
+        pageError: null,
+      });
+      return;
+    }
 
     res.json({
       ok: true,
