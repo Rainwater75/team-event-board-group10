@@ -31,12 +31,23 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
+                <%
+                  // Helper function to format a Date object into "YYYY-MM-DDTHH:mm" local time string
+                  const formatDateTimeLocal = (date) => {
+                    const year = date.getFullYear();
+                    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    const day = date.getDate().toString().padStart(2, '0');
+                    const hours = date.getHours().toString().padStart(2, '0');
+                    const minutes = date.getMinutes().toString().padStart(2, '0');
+                    return `${year}-${month}-${day}T${hours}:${minutes}`;
+                  };
+                %>
                 <label for="startDate" class="block text-gray-700 text-sm font-bold mb-2">Start Date</label>
-                <input type="datetime-local" name="startDate" id="startDate" value="<%= event.startDate.toISOString().slice(0, 16) %>" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <input type="datetime-local" name="startDate" id="startDate" value="<%= formatDateTimeLocal(event.startDate) %>" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             </div>
             <div>
                 <label for="endDate" class="block text-gray-700 text-sm font-bold mb-2">End Date</label>
-                <input type="datetime-local" name="endDate" id="endDate" value="<%= event.endDate.toISOString().slice(0, 16) %>" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                <input type="datetime-local" name="endDate" id="endDate" value="<%= formatDateTimeLocal(event.endDate) %>" required class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
             </div>
         </div>
 
