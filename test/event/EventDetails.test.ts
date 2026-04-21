@@ -79,4 +79,29 @@ describe("EventService getEvent", () => {
         const result = await service.getEvent(createdEvent.value.id, null); // null session, unauthenticated user
         expect(result.ok).toBe(false);
     });
+
+    it("does not retrieve cancelled events for non-organizer", async () => {
+        const repo = CreateInMemoryEventRepository();
+        const service = CreateEventService(repo);  
+        const createdEvent = await service.createEvent(eventInput, eventInput.organizerId, eventInput.organizerName);
+        if (!createdEvent.ok) throw new Error("Failed to create event for testing");
+        await service.publishEvent(createdEvent.value.id, eventInput.organizerId); 
+        await service.cancelEvent(createdEvent.value.id, eventInput.organizerId);
+        const result = await service.getEvent(createdEvent.value.id, {userId: "user-2", role: "user"});
+        expect(result.ok).toBe(false);
+    });
+
+    it("retrieves cancelled events for organizer & admins", async () => {
+        const repo = CreateInMemoryEventRepository();
+        const service = CreateEventService(repo);  
+        const createdEvent = await service.createEvent(eventInput, eventInput.organizerId, eventInput.organizerName);
+        if (!createdEvent.ok) throw new Error("Failed to create event for testing");
+        await service.publishEvent(createdEvent.value.id, eventInput.organizerId); 
+        await service.cancelEvent(createdEvent.value.id, eventInput.organizerId);
+        const result = await service.getEvent(createdEvent.value.id, {userId: "organizer-1", role: "user"});
+        expect(result.ok).toBe(true);
+        const adminResult = await service.getEvent(createdEvent.value.id, {userId: "admin-1", role: "admin"});
+        expect(adminResult.ok).toBe(true);
+    });
+
 });

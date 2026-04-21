@@ -204,16 +204,19 @@ export class EventService implements IEventService {
 
         // Draft visibility rule: only organizers and admins can see draft events
         const isAdmin = currentUser.role === "admin";
-        if (event.value.status === "draft") {
-          const isOrganizer = currentUser.userId === event.value.organizerId;
+        const isOrganizer = currentUser.userId === event.value.organizerId;
+        if (event.value.status !== "published") {
           if (!isOrganizer && !isAdmin) {
             return { ok: false, value: EventNotFound("Event not found") };
           }
         }
 
-        // Invalid state: For now only admins can see cancelled events, maybe organizers later.
-        if (event.value.status === "cancelled" && !isAdmin) {
+        // Invalid state: Only admins/organizers can see cancelled/past events.
+        if (event.value.status === "cancelled" && !isAdmin && !isOrganizer) {
           return { ok: false, value: InvalidContent("Event is cancelled") };
+        }
+        if (event.value.status === "past" && !isAdmin && !isOrganizer) {
+          return { ok: false, value: InvalidContent("Event has past") };
         }
         return event;
     }
