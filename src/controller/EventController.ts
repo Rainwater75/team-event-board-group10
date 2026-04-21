@@ -3,6 +3,7 @@ import { AuthenticationRequired, AuthError, AuthorizationRequired } from "../aut
 import { Category, CreateEventInput, EditEventInput, EventStatus } from "../model/Event.js";
 import type { IAppBrowserSession } from "../session/AppSession.js";
 import type { IEventService } from "../service/EventService.js";
+import type { IRsvpService } from "../service/RsvpService.js";
 import type { ILoggingService } from "../service/LoggingService.js";
 import { EventError } from "../lib/errors.js";
 
@@ -32,31 +33,34 @@ export interface IEventController {
         status?: EventStatus,
     ): Promise<void>
 
-<<<<<<< HEAD
-    showCreateForm(res: Response, session: IAppBrowserSession): void;
-
-    publishFromForm(
-        res: Response,
-        session: IAppBrowserSession,
-        eventIdRaw: string,
-    ): Promise<void>;
-
-    cancelFromForm(
-        res: Response,
-        session: IAppBrowserSession,
-        eventIdRaw: string,
-    ): Promise<void>;
-=======
     showCreateForm(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
+    showEditForm(res: Response, session: IAppBrowserSession, eventId: number, pageError?: string | null): Promise<void>;
     displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
     showEventDetails(res: Response, session: IAppBrowserSession, eventId: number): Promise<void>;
     searchEvents(res: Response, session: IAppBrowserSession, query: string): Promise<void>;
->>>>>>> f70f4952f9d28c9a6a059d1a836e8fdcbe55f5a8
+    filterEvents(
+    res: Response,
+    session: IAppBrowserSession,
+    category: string,
+    startAfterRaw: string,): Promise<void>
+
+    publishEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void>;
+
+cancelEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void>;
 }
 
 class EventController implements IEventController {
     constructor(
         private readonly service: IEventService,
+        private readonly rsvpService: IRsvpService,
         private readonly logger: ILoggingService,
     ) {}
 
@@ -79,6 +83,68 @@ class EventController implements IEventController {
     private isHtmxRequest(res: Response): boolean {
         return res.req?.get("HX-Request") === "true";
     }
+
+    async publishEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void> {
+    const currentUser = session.authenticatedUser;
+    if (!currentUser) {
+        res.status(401).render("partials/error", {
+            message: AuthenticationRequired("Please log in to continue.").message,
+            layout: false,
+        });
+        return;
+    }
+
+    const result = await this.service.publishEvent(id, currentUser.userId);
+
+    if (!result.ok) {
+        const message = this.isEventError(result.value)
+            ? result.value.message
+            : "Unexpected error publishing event.";
+
+        res.status(400).render("partials/error", {
+            message,
+            layout: false,
+        });
+        return;
+    }
+
+    res.redirect(`/events/${id}`);
+}
+
+async cancelEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void> {
+    const currentUser = session.authenticatedUser;
+    if (!currentUser) {
+        res.status(401).render("partials/error", {
+            message: AuthenticationRequired("Please log in to continue.").message,
+            layout: false,
+        });
+        return;
+    }
+
+    const result = await this.service.cancelEvent(id, currentUser.userId);
+
+    if (!result.ok) {
+        const message = this.isEventError(result.value)
+            ? result.value.message
+            : "Unexpected error cancelling event.";
+
+        res.status(400).render("partials/error", {
+            message,
+            layout: false,
+        });
+        return;
+    }
+
+    res.redirect(`/events/${id}`);
+}
 
     async createFromForm(
         res: Response,
@@ -114,7 +180,7 @@ class EventController implements IEventController {
             category,
             startDate: startDateRaw
                 ? new Date(startDateRaw)
-                : new Date(Date.now() + 60 * 60 * 1000),
+                : new Date(Date.now() + 60 * 60 * 1000), // double default. one in frontend one in backend
             endDate: endDateRaw
                 ? new Date(endDateRaw)
                 : new Date(Date.now() + 2 * 60 * 60 * 1000),
@@ -251,14 +317,39 @@ class EventController implements IEventController {
         res.redirect("/home");
     }
 
-    async showEventDetails(
-        res: Response,
+    showCreateForm(
+        res: Response, 
+        session: IAppBrowserSession,
+        pageError: string | null = null
+    ): Promise<void> {
+        const currentUser = session.authenticatedUser;
+        if (!currentUser) {
+            res.status(401).render("partials/error", {
+                message: AuthenticationRequired("Please log in to continue.").message,
+                layout: false,
+            });
+            return Promise.resolve();
+        }
+
+        res.render("create", { pageError, session });
+        return Promise.resolve(); // returning here to fix typing error
+    }
+
+    async showEditForm(
+        res: Response, 
         session: IAppBrowserSession,
         eventId: number,
+        pageError: string | null = null
     ): Promise<void> {
-        this.logger.info(`Fetching event details for id=${eventId}`);
-        //const isHtmx = this.isHtmxRequest(res);
         const currentUser = session.authenticatedUser;
+        if (!currentUser) {
+            res.status(401).render("partials/error", {
+                message: AuthenticationRequired("Please log in to continue.").message,
+                layout: false,
+            });
+            return;
+        }
+
         const result = await this.service.getEvent(eventId, currentUser);
 
         // Error handling
@@ -283,39 +374,19 @@ class EventController implements IEventController {
         }
 
         const event = result.value;
-        // Role logic
-        const isOrganizer = currentUser?.userId === event.organizerId;
-        const isAdmin = currentUser?.role === "admin";
-        // we can later check if member before allowing RSVP, but for now anyone can RSVP to published events
+        const isOrganizer = currentUser.userId === event.organizerId;
+        const isAdmin = currentUser.role === "admin";
 
-        res.render("event-detail", {
-            session,
-            event,
-            attendingCount: event.attendingUsers.length,
-            canEdit: isOrganizer || isAdmin,
-            canCancel: isOrganizer || isAdmin,
-            canRSVP: true, // Later we should check if user is member and event is published before allowing RSVP
-            isDraft: event.status === "draft",
-            organizerName: event.organizerName,
-        });
-    }
-
-    async showCreateForm(
-        res: Response, 
-        session: IAppBrowserSession,
-        pageError: string | null = null
-    ): Promise<void> {
-        const currentUser = session.authenticatedUser;
-        if (!currentUser) {
-            res.status(401).render("partials/error", {
-                message: AuthenticationRequired("Please log in to continue.").message,
+        if (!isOrganizer && !isAdmin) {
+            this.logger.warn(`User ${currentUser.userId} attempted to access edit form for event ${eventId} without authorization.`);
+            res.status(403).render("partials/error", {
+                message: AuthorizationRequired("You are not authorized to edit this event.").message,
                 layout: false,
             });
-            return Promise.resolve();
+            return;
         }
 
-        res.render("create", { pageError, session });
-        return Promise.resolve(); // returning here to fix typing error
+        res.render("edit-event", { pageError, session, event });
     }
 
     async displayOrganizerDashboard(
@@ -355,89 +426,12 @@ class EventController implements IEventController {
         }  
         res.render("event-list", { session, events: result.value, query });
     }
-    
-    async publishFromForm(
-        res: Response,
-        session: IAppBrowserSession,
-        eventIdRaw: string,
-    ): Promise<void> {
-        const currentUser = session.authenticatedUser;
-        if (!currentUser) {
-            res.status(401).render("partials/error", {
-                message: AuthenticationRequired("Please log in to continue.").message,
-                layout: false,
-            });
-            return;
-        }
-
-        const eventId = Number(eventIdRaw);
-        if (Number.isNaN(eventId)) {
-            res.status(400).render("partials/error", {
-                message: "Invalid event id.",
-                layout: false,
-            });
-            return;
-        }
-
-        const result = await this.service.publishEvent(eventId, currentUser.userId);
-
-        if (!result.ok) {
-            const status = this.mapErrorStatus(result.value);
-            res.status(status).render("partials/error", {
-                message: result.value.message,
-                layout: false,
-            });
-            return;
-        }
-
-        res.redirect("/home");
-    }
-
-    async cancelFromForm(
-        res: Response,
-        session: IAppBrowserSession,
-        eventIdRaw: string,
-    ): Promise<void> {
-        const currentUser = session.authenticatedUser;
-        if (!currentUser) {
-            res.status(401).render("partials/error", {
-                message: AuthenticationRequired("Please log in to continue.").message,
-                layout: false,
-            });
-            return;
-        }
-
-        const eventId = Number(eventIdRaw);
-        if (Number.isNaN(eventId)) {
-            res.status(400).render("partials/error", {
-                message: "Invalid event id.",
-                layout: false,
-            });
-            return;
-        }
-
-        const result = await this.service.cancelEvent(
-            eventId,
-            currentUser.userId,
-            currentUser.role,
-        );
-
-        if (!result.ok) {
-            const status = this.mapErrorStatus(result.value);
-            res.status(status).render("partials/error", {
-                message: result.value.message,
-                layout: false,
-            });
-            return;
-        }
-
-        res.redirect("/home");
-    }
 }
 
 export function CreateEventController(
     service: IEventService,
+    rsvpService: IRsvpService,
     logger: ILoggingService,
 ): IEventController {
-    return new EventController(service, logger);
+    return new EventController(service, rsvpService, logger);
 }

@@ -24,6 +24,7 @@
 		</section>
 	</div>
 
+	<!-- PUBLISHED EVENTS -->
 	<div x-show="events.length > 0" class="space-y-5">
 		<section class="p-4 border border-slate-200 rounded-xl bg-white">
 			<div class="flex items-center justify-between mb-3">
@@ -44,11 +45,18 @@
 						<p class="text-sm text-slate-700 mt-2">
 							Attending: <strong x-text="attendeeCount(event)"></strong> / <span x-text="event.maxCapacity"></span>
 						</p>
+						<div class="mt-3 flex flex-wrap gap-2">
+							<a :href="`/events/${event.id}`" class="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">View</a>
+							<form :action="`/events/${event.id}/cancel`" method="POST" class="m-0" onsubmit="return confirm('Cancel this event?');">
+								<button type="submit" class="px-3 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition">Cancel Event</button>
+							</form>
+						</div>
 					</article>
 				</template>
 			</div>
 		</section>
 
+		<!-- DRAFT EVENTS -->
 		<section class="p-4 border border-slate-200 rounded-xl bg-white">
 			<div class="flex items-center justify-between mb-3">
 				<h2 class="text-lg font-semibold text-slate-800">Draft</h2>
@@ -68,11 +76,18 @@
 						<p class="text-sm text-slate-700 mt-2">
 							Attending: <strong x-text="attendeeCount(event)"></strong> / <span x-text="event.maxCapacity"></span>
 						</p>
+						<div class="mt-3 flex flex-wrap gap-2">
+							<a :href="`/events/${event.id}`" class="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">View</a>
+							<form :action="`/events/${event.id}/publish`" method="POST" class="m-0">
+								<button type="submit" class="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition">Publish Event</button>
+							</form>
+						</div>
 					</article>
 				</template>
 			</div>
 		</section>
 
+		<!-- CANCELLED / PAST EVENTS -->
 		<section class="p-4 border border-slate-200 rounded-xl bg-white">
 			<div class="flex items-center justify-between mb-3">
 				<h2 class="text-lg font-semibold text-slate-800">Cancelled / Past</h2>
@@ -92,6 +107,9 @@
 						<p class="text-sm text-slate-700 mt-2">
 							Attending: <strong x-text="attendeeCount(event)"></strong> / <span x-text="event.maxCapacity"></span>
 						</p>
+						<div class="mt-3 flex flex-wrap gap-2">
+							<a :href="`/events/${event.id}`" class="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">View</a>
+						</div>
 					</article>
 				</template>
 			</div>
