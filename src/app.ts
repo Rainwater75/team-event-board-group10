@@ -325,32 +325,32 @@ class ExpressApp implements IApp {
       
         await this.controller.searchEvents(res, session, query);
 
-        this.app.post(
-  "/events/:id/publish",
-  asyncHandler(async (req, res) => {
-    if (!this.requireAuthenticated(req, res)) return;
+      this.app.post(
+        "/events/:id/publish",
+        asyncHandler(async (req, res) => {
+          if (!this.requireAuthenticated(req, res)) return;
 
-    await this.controller.publishEvent(
-      res,
-      recordPageView(sessionStore(req)),
-      Number(req.params.id),
-    );
-  }),
+          await this.controller.publishEvent(
+            res,
+            recordPageView(sessionStore(req)),
+            Number(req.params.id),
+          );
+        }),
 );
 
-        this.app.post(
-          "/events/:id/cancel",
-          asyncHandler(async (req, res) => {
-            if (!this.requireAuthenticated(req, res)) return;
+      this.app.post(
+        "/events/:id/cancel",
+        asyncHandler(async (req, res) => {
+          if (!this.requireAuthenticated(req, res)) return;
 
-            await this.controller.cancelEvent(
-              res,
-              recordPageView(sessionStore(req)),
-              Number(req.params.id),
-             );
-            }),
-          );
-        })
+          await this.controller.cancelEvent(
+            res,
+            recordPageView(sessionStore(req)),
+            Number(req.params.id),
+            );
+          }),
+        );
+      })
     );
 
     // ── Edit Routes ────────────────────────────────────────────────
