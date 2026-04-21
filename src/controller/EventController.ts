@@ -440,11 +440,14 @@ async cancelEvent(
             });
             return Promise.resolve();
         }  
-        const eventsResult = await this.service.getAllEventsByOrganizer(currentUser.userId);
+        const isAdmin = currentUser.role === "admin";
+        const eventsResult = isAdmin
+            ? await this.service.getAllEvents()
+            : await this.service.getAllEventsByOrganizer(currentUser.userId);
         if (!eventsResult.ok) {
             const message = this.isEventError(eventsResult.value)
                 ? eventsResult.value.message
-                : "Failed to load organizer events.";
+                : "Failed to load dashboard events.";
             this.logger.error(`Failed to load organizer dashboard events: ${message}`);
             res.render("organizerDashboard", { pageError: message, session, events: [] });
             return;

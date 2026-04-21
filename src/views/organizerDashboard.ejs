@@ -2,7 +2,7 @@
 	<div class="mb-6">
 		<a href="/home" class="text-blue-600 hover:underline text-sm font-medium">← Back to home</a>
 		<h1 class="text-3xl font-bold text-slate-900 mt-2">Organizer Dashboard</h1>
-		<p class="text-slate-500">Your events grouped by status.</p>
+		<p class="text-slate-500"><%= session?.authenticatedUser?.role === "admin" ? "All events grouped by status." : "Your events grouped by status." %></p>
 	</div>
 
 	<% if (pageError) { %>
