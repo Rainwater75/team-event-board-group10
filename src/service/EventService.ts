@@ -79,7 +79,7 @@ export class EventService implements IEventService {
     return await this.repo.edit(id, { status: "published" });
 }
 
-async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
+    async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
     const result = await this.repo.getById(id);
     if (!result.ok) return result;
 
@@ -94,7 +94,7 @@ async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>
     }
 
     return await this.repo.edit(id, { status: "cancelled" });
-}
+    }
 
     async createEvent(input: CreateEventInput, organizerId: string, organizerDisplayName: string): Promise<Result<Event, EventError>> {
         // can add role permissions later
@@ -195,9 +195,10 @@ async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>
         }
     }
 
-    // user role is now passed to getEvent()
-    async getEvent(id: number, currentUser: { userId: string; role: string }): Promise<Result<Event, EventError>> {
-        
+    async getEvent(id: number, currentUser: { userId: string; role: string } | null): Promise<Result<Event, EventError>> {
+        if (!currentUser) {
+            return Err(ValidationError("User must be authenticated to view event details"));
+        }
         var event = await this.repo.getById(id);
         if (!event.ok) return event; // pass on repository errors
 
