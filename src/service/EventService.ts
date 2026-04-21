@@ -114,8 +114,9 @@ export class EventService implements IEventService {
 
         if (input.status !== undefined) {
             const status = input.status;
-            if (status !== "published" && status !== "cancelled") {
-                return ValidationError("Status input can only be set to published or cancelled");
+            const allowedStatuses = ["draft", "published", "cancelled", "past"];
+            if (!allowedStatuses.includes(status)) {
+                return ValidationError("Status input must be " + allowedStatuses.slice(0, -1).join(", ") + " or " + allowedStatuses[allowedStatuses.length - 1]);
             }
         }
     }
