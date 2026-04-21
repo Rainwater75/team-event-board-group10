@@ -14,14 +14,13 @@ describe("EventService getEvent", () => {
         organizerName: "Alice Organizer",
     };
 
-    it("retrieves a published event for any user", async () => {
+    it("retrieves an unpublished event for organizer", async () => {
         const repo = CreateInMemoryEventRepository();
         const service = CreateEventService(repo);  
         const createdEvent = await service.createEvent(eventInput, eventInput.organizerId, eventInput.organizerName);
         if (!createdEvent.ok) throw new Error("Failed to create event for testing");
 
         // Update event status to published
-        await repo.updateStatus(createdEvent.value.id, "published");
         const result = await service.getEvent(createdEvent.value.id, {userId: "organizer-1", role: "user"});
 
         expect(result.ok).toBe(true);
@@ -30,10 +29,19 @@ describe("EventService getEvent", () => {
             expect(result.value.description).toBe(eventInput.description);
             expect(result.value.location).toBe(eventInput.location);
             expect(result.value.maxCapacity).toBe(eventInput.maxCapacity);
-            expect(result.value.status).toBe("published");
+            expect(result.value.status).toBe("draft");
             expect(result.value.organizerId).toBe(eventInput.organizerId);
             expect(result.value.organizerName).toBe(eventInput.organizerName);
         }
+    });
+
+    it("does not retrieve an unpublished event for non-organizer", async () => {
+        const repo = CreateInMemoryEventRepository();
+        const service = CreateEventService(repo);  
+        const createdEvent = await service.createEvent(eventInput, eventInput.organizerId, eventInput.organizerName);
+        if (!createdEvent.ok) throw new Error("Failed to create event for testing");
+        const result = await service.getEvent(createdEvent.value.id, {userId: "user-2", role: "user"});
+        expect(result.ok).toBe(false);
     });
 
 });
