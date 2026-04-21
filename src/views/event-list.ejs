@@ -51,6 +51,32 @@
   </div>
 </div>
 
+<form method="get" action="/events/filter" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+  <select
+    name="category"
+    style="min-width:160px; padding:12px; border-radius:10px; border:1px solid #ccc; font-size:16px;"
+  >
+    <option value="">All Categories</option>
+    <option value="music">Music</option>
+    <option value="sports">Sports</option>
+    <option value="academic">Academic</option>
+    <option value="social">Social</option>
+  </select>
+
+  <input
+    type="datetime-local"
+    name="startAfter"
+    style="min-width:220px; padding:12px; border-radius:10px; border:1px solid #ccc; font-size:16px;"
+  />
+
+  <button
+    type="submit"
+    style="padding:12px 18px; border-radius:10px; border:none; background-color:#2563eb; color:white; font-weight:600; cursor:pointer;"
+  >
+    Apply Filters
+  </button>
+</form>
+
 <div class="events-grid">
   <% if (events.length > 0) { %>
     <% events.forEach(event => { %>
