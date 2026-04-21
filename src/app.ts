@@ -324,8 +324,9 @@ class ExpressApp implements IApp {
         const query = typeof req.query.q === "string" ? req.query.q : "";
       
         await this.controller.searchEvents(res, session, query);
-
-      this.app.post(
+        }),
+);
+    this.app.post(
         "/events/:id/publish",
         asyncHandler(async (req, res) => {
           if (!this.requireAuthenticated(req, res)) return;
@@ -335,8 +336,6 @@ class ExpressApp implements IApp {
             recordPageView(sessionStore(req)),
             Number(req.params.id),
           );
-        }),
-);
 
       this.app.post(
         "/events/:id/cancel",
