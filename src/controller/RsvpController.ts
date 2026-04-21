@@ -107,6 +107,15 @@ class RsvpController implements IRsvpController {
       const log = status >= 500 ? this.logger.error : this.logger.warn;
       log.call(this.logger, `Attendee list failed: ${result.value.message}`);
 
+      if (this.isHtmxRequest(res)) {
+        res.status(status).render("partials/attendee-list", {
+          layout: false,
+          attendeeGroups: null,
+          pageError: result.value.message,
+        });
+        return;
+      }
+
       res.status(status).json({
         ok: false,
         error: result.value,
@@ -115,6 +124,15 @@ class RsvpController implements IRsvpController {
     }
 
     this.logger.info(`Loaded attendee list for event ${eventId}`);
+
+    if (this.isHtmxRequest(res)) {
+      res.render("partials/attendee-list", {
+        layout: false,
+        attendeeGroups: result.value,
+        pageError: null,
+      });
+      return;
+    }
 
     res.json({
       ok: true,

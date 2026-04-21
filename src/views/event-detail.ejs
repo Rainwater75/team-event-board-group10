@@ -74,6 +74,9 @@
   .btn-cancel { background: #ef4444; color: white; }
   .btn-cancel:hover { background: #dc2626; }
 
+  .btn-attendees { background: #0f766e; color: white; }
+  .btn-attendees:hover { background: #115e59; }
+
   .description-area {
     background: #fff;
     border-left: 4px solid #e2e8f0;
@@ -85,7 +88,6 @@
 </style>
 
 <div class="event-details-container">
-  <!-- Header Section -->
   <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
     <div>
       <h1 style="font-size: 2.75rem; margin: 0 0 15px 0; color: #0f172a; letter-spacing: -0.02em;"><%= event.title %></h1>
@@ -94,7 +96,6 @@
     <a href="/events" class="btn-home">&larr; Back to Events</a>
   </div>
 
-  <!-- Details Grid -->
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px;">
     <div class="detail-box">
       <span class="detail-label">Status</span>
@@ -122,13 +123,11 @@
     </div>
   </div>
 
-  <!-- Description Section -->
   <div class="description-area">
     <h4 style="margin-top:0; color: #1e293b; font-size: 1.1rem;">About this event</h4>
     <%= event.description %>
   </div>
 
-  <!-- Bottom Actions -->
   <div style="display: flex; justify-content: space-between; align-items: center; border-top: 2px solid #f1f5f9; padding-top: 30px;">
     <div>
       <% if (isDraft) { %>
@@ -162,6 +161,20 @@
           <button type="submit" class="btn btn-cancel">Cancel Event</button>
         </form>
       <% } %>
+
+      <% if (canEdit || session?.authenticatedUser?.role === "admin") { %>
+        <button
+          class="btn btn-attendees"
+          hx-get="/events/<%= event.id %>/attendees"
+          hx-target="#attendee-list-panel"
+          hx-swap="outerHTML"
+          type="button"
+        >
+          View Attendees
+        </button>
+      <% } %>
     </div>
   </div>
+
+  <div id="attendee-list-panel" style="margin-top: 24px;"></div>
 </div>

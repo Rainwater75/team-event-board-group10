@@ -1,0 +1,136 @@
+import { CreateEventService } from "../../src/service/EventService";
+import { CreateInMemoryEventRepository } from "../../src/repository/InMemoryEventRepository";
+
+// Write tests that cover published events, missing events, and the draft visibility rule from different user perspectives.
+describe("EventService getEvent", () => {
+    const eventInput = { // this event is in draft mode by default, so only visible to organizer and admins
+        title: "Event",
+        description: "This event is not published yet, only available to organizer & admins.",
+        startDate: new Date(Date.now() + 60 * 60 * 1000),
+        endDate: new Date(Date.now() + 2 * 60 * 60 * 1000),
+        location: "Main Hall",
+        maxCapacity: 100,
+        organizerId: "organizer-1",
+        organizerName: "Alice Organizer",
+    };
+
+    it("retrieves an unpublished event for organizer & admins", async () => {
+        const repo = CreateInMemoryEventRepository();
+        const service = CreateEventService(repo);  
+        const createdEvent = await service.createEvent(eventInput, eventInput.organizerId, eventInput.organizerName);
+        if (!createdEvent.ok) throw new Error("Failed to create event for testing");
+
+        // Update event status to published
+        const result = await service.getEvent(createdEvent.value.id, {userId: "organizer-1", role: "user"});
+
+        expect(result.ok).toBe(true);
+        if (result.ok) {
+            expect(result.value.title).toBe(eventInput.title);
+            expect(result.value.description).toBe(eventInput.description);
+            expect(result.value.location).toBe(eventInput.location);
+            expect(result.value.maxCapacity).toBe(eventInput.maxCapacity);
+            expect(result.value.status).toBe("draft");
+            expect(result.value.organizerId).toBe(eventInput.organizerId);
+            expect(result.value.organizerName).toBe(eventInput.organizerName);
+        }
+
+        const adminResult = await service.getEvent(createdEvent.value.id, {userId: "admin-1", role: "admin"});
+        expect(adminResult.ok).toBe(true);
+    });
+
+    it("does not retrieve an unpublished event for non-organizer", async () => {
+        const repo = CreateInMemoryEventRepository();
+        const service = CreateEventService(repo);  
+        const createdEvent = await service.createEvent(eventInput, eventInput.organizerId, eventInput.organizerName);
+        if (!createdEvent.ok) throw new Error("Failed to create event for testing");
+        const result = await service.getEvent(createdEvent.value.id, {userId: "user-2", role: "user"});
+        expect(result.ok).toBe(false);
+    });
+
+    it("returns an error for non-existent event", async () => {
+        const service = CreateEventService(CreateInMemoryEventRepository());
+        const result = await service.getEvent(999, {userId: "user-1", role: "user"});
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+            expect(result.value.message).toBe("Event 999 not found.");
+        }
+    });
+
+    it("retrieves a published event for any user", async () => {
+        const repo = CreateInMemoryEventRepository();
+        const service = CreateEventService(repo);  
+        const createdEvent = await service.createEvent(eventInput, eventInput.organizerId, eventInput.organizerName);
+        if (!createdEvent.ok) throw new Error("Failed to create event for testing");
+        await service.publishEvent(createdEvent.value.id, eventInput.organizerId); 
+        const result = await service.getEvent(createdEvent.value.id, {userId: "user-2", role: "user"});
+        expect(result.ok).toBe(true);
+        const result3 = await service.getEvent(createdEvent.value.id, {userId: "admin-1", role: "admin"});
+        expect(result3.ok).toBe(true);
+        const result4 = await service.getEvent(createdEvent.value.id, {userId: "organizer-1", role: "staff"});
+        expect(result4.ok).toBe(true);
+    });
+
+    it("published events do not show up for unauthenticated users", async () => {
+        const repo = CreateInMemoryEventRepository();
+        const service = CreateEventService(repo);  
+        const createdEvent = await service.createEvent(eventInput, eventInput.organizerId, eventInput.organizerName);
+        if (!createdEvent.ok) throw new Error("Failed to create event for testing");
+        await service.publishEvent(createdEvent.value.id, eventInput.organizerId); 
+        const result = await service.getEvent(createdEvent.value.id, null); // null session, unauthenticated user
+        expect(result.ok).toBe(false);
+    });
+
+    it("does not retrieve cancelled events for non-organizer", async () => {
+        const repo = CreateInMemoryEventRepository();
+        const service = CreateEventService(repo);  
+        const createdEvent = await service.createEvent(eventInput, eventInput.organizerId, eventInput.organizerName);
+        if (!createdEvent.ok) throw new Error("Failed to create event for testing");
+        await service.publishEvent(createdEvent.value.id, eventInput.organizerId); 
+        await service.cancelEvent(createdEvent.value.id, eventInput.organizerId);
+        const result = await service.getEvent(createdEvent.value.id, {userId: "user-2", role: "user"});
+        expect(result.ok).toBe(false);
+    });
+
+    it("retrieves cancelled events for organizer & admins", async () => {
+        const repo = CreateInMemoryEventRepository();
+        const service = CreateEventService(repo);  
+        const createdEvent = await service.createEvent(eventInput, eventInput.organizerId, eventInput.organizerName);
+        if (!createdEvent.ok) throw new Error("Failed to create event for testing");
+        await service.publishEvent(createdEvent.value.id, eventInput.organizerId); 
+        await service.cancelEvent(createdEvent.value.id, eventInput.organizerId);
+        const result = await service.getEvent(createdEvent.value.id, {userId: "organizer-1", role: "user"});
+        expect(result.ok).toBe(true);
+        const adminResult = await service.getEvent(createdEvent.value.id, {userId: "admin-1", role: "admin"});
+        expect(adminResult.ok).toBe(true);
+    });
+
+    it("retrieves past events for all", async () => {
+        const repo = CreateInMemoryEventRepository();
+        const service = CreateEventService(repo);
+        const createdEvent = await service.createEvent(eventInput, eventInput.organizerId, eventInput.organizerName);
+        if (!createdEvent.ok) throw new Error("Failed to create event for testing");
+        await service.publishEvent(createdEvent.value.id, eventInput.organizerId);
+        // Simulate a past event by manually setting the end date
+        createdEvent.value.endDate = new Date(Date.now() - 86400000); // One day ago
+        const result = await service.getEvent(createdEvent.value.id, {userId: "organizer-1", role: "user"});
+        expect(result.ok).toBe(true);
+        const adminResult = await service.getEvent(createdEvent.value.id, {userId: "admin-1", role: "admin"});
+        expect(adminResult.ok).toBe(true);
+        const userResult = await service.getEvent(createdEvent.value.id, {userId: "user-2", role: "user"});
+        expect(userResult.ok).toBe(true);
+    });
+
+    // For each feature, write integration tests covering the happy path, each named error type, and at least one edge case
+    it("handles edge case of event with start date in the past", async () => {
+        const repo = CreateInMemoryEventRepository();
+        const service = CreateEventService(repo);
+        const createdEvent = await service.createEvent(eventInput, eventInput.organizerId, eventInput.organizerName);
+        if (!createdEvent.ok) throw new Error("Failed to create event for testing");
+        await service.publishEvent(createdEvent.value.id, eventInput.organizerId);
+        // Simulate a past event by manually setting the start and end dates
+        createdEvent.value.startDate = new Date(Date.now() - 86400000); // One day ago
+        createdEvent.value.endDate = new Date(Date.now() - 3600000); // One hour ago
+        const result = await service.getEvent(createdEvent.value.id, {userId: "user-2", role: "user"});
+        expect(result.ok).toBe(true);
+    });
+});

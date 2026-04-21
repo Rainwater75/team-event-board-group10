@@ -79,7 +79,7 @@ export class EventService implements IEventService {
     return await this.repo.edit(id, { status: "published" });
 }
 
-async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
+    async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
     const result = await this.repo.getById(id);
     if (!result.ok) return result;
 
@@ -94,7 +94,7 @@ async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>
     }
 
     return await this.repo.edit(id, { status: "cancelled" });
-}
+    }
 
     async createEvent(input: CreateEventInput, organizerId: string, organizerDisplayName: string): Promise<Result<Event, EventError>> {
         // can add role permissions later
@@ -189,30 +189,35 @@ async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>
 
         if (input.status !== undefined) {
             const status = input.status;
-            if (status !== "published" && status !== "cancelled") {
-                return ValidationError("Status input can only be set to published or cancelled");
+            const allowedStatuses = ["draft", "published", "cancelled", "past"];
+            if (!allowedStatuses.includes(status)) {
+                return ValidationError("Status input must be " + allowedStatuses.slice(0, -1).join(", ") + " or " + allowedStatuses[allowedStatuses.length - 1]);
             }
         }
     }
 
-    // user role is now passed to getEvent()
-    async getEvent(id: number, currentUser: { userId: string; role: string }): Promise<Result<Event, EventError>> {
-        
+    async getEvent(id: number, currentUser: { userId: string; role: string } | null): Promise<Result<Event, EventError>> {
+        if (!currentUser) {
+            return Err(ValidationError("User must be authenticated to view event details"));
+        }
         var event = await this.repo.getById(id);
         if (!event.ok) return event; // pass on repository errors
 
         // Draft visibility rule: only organizers and admins can see draft events
         const isAdmin = currentUser.role === "admin";
-        if (event.value.status === "draft") {
-          const isOrganizer = currentUser.userId === event.value.organizerId;
+        const isOrganizer = currentUser.userId === event.value.organizerId;
+        if (event.value.status !== "published") {
           if (!isOrganizer && !isAdmin) {
             return { ok: false, value: EventNotFound("Event not found") };
           }
         }
 
-        // Invalid state: For now only admins can see cancelled events, maybe organizers later.
-        if (event.value.status === "cancelled" && !isAdmin) {
+        // Invalid state: Only admins/organizers can see cancelled/past events.
+        if (event.value.status === "cancelled" && !isAdmin && !isOrganizer) {
           return { ok: false, value: InvalidContent("Event is cancelled") };
+        }
+        if (event.value.status === "past" && !isAdmin && !isOrganizer) {
+          return { ok: false, value: InvalidContent("Event has past") };
         }
         return event;
     }
