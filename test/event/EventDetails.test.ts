@@ -104,4 +104,19 @@ describe("EventService getEvent", () => {
         expect(adminResult.ok).toBe(true);
     });
 
+    it("retrieves past events for all", async () => {
+        const repo = CreateInMemoryEventRepository();
+        const service = CreateEventService(repo);
+        const createdEvent = await service.createEvent(eventInput, eventInput.organizerId, eventInput.organizerName);
+        if (!createdEvent.ok) throw new Error("Failed to create event for testing");
+        await service.publishEvent(createdEvent.value.id, eventInput.organizerId);
+        // Simulate a past event by manually setting the end date
+        createdEvent.value.endDate = new Date(Date.now() - 86400000); // One day ago
+        const result = await service.getEvent(createdEvent.value.id, {userId: "organizer-1", role: "user"});
+        expect(result.ok).toBe(true);
+        const adminResult = await service.getEvent(createdEvent.value.id, {userId: "admin-1", role: "admin"});
+        expect(adminResult.ok).toBe(true);
+        const userResult = await service.getEvent(createdEvent.value.id, {userId: "user-2", role: "user"});
+        expect(userResult.ok).toBe(true);
+    });
 });
