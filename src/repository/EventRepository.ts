@@ -10,7 +10,7 @@ export interface IEventRepository {
     edit(id: number, input: EditEventInput): Promise<Result<Event, EventError>>;
     getById(id: number): Promise<Result<Event, EventError>>;
     getAll(): Promise<Result<Event[], EventError>>;
-    updateStatus(id: number, status: "draft" | "published" | "cancelled"): Promise<Result<Event, EventError>>;
+    updateStatus(id: number, status: "draft" | "published" | "cancelled" | "past"): Promise<Result<Event, EventError>>;
     getAllByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
     search(query: string): Promise<Result<Event[], EventError>>;
 }
