@@ -135,20 +135,26 @@
         <span style="color: #92400e; background: #fef3c7; padding: 8px 16px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;">⚠️ Draft Mode</span>
       <% } %>
     </div>
-    
+
     <div style="display: flex; gap: 12px; align-items: center;">
       <% if (canRSVP) { %>
-        <% if (attendingCount >= event.maxCapacity) { %>
-          <span style="background: #94a3b8; color: white; padding: 12px 24px; border-radius: 10px; font-weight: bold; cursor: not-allowed;">Sold Out</span>
-        <% } else { %>
-          <form method="POST" action="/events/<%= event.id %>/rsvp" style="margin: 0;">
-            <button type="submit" class="btn btn-rsvp">RSVP Now</button>
-          </form>
-        <% } %>
+        <%- include("partials/rsvp-button", {
+          eventId: event.id,
+          attendeeCount: attendingCount,
+          maxCapacity: event.maxCapacity,
+          rsvpStatus: null,
+          pageError: null
+        }) %>
       <% } %>
 
       <% if (canEdit) { %>
         <a href="/events/<%= event.id %>/edit" class="btn btn-edit">Edit Event</a>
+      <% } %>
+
+      <% if (event.status === "draft") { %>
+        <form method="POST" action="/events/<%= event.id %>/publish" style="margin: 0;">
+          <button type="submit" class="btn btn-rsvp">Publish Event</button>
+        </form>
       <% } %>
 
       <% if (canCancel) { %>

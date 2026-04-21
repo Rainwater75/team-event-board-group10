@@ -38,6 +38,23 @@ export interface IEventController {
     displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
     showEventDetails(res: Response, session: IAppBrowserSession, eventId: number): Promise<void>;
     searchEvents(res: Response, session: IAppBrowserSession, query: string): Promise<void>;
+    filterEvents(
+    res: Response,
+    session: IAppBrowserSession,
+    category: string,
+    startAfterRaw: string,): Promise<void>
+
+    publishEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void>;
+
+cancelEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -66,6 +83,68 @@ class EventController implements IEventController {
     private isHtmxRequest(res: Response): boolean {
         return res.req?.get("HX-Request") === "true";
     }
+
+    async publishEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void> {
+    const currentUser = session.authenticatedUser;
+    if (!currentUser) {
+        res.status(401).render("partials/error", {
+            message: AuthenticationRequired("Please log in to continue.").message,
+            layout: false,
+        });
+        return;
+    }
+
+    const result = await this.service.publishEvent(id, currentUser.userId);
+
+    if (!result.ok) {
+        const message = this.isEventError(result.value)
+            ? result.value.message
+            : "Unexpected error publishing event.";
+
+        res.status(400).render("partials/error", {
+            message,
+            layout: false,
+        });
+        return;
+    }
+
+    res.redirect(`/events/${id}`);
+}
+
+async cancelEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void> {
+    const currentUser = session.authenticatedUser;
+    if (!currentUser) {
+        res.status(401).render("partials/error", {
+            message: AuthenticationRequired("Please log in to continue.").message,
+            layout: false,
+        });
+        return;
+    }
+
+    const result = await this.service.cancelEvent(id, currentUser.userId);
+
+    if (!result.ok) {
+        const message = this.isEventError(result.value)
+            ? result.value.message
+            : "Unexpected error cancelling event.";
+
+        res.status(400).render("partials/error", {
+            message,
+            layout: false,
+        });
+        return;
+    }
+
+    res.redirect(`/events/${id}`);
+}
 
     async createFromForm(
         res: Response,
@@ -101,7 +180,7 @@ class EventController implements IEventController {
             category,
             startDate: startDateRaw
                 ? new Date(startDateRaw)
-                : new Date(Date.now() + 60 * 60 * 1000),
+                : new Date(Date.now() + 60 * 60 * 1000), // double default. one in frontend one in backend
             endDate: endDateRaw
                 ? new Date(endDateRaw)
                 : new Date(Date.now() + 2 * 60 * 60 * 1000),
@@ -133,12 +212,45 @@ class EventController implements IEventController {
 
         this.logger.info(`Created event id: ${result.value.id} by organizer: ${currentUser.userId}`);
         if (isHtmx) {
-            res.set("HX-Redirect", "/events");
-            res.status(204).send();
+            res.set("HX-Trigger", "event-created");
+            res.status(200).render("partials/success", {
+                message: "Event created successfully.",
+                eventId: result.value.id,
+                layout: false,
+            });
             return;
         }
         res.redirect("/events");
     }
+
+    async filterEvents(
+        res: Response,
+        session: IAppBrowserSession,
+        category: string,
+        startAfterRaw: string,
+    ): Promise<void> {
+        this.logger.info(`Filtering events with category="${category}" and startAfter="${startAfterRaw}"`);
+
+        const startAfter = startAfterRaw ? new Date(startAfterRaw) : undefined;
+        const result = await this.service.filterEvents(category, startAfter);
+
+        if (!result.ok) {
+            const message = this.isEventError(result.value)
+                ? result.value.message
+                : "Failed to filter events.";
+            this.logger.error(`Event filter failed: ${message}`);
+            res.status(500).render("partials/error", { message, layout: false });
+            return;
+        }
+
+        res.render("event-list", {
+            session,
+            events: result.value,
+            query: "",
+            category,
+            startAfter: startAfterRaw,
+        });
+}
     
     async editFromForm(
         res: Response,

@@ -19,6 +19,14 @@ export interface IEventService {
     getAllEvents(): Promise<Result<Event[], EventError>>;
     getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
     searchEvents(query: string): Promise<Result<Event[], EventError>>;
+
+    filterEvents(
+    category: string,
+    startAfter?: Date,
+    ): Promise<Result<Event[], EventError>>;
+    
+    publishEvent(id: number, userId: string): Promise<Result<Event, EventError>>;
+    cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>>;
 }
 
 // validation invariants 
@@ -33,6 +41,61 @@ const LOCATION_MIN = 3;
 export class EventService implements IEventService {
     constructor(private readonly repo: IEventRepository) {}
 
+    async filterEvents(
+        category: string,
+        startAfter?: Date,
+    ): Promise<Result<Event[], EventError>> {
+        const result = await this.repo.getAll();
+        if (!result.ok) return result;
+
+        let events = result.value;
+
+        // filter by category
+        if (category.trim()) {
+            events = events.filter(event => event.category === category);
+        }
+
+        // filter by date
+        if (startAfter) {
+            events = events.filter(event => new Date(event.startDate) >= startAfter);
+        }
+
+        return Ok(events);
+    }
+    async publishEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
+    const result = await this.repo.getById(id);
+    if (!result.ok) return result;
+
+    const event = result.value;
+
+    if (event.organizerId !== userId) {
+        return Err(ValidationError("Only the organizer can publish this event"));
+    }
+
+    if (event.status !== "draft") {
+        return Err(ValidationError("Event must be draft to publish"));
+    }
+
+    return await this.repo.edit(id, { status: "published" });
+}
+
+async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
+    const result = await this.repo.getById(id);
+    if (!result.ok) return result;
+
+    const event = result.value;
+
+    if (event.organizerId !== userId) {
+        return Err(ValidationError("Only the organizer can cancel this event"));
+    }
+
+    if (event.status !== "published") {
+        return Err(ValidationError("Only published events can be cancelled"));
+    }
+
+    return await this.repo.edit(id, { status: "cancelled" });
+}
+
     async createEvent(input: CreateEventInput, organizerId: string, organizerDisplayName: string): Promise<Result<Event, EventError>> {
         // can add role permissions later
         
@@ -44,7 +107,11 @@ export class EventService implements IEventService {
         if (!description) return Err(ValidationError("Description is required"));
         
         const location = input.location.trim();
-        if (!location) return Err(ValidationError("Location is required"));   
+        if (!location) return Err(ValidationError("Location is required"));
+        
+        if (input.maxCapacity === undefined || input.maxCapacity === null) {
+            return Err(ValidationError("Max capacity is required"));
+        }
 
         const validationError = this.validateEventInput(input);
         if (validationError !== undefined) return Err(validationError);
@@ -107,9 +174,17 @@ export class EventService implements IEventService {
             if (endDate < new Date()) return ValidationError("End date must be in the future");
         }
 
+        if (input.startDate !== undefined && input.endDate !== undefined) {
+            if (input.endDate <= input.startDate) {
+                return ValidationError("End date must be after start date");
+            }
+        }
+
         if (input.maxCapacity !== undefined) {
             const capacity = input.maxCapacity;
-            if (capacity <= 0) return ValidationError("Max capacity must be greater than 0");
+            if (!Number.isFinite(capacity) || capacity <= 0) {
+                return ValidationError("Max capacity must be greater than 0");
+            }
         }
 
         if (input.status !== undefined) {
