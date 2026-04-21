@@ -235,11 +235,11 @@ class EventController implements IEventController {
 
         this.logger.info(`Edited event id: ${id} by organizer: ${currentUser.userId}`);
         if (isHtmx) {
-            res.set("HX-Redirect", "/events");
+            res.set("HX-Redirect", `/events/${id}`);
             res.status(204).send();
             return;
         }
-        res.redirect("/events");
+        res.redirect(`/events/${id}`);
     }
 
     async showEventDetails(
