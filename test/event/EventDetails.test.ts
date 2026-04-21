@@ -119,4 +119,18 @@ describe("EventService getEvent", () => {
         const userResult = await service.getEvent(createdEvent.value.id, {userId: "user-2", role: "user"});
         expect(userResult.ok).toBe(true);
     });
+
+    // For each feature, write integration tests covering the happy path, each named error type, and at least one edge case
+    it("handles edge case of event with start date in the past", async () => {
+        const repo = CreateInMemoryEventRepository();
+        const service = CreateEventService(repo);
+        const createdEvent = await service.createEvent(eventInput, eventInput.organizerId, eventInput.organizerName);
+        if (!createdEvent.ok) throw new Error("Failed to create event for testing");
+        await service.publishEvent(createdEvent.value.id, eventInput.organizerId);
+        // Simulate a past event by manually setting the start and end dates
+        createdEvent.value.startDate = new Date(Date.now() - 86400000); // One day ago
+        createdEvent.value.endDate = new Date(Date.now() - 3600000); // One hour ago
+        const result = await service.getEvent(createdEvent.value.id, {userId: "user-2", role: "user"});
+        expect(result.ok).toBe(true);
+    });
 });
