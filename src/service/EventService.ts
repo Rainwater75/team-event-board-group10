@@ -80,7 +80,11 @@ async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>
         if (!description) return Err(ValidationError("Description is required"));
         
         const location = input.location.trim();
-        if (!location) return Err(ValidationError("Location is required"));   
+        if (!location) return Err(ValidationError("Location is required"));
+        
+        if (input.maxCapacity === undefined || input.maxCapacity === null) {
+            return Err(ValidationError("Max capacity is required"));
+        }
 
         const validationError = this.validateEventInput(input);
         if (validationError !== undefined) return Err(validationError);
@@ -143,9 +147,17 @@ async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>
             if (endDate < new Date()) return ValidationError("End date must be in the future");
         }
 
+        if (input.startDate !== undefined && input.endDate !== undefined) {
+            if (input.endDate <= input.startDate) {
+                return ValidationError("End date must be after start date");
+            }
+        }
+
         if (input.maxCapacity !== undefined) {
             const capacity = input.maxCapacity;
-            if (capacity <= 0) return ValidationError("Max capacity must be greater than 0");
+            if (!Number.isFinite(capacity) || capacity <= 0) {
+                return ValidationError("Max capacity must be greater than 0");
+            }
         }
 
         if (input.status !== undefined) {

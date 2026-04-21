@@ -174,7 +174,7 @@ async cancelEvent(
             category,
             startDate: startDateRaw
                 ? new Date(startDateRaw)
-                : new Date(Date.now() + 60 * 60 * 1000),
+                : new Date(Date.now() + 60 * 60 * 1000), // double default. one in frontend one in backend
             endDate: endDateRaw
                 ? new Date(endDateRaw)
                 : new Date(Date.now() + 2 * 60 * 60 * 1000),
@@ -206,8 +206,12 @@ async cancelEvent(
 
         this.logger.info(`Created event id: ${result.value.id} by organizer: ${currentUser.userId}`);
         if (isHtmx) {
-            res.set("HX-Redirect", "/events");
-            res.status(204).send();
+            res.set("HX-Trigger", "event-created");
+            res.status(200).render("partials/success", {
+                message: "Event created successfully.",
+                eventId: result.value.id,
+                layout: false,
+            });
             return;
         }
         res.redirect("/events");
