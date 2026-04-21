@@ -212,12 +212,45 @@ async cancelEvent(
 
         this.logger.info(`Created event id: ${result.value.id} by organizer: ${currentUser.userId}`);
         if (isHtmx) {
-            res.set("HX-Redirect", "/events");
-            res.status(204).send();
+            res.set("HX-Trigger", "event-created");
+            res.status(200).render("partials/success", {
+                message: "Event created successfully.",
+                eventId: result.value.id,
+                layout: false,
+            });
             return;
         }
         res.redirect("/events");
     }
+
+    async filterEvents(
+        res: Response,
+        session: IAppBrowserSession,
+        category: string,
+        startAfterRaw: string,
+    ): Promise<void> {
+        this.logger.info(`Filtering events with category="${category}" and startAfter="${startAfterRaw}"`);
+
+        const startAfter = startAfterRaw ? new Date(startAfterRaw) : undefined;
+        const result = await this.service.filterEvents(category, startAfter);
+
+        if (!result.ok) {
+            const message = this.isEventError(result.value)
+                ? result.value.message
+                : "Failed to filter events.";
+            this.logger.error(`Event filter failed: ${message}`);
+            res.status(500).render("partials/error", { message, layout: false });
+            return;
+        }
+
+        res.render("event-list", {
+            session,
+            events: result.value,
+            query: "",
+            category,
+            startAfter: startAfterRaw,
+        });
+}
     
     async editFromForm(
         res: Response,
@@ -253,11 +286,15 @@ async cancelEvent(
         const eventResult = await this.service.getEvent(id, currentUser);
         if (!eventResult.ok) {
             //if getEvent failed, it means the event doesn't exist or the user doesn't have view permissions
-            const status = this.mapErrorStatus(eventResult.value);
+            const error = eventResult.value;
+            const status = this.isEventError(error) ? this.mapErrorStatus(error) : 500;
+            const message = this.isEventError(error)
+                ? error.message
+                : "An unexpected error occurred while loading the event.";
             const log = status === 400 ? this.logger.warn : this.logger.error;
-            log.call(this.logger, `Failed to retrieve event for editing: ${eventResult.value.message}`);
+            log.call(this.logger, `Failed to retrieve event for editing: ${message}`);
             res.status(isHtmx ? 200 : status).render("partials/error", {
-                message: eventResult.value.message,
+                message,
                 layout: false,
             });
             return;
@@ -310,14 +347,70 @@ async cancelEvent(
 
         this.logger.info(`Edited event id: ${id} by organizer: ${currentUser.userId}`);
         if (isHtmx) {
-            res.set("HX-Redirect", "/home");
+            res.set("HX-Redirect", `/events/${id}`);
             res.status(204).send();
             return;
         }
-        res.redirect("/home");
+        res.redirect(`/events/${id}`);
     }
 
-    showCreateForm(
+    async showEventDetails(
+        res: Response,
+        session: IAppBrowserSession,
+        eventId: number,
+    ): Promise<void> {
+        this.logger.info(`Fetching event details for id=${eventId}`);
+        //const isHtmx = this.isHtmxRequest(res);
+        const currentUser = session.authenticatedUser;
+        const result = await this.service.getEvent(eventId, currentUser);
+
+        // Error handling
+        if (!result.ok && this.isEventError(result.value)) {
+            const status = this.mapErrorStatus(result.value);
+
+            const log = status === 400 ? this.logger.warn : this.logger.error;
+            log.call(this.logger, `Failed to fetch event: ${result.value.message}`);
+
+            res.status(status).render("partials/error", {
+                message: result.value.message,
+                layout: false,
+            });
+            return;
+        }
+        if (!result.ok) {
+            res.status(500).render("partials/error", {
+                message: "Unexpected error fetching event.",
+                layout: false,
+            });
+            return;
+        }
+
+        const event = result.value;
+        const attendeeCountResult = await this.rsvpService.getGoingCount(eventId);
+        const attendingCount = attendeeCountResult.ok ? attendeeCountResult.value : event.attendingUsers.length;
+
+        if (attendeeCountResult.ok === false) {
+            this.logger.warn(`Failed to load attendee count for event ${eventId}: ${attendeeCountResult.value.message}`);
+        }
+
+        // Role logic
+        const isOrganizer = currentUser?.userId === event.organizerId;
+        const isAdmin = currentUser?.role === "admin";
+        // we can later check if member before allowing RSVP, but for now anyone can RSVP to published events
+
+        res.render("event-detail", {
+            session,
+            event,
+            attendingCount,
+            canEdit: isOrganizer || isAdmin,
+            canCancel: isOrganizer || isAdmin,
+            canRSVP: true, // Later we should check if user is member and event is published before allowing RSVP
+            isDraft: event.status === "draft",
+            organizerName: event.organizerName,
+        });
+    }
+
+    async showCreateForm(
         res: Response, 
         session: IAppBrowserSession,
         pageError: string | null = null
