@@ -34,6 +34,7 @@ export interface IEventController {
     ): Promise<void>
 
     showCreateForm(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
+    showEditForm(res: Response, session: IAppBrowserSession, eventId: number, pageError?: string | null): Promise<void>;
     displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
     showEventDetails(res: Response, session: IAppBrowserSession, eventId: number): Promise<void>;
     searchEvents(res: Response, session: IAppBrowserSession, query: string): Promise<void>;
@@ -346,11 +347,11 @@ async cancelEvent(
 
         this.logger.info(`Edited event id: ${id} by organizer: ${currentUser.userId}`);
         if (isHtmx) {
-            res.set("HX-Redirect", "/home");
+            res.set("HX-Redirect", `/events/${id}`);
             res.status(204).send();
             return;
         }
-        res.redirect("/home");
+        res.redirect(`/events/${id}`);
     }
 
     async showEventDetails(
@@ -425,6 +426,60 @@ async cancelEvent(
 
         res.render("create", { pageError, session });
         return Promise.resolve(); // returning here to fix typing error
+    }
+
+    async showEditForm(
+        res: Response, 
+        session: IAppBrowserSession,
+        eventId: number,
+        pageError: string | null = null
+    ): Promise<void> {
+        const currentUser = session.authenticatedUser;
+        if (!currentUser) {
+            res.status(401).render("partials/error", {
+                message: AuthenticationRequired("Please log in to continue.").message,
+                layout: false,
+            });
+            return;
+        }
+
+        const result = await this.service.getEvent(eventId, currentUser);
+
+        // Error handling
+        if (!result.ok && this.isEventError(result.value)) {
+            const status = this.mapErrorStatus(result.value);
+
+            const log = status === 400 ? this.logger.warn : this.logger.error;
+            log.call(this.logger, `Failed to fetch event: ${result.value.message}`);
+
+            res.status(status).render("partials/error", {
+                message: result.value.message,
+                layout: false,
+            });
+            return;
+        }
+        if (!result.ok) {
+            res.status(500).render("partials/error", {
+                message: "Unexpected error fetching event.",
+                layout: false,
+            });
+            return;
+        }
+
+        const event = result.value;
+        const isOrganizer = currentUser.userId === event.organizerId;
+        const isAdmin = currentUser.role === "admin";
+
+        if (!isOrganizer && !isAdmin) {
+            this.logger.warn(`User ${currentUser.userId} attempted to access edit form for event ${eventId} without authorization.`);
+            res.status(403).render("partials/error", {
+                message: AuthorizationRequired("You are not authorized to edit this event.").message,
+                layout: false,
+            });
+            return;
+        }
+
+        res.render("edit-event", { pageError, session, event });
     }
 
     async displayOrganizerDashboard(
