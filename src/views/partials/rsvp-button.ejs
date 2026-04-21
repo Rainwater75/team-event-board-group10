@@ -1,0 +1,30 @@
+<div id="rsvp-panel">
+    <% 
+      const label =
+        rsvpStatus === "going" ? "Cancel RSVP" :
+        rsvpStatus === "waitlisted" ? "Leave Waitlist" :
+        rsvpStatus === "cancelled" ? "RSVP Again" :
+        (typeof attendeeCount === "number" && typeof maxCapacity === "number" && attendeeCount >= maxCapacity
+          ? "Join Waitlist"
+          : "RSVP Now");
+    %>
+  
+    <% if (pageError) { %>
+      <div style="margin-bottom: 10px; color: #b91c1c; background: #fee2e2; border: 1px solid #fecaca; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem;">
+        <%= pageError %>
+      </div>
+    <% } %>
+  
+    <form
+      method="POST"
+      action="/events/<%= eventId %>/rsvp"
+      hx-post="/events/<%= eventId %>/rsvp"
+      hx-target="#rsvp-panel"
+      hx-swap="outerHTML"
+      style="margin: 0;"
+    >
+      <button type="submit" class="btn btn-rsvp">
+        <%= label %>
+      </button>
+    </form>
+  </div>
