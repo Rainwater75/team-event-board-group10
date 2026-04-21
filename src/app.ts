@@ -313,7 +313,18 @@ class ExpressApp implements IApp {
         await this.controller.searchEvents(res, session, query);
       })
     );
-    
+
+    // ── Edit Routes ────────────────────────────────────────────────
+
+    this.app.get(
+      "/events/:id/edit",
+      asyncHandler(async (req, res) => {
+        if (!this.requireAuthenticated(req, res)) return;
+        const browserSession = recordPageView(sessionStore(req));
+        await this.controller.showEditForm(res, browserSession, Number(req.params.id));
+      })
+    );
+
     this.app.post(
       "/events/:id/edit",
       asyncHandler(async (req, res) => {
@@ -334,6 +345,7 @@ class ExpressApp implements IApp {
         );
       })
     )
+
     // ── RSVP Routes ────────────────────────────────────────────────
     this.app.post(
       "/events/:id/rsvp",
