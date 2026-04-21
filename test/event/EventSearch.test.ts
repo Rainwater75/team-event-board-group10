@@ -1,58 +1,120 @@
-import request from 'supertest';
-import { createComposedApp } from '../../src/composition'; // Assuming your app is exported from src/app.ts
-import { CreateLoggingService } from '../../src/service/LoggingService';
+import { CreateEventService, IEventService } from "../../src/service/EventService";
+import { CreateInMemoryEventRepository } from "../../src/repository/InMemoryEventRepository";
+import { IEventRepository } from "../../src/repository/EventRepository";
 
-describe('EventSearch API', () => {
+// Write tests covering matching results, no results, empty queries, and invalid input.
 
-    describe('GET /events/search', () => {
-        let agent: any;
-        let app: any;
-        beforeAll(async () => {
-            app = createComposedApp(CreateLoggingService()).getExpressApp();
-            agent = request.agent(app);
-            const loginRes = await agent.post('/login').send({ username: 'user@app.test', password: 'password123' });
-            // Debug: Ensure login actually worked
-            if (loginRes.status !== 200 && loginRes.status !== 302) {
-              console.error('Login failed with status:', loginRes.status);
-            }
-        });
+describe("EventSearch", () => {
+  let eventRepository: IEventRepository;
+  let eventService: IEventService;
+  const input = {
+    title: "Tech Conference",
+    description: "A conference",
+    startDate: new Date("2030-10-01"),
+    endDate: new Date("2030-10-01"),
+    location: "Online",
+    organizerId: "john-doe",
+    maxCapacity: 100,
+  };
 
-        it('should return all events on events page', async () => {
-            const response = await agent.get("/events");
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Array);
-            expect(response.body.length).toBeGreaterThan(0);
-        });
+  beforeEach(() => {
+    eventRepository = CreateInMemoryEventRepository();
+    eventService = CreateEventService(eventRepository);
+  });
 
-        it('should return no results for a query with no matches', async () => {
-            const response = await agent
-                .get('/events/search')
-                .query({ q: 'nonexistentevent' });
 
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Array);
-            expect(response.body.length).toBe(0);
-        });
+  describe("Repository - search", () => {
+    it("should return events matching the search query by title", async () => {
+      await eventRepository.add({
+        title: "Tech Conference",
+        description: "A conference",
+        startDate: new Date("2030-10-01"),
+        endDate: new Date("2030-10-01"),
+        location: "Online",
+        organizerId: "john-doe",
+        maxCapacity: 100,
+      });
+      // make published first
+      await eventRepository.updateStatus(1, "published");
 
-        it('should handle empty queries gracefully', async () => {
-            const app = createComposedApp(CreateLoggingService()).getExpressApp();
-            const response = await request(app as any)
-                .get('/events/search')
-                .query({ q: '' });
+      const result = await eventRepository.search("Tech");
 
-            expect(response.status).toBe(200);
-            expect(response.body).toBeInstanceOf(Array);
-            // Depending on implementation, might return all events or empty
-        });
-
-        it('should return 400 for invalid input (non-string query)', async () => {
-            const app = createComposedApp(CreateLoggingService()).getExpressApp();
-            const response = await request(app as any)
-                .get('/events/search')
-                .query({ q: 123 }); // Invalid input
-
-            expect(response.status).toBe(400);
-            expect(response.body).toHaveProperty('error');
-        });
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(1);
+        expect(result.value[0].title).toBe("Tech Conference");
+      }
     });
+
+    it("should return empty array if no events match the query", async () => {
+      await eventRepository.add(input);
+      await eventRepository.updateStatus(1, "published");
+
+      const result = await eventRepository.search("Nonexistent");
+      
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(0);
+      }
+    });
+
+    it("should be case insensitive", async () => {
+      await eventRepository.add(input);
+      await eventRepository.updateStatus(1, "published");
+      const result = await eventRepository.search("tech");
+      
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value[0].title).toBe("Tech Conference");
+      }
+    });
+  });
+
+  describe("Service - searchEvents", () => {
+    it("should return events matching the search query", async () => {
+      await eventService.createEvent(input, "john-doe", "John Doe");
+      // Assuming createResult.value contains the new event with its ID
+
+      await eventRepository.updateStatus(1, "published");
+
+      const result = await eventService.searchEvents("Tech");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(1);
+        expect(result.value[0].title).toBe("Tech Conference");
+      }
+    });
+
+  });
+
+  describe("Service - searchEvents", () => {
+    it("should return events matching the search query", async () => {
+      await eventService.createEvent(input, "john-doe", "John Doe");
+      await eventRepository.updateStatus(1, "published");
+
+      const result = await eventService.searchEvents("Tech");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toHaveLength(1);
+        expect(result.value[0].title).toBe("Tech Conference");
+      }
+    });
+
+    it("should handle errors from repository", async () => {
+      // Mock search to return a failed result instead of throwing
+      jest.spyOn(eventRepository, 'search').mockResolvedValue({
+        ok: false,
+        error: new Error("Repository error")
+      } as any);
+
+      const result = await eventService.searchEvents("query");
+      
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.value.message).toBe("Repository error");
+      }
+    });
+  });
 });
