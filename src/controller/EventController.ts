@@ -111,6 +111,14 @@ class EventController implements IEventController {
         return;
     }
 
+    if (this.isHtmxRequest(res)) {
+        res.set("HX-Trigger", JSON.stringify({
+            "dashboard-event-status-updated": { id, status: "published" },
+        }));
+        res.status(204).send();
+        return;
+    }
+
     res.redirect(`/events/${id}`);
 }
 
@@ -139,6 +147,14 @@ async cancelEvent(
             message,
             layout: false,
         });
+        return;
+    }
+
+    if (this.isHtmxRequest(res)) {
+        res.set("HX-Trigger", JSON.stringify({
+            "dashboard-event-status-updated": { id, status: "cancelled" },
+        }));
+        res.status(204).send();
         return;
     }
 
