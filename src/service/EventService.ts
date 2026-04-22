@@ -17,6 +17,24 @@ export interface IEventService {
 
     getEvent(id: number, currentUser: { userId: string; role: string } | null): Promise<Result<Event, EventError>>;
     getAllEvents(): Promise<Result<Event[], EventError>>;
+    publishEvent(
+        id: number,
+        actingUserId: string,
+    ): Promise<Result<Event, EventError>>;
+    editEvent(
+        id: number, 
+        input: EditEventInput
+    ): Promise<Result<Event, EventError>>,
+
+    cancelEvent(
+        id: number,
+        actingUserId: string,
+        actingUserRole: "admin" | "staff" | "user",
+    ): Promise<Result<Event, EventError>>;
+    getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
+    searchEvents(query: string): Promise<Result<Event[], EventError>>;
+    getEvent(id: number, currentUser: { userId: string; role: string } | null): Promise<Result<Event, EventError>>;
+    getAllEvents(): Promise<Result<Event[], EventError>>;
     getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
     searchEvents(query: string): Promise<Result<Event[], EventError>>;
 
