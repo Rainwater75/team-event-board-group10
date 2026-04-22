@@ -206,7 +206,7 @@ export class EventService implements IEventService {
 
         if (input.maxCapacity !== undefined) {
             const capacity = input.maxCapacity;
-            if (Number.isNaN(capacity) || Number.isInteger(capacity) || !Number.isFinite(capacity)) {
+            if (Number.isNaN(capacity) || !Number.isInteger(capacity) || !Number.isFinite(capacity)) {
                 return ValidationError("Max capacity is invalid")
             }
             if (capacity <= 0) {
