@@ -242,4 +242,102 @@ describe("EventService editEvent", () => {
       }
     }
   });
-})
+
+  it("rejects a title that is too short", async () => {
+    const result = await service.editEvent(createdEvent.id, { title: "a" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.value.message).toBe("Title must be between 3 and 100 characters");
+    }
+  });
+
+  it("rejects a title that is too long", async () => {
+    const result = await service.editEvent(createdEvent.id, { title: "a".repeat(101) });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.value.message).toBe("Title must be between 3 and 100 characters");
+    }
+  });
+
+  it("rejects a description that is too short", async () => {
+    const result = await service.editEvent(createdEvent.id, { description: "a" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.value.message).toBe("Description must be between 10 and 1000 characters");
+    }
+  });
+
+  it("rejects a description that is too long", async () => {
+    const result = await service.editEvent(createdEvent.id, { description: "a".repeat(1001) });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.value.message).toBe("Description must be between 10 and 1000 characters");
+    }
+  });
+
+  it("rejects a location that is too short", async () => {
+    const result = await service.editEvent(createdEvent.id, { location: "a" });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.value.message).toBe("Location must be at least 3 characters");
+    }
+  });
+
+  it("rejects a start date in the past", async () => {
+    const result = await service.editEvent(createdEvent.id, { startDate: new Date(Date.now() - 1000) });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.value.message).toBe("Start date must be in the future");
+    }
+  });
+
+  it("rejects an end date that is not after the start date", async () => {
+    const startDate = new Date(Date.now() + 2 * 60 * 60 * 1000);
+    const endDate = new Date(startDate.getTime() - 1000);
+    const result = await service.editEvent(createdEvent.id, { startDate, endDate });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.value.message).toBe("End date must be after start date");
+    }
+  });
+
+  it("rejects a non-positive max capacity", async () => {
+    const result = await service.editEvent(createdEvent.id, { maxCapacity: 0 });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.value.message).toBe("Max capacity must be greater than 0");
+    }
+  });
+
+  it("rejects an invalid max capacity", async () => {
+    const result = await service.editEvent(createdEvent.id, { maxCapacity: 10.5 });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.value.message).toBe("Max capacity is invalid");
+    }
+  });
+
+  it("rejects an infinite max capacity", async () => {
+    const result = await service.editEvent(createdEvent.id, { maxCapacity: Number.POSITIVE_INFINITY });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.value.message).toBe("Max capacity is invalid");
+    }
+  });
+
+  it("rejects an invalid status", async () => {
+    const result = await service.editEvent(createdEvent.id, { status: "invalid-status" as any });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.value.message).toContain("Status input must be");
+    }
+  });
+
+  it("rejects an invalid date", async () => {
+    const result = await service.editEvent(createdEvent.id, { startDate: new Date("invalid") });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.value.message).toBe("Start date is invalid");
+    }
+  });
+});
