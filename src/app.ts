@@ -298,7 +298,7 @@ class ExpressApp implements IApp {
 
         await this.controller.filterEvents(res, session, category, startAfter);
       }),
-);
+    );
 
     this.app.get(
       "/dashboard/organizer",
@@ -324,20 +324,19 @@ class ExpressApp implements IApp {
         const query = typeof req.query.q === "string" ? req.query.q : "";
       
         await this.controller.searchEvents(res, session, query);
-        }),
+      }),
     );
 
     this.app.post(
       "/events/:id/publish",
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) return;
-
         await this.controller.publishEvent(
           res,
           recordPageView(sessionStore(req)),
           Number(req.params.id),
-      );
-        }),
+        );
+      }),
     );
 
     this.app.post(
@@ -349,10 +348,10 @@ class ExpressApp implements IApp {
           res,
           recordPageView(sessionStore(req)),
           Number(req.params.id),
-            );
-          }),
-      );
-
+        );
+      }),
+    );
+    
     // ── Edit Routes ────────────────────────────────────────────────
 
     this.app.get(
