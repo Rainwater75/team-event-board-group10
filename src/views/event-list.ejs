@@ -57,6 +57,9 @@
                         <p style="font-size:13px; margin-top:12px; font-weight: bold; color: #6b7280;">
                             📅 <%= new Date(event.startDate).toLocaleString([], {dateStyle: 'medium', timeStyle: 'short'}) %>
                         </p>
+                        <p style="font-size:13px; margin-top:12px; font-weight: bold; color: #6b7280;">
+                            📍 <%= event.description.length > 150 ? event.description.slice(0, 150) + "..." : event.description  %>
+                        </p>
                     </div>
                     <a href="/events/<%= event.id %>" class="btn-check" style="margin-top:16px; text-align:center; background-color:#2563eb; color:white; padding:12px; border-radius:8px; text-decoration:none; font-weight:600; transition: 0.2s;">
                         Check it Out!
