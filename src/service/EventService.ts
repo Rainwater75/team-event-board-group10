@@ -1,5 +1,5 @@
 import { IEventRepository } from "../repository/EventRepository.js";
-import { EventError, EventNotFound, InvalidContent } from "../lib/errors.js";
+import { EventError, EventNotFound, InvalidContent, InvalidSearchInput } from "../lib/errors.js";
 import { Ok, Err, Result } from "../lib/result.js";
 import { CreateEventInput, Event, Category, EditEventInput } from "../model/Event.js";
 import { ValidationError } from "../lib/errors.js";
@@ -59,7 +59,7 @@ const LOCATION_MIN = 3;
 export class EventService implements IEventService {
     constructor(private readonly repo: IEventRepository) {}
 
-    async filterEvents(
+    async filterEvents( // THIS NEEDS TO BE FIXED: SHOULD ONLY SHOW PUBLISHED EVENTS, TAKE IN SEARCH PARAMS ALSO, AND USER ROLE (ORGANIZER, ADMIN,ETC)
         category: string,
         startAfter?: Date,
     ): Promise<Result<Event[], EventError>> {
@@ -250,6 +250,8 @@ export class EventService implements IEventService {
     }
 
     async searchEvents(query: string): Promise<Result<Event[], EventError>> {
+        // search req can be empty
+        if (query.trim().length > 500) return Err(InvalidSearchInput("Search query is too long"));
         return await this.repo.search(query);
     }
 }
