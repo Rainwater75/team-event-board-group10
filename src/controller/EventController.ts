@@ -99,15 +99,19 @@ class EventController implements IEventController {
     }
 
     const result = await this.service.publishEvent(id, currentUser.userId);
-
+    // Map service-layer errors to the correct HTTP status and error response
     if (!result.ok) {
         const message = this.isEventError(result.value)
             ? result.value.message
             : "Unexpected error publishing event.";
 
-        res.status(400).render("partials/error", {
-            message,
-            layout: false,
+        const status = this.isEventError(result.value)
+            ? this.mapErrorStatus(result.value)
+            : 500;
+
+    res.status(status).render("partials/error", {
+        message,
+        layout: false,
         });
         return;
     }
