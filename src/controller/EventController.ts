@@ -75,7 +75,8 @@ class EventController implements IEventController {
 
     private mapErrorStatus(error: EventError | AuthError): number {
         if (error.name === "ValidationError" || error.name === "InvalidContent") return 400; // bad request
-        if (error.name === "AuthorizationRequired") return 403; // forbidden
+        if (error.name === "InvalidStateTransitionError") return 400; // bad request
+        if (error.name === "AuthorizationRequired" || error.name === "UnauthorizedEventActionError") return 403; // forbidden
         if (error.name === "EventNotFound") return 404; // not found
         return 500; // internal server error for unexpected errors
     }
@@ -99,15 +100,19 @@ class EventController implements IEventController {
     }
 
     const result = await this.service.publishEvent(id, currentUser.userId);
-
+    // Map service-layer errors to the correct HTTP status and error response
     if (!result.ok) {
         const message = this.isEventError(result.value)
             ? result.value.message
             : "Unexpected error publishing event.";
 
-        res.status(400).render("partials/error", {
-            message,
-            layout: false,
+        const status = this.isEventError(result.value)
+            ? this.mapErrorStatus(result.value)
+            : 500;
+
+    res.status(status).render("partials/error", {
+        message,
+        layout: false,
         });
         return;
     }
@@ -144,7 +149,11 @@ async cancelEvent(
             ? result.value.message
             : "Unexpected error cancelling event.";
 
-        res.status(400).render("partials/error", {
+        const status = this.isEventError(result.value)
+            ? this.mapErrorStatus(result.value)
+            : 500;
+
+        res.status(status).render("partials/error", {
             message,
             layout: false,
         });
