@@ -86,6 +86,7 @@ export class EventService implements IEventService {
 
     const event = result.value;
 
+    //Can add permission for admin override but leaving it like this for now
     if (event.organizerId !== userId) {
         return Err(UnauthorizedEventActionError("Only the organizer can cancel this event"));
     }
