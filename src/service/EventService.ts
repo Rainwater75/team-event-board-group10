@@ -3,6 +3,8 @@ import { EventError, EventNotFound, InvalidContent, InvalidSearchInput } from ".
 import { Ok, Err, Result } from "../lib/result.js";
 import { CreateEventInput, Event, Category, EditEventInput } from "../model/Event.js";
 import { ValidationError } from "../lib/errors.js";
+import { UnauthorizedEventActionError } from "../lib/errors.js";
+import { InvalidStateTransitionError } from "../lib/errors.js";
 
 export interface IEventService {
     createEvent(
@@ -68,11 +70,11 @@ export class EventService implements IEventService {
     const event = result.value;
 
     if (event.organizerId !== userId) {
-        return Err(ValidationError("Only the organizer can publish this event"));
+        return Err(UnauthorizedEventActionError("Only the organizer can publish this event"));
     }
 
     if (event.status !== "draft") {
-        return Err(ValidationError("Event must be draft to publish"));
+        return Err(InvalidStateTransitionError("Event must be draft to publish"));
     }
 
     return await this.repo.edit(id, { status: "published" });
