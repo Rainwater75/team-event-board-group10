@@ -4,7 +4,8 @@ export type EventError =
   | { name: "ValidationError"; message: string }
   | { name: "UnexpectedDependencyError"; message: string }
   | { name: "UnauthorizedEventActionError"; message: string }
-  | { name: "InvalidStateTransitionError"; message: string };
+  | { name: "InvalidStateTransitionError"; message: string }
+  | { name: "InvalidSearchInput"; message: string };
 
 // when the event is not found in the database, we can return this error
 export const EventNotFound = (message: string): EventError => ({
@@ -39,5 +40,11 @@ export const UnauthorizedEventActionError = (message: string): EventError => ({
 // when an action is invalid for the event's current state (e.g., publishing a non-draft event)
 export const InvalidStateTransitionError = (message: string): EventError => ({
   name: "InvalidStateTransitionError",
+  message,
+});
+
+// when the search input is invalid
+export const InvalidSearchInput = (message: string): EventError => ({
+  name: "InvalidSearchInput",
   message,
 });
