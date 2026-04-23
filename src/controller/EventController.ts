@@ -42,6 +42,7 @@ export interface IEventController {
     res: Response,
     session: IAppBrowserSession,
     category: string,
+    query: string,
     startAfterRaw: string,): Promise<void>
 
     publishEvent(
@@ -243,12 +244,13 @@ async cancelEvent(
         res: Response,
         session: IAppBrowserSession,
         category: string,
+        query: string,
         startAfterRaw: string,
     ): Promise<void> {
         this.logger.info(`Filtering events with category="${category}" and startAfter="${startAfterRaw}"`);
 
         const startAfter = startAfterRaw ? new Date(startAfterRaw) : undefined;
-        const result = await this.service.filterEvents(category, startAfter);
+        const result = await this.service.filterEvents(category, query, startAfter);
 
         if (!result.ok) {
             const message = this.isEventError(result.value)

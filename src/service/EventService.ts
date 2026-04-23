@@ -24,8 +24,8 @@ export interface IEventService {
     getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
     searchEvents(query: string): Promise<Result<Event[], EventError>>;
 
-    filterEvents?(
-    category: string,
+    filterEvents(
+    category?: string,
     query?: string,
     startAfter?: Date,
     ): Promise<Result<Event[], EventError>>;

@@ -294,9 +294,11 @@ class ExpressApp implements IApp {
 
         const session = touchAppSession(sessionStore(req));
         const category = typeof req.query.category === "string" ? req.query.category : "";
+        const query = typeof req.query.query === "string" ? req.query.query : "";
+        const startAfterRaw = typeof req.query.startAfter === "string" ? req.query.startAfter : "";
         const startAfter = typeof req.query.startAfter === "string" ? req.query.startAfter : "";
 
-        await this.controller.filterEvents(res, session, category, startAfter);
+        await this.controller.filterEvents(res, session, category, query, startAfter);
       }),
     );
 
