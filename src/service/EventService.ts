@@ -166,10 +166,6 @@ export class EventService implements IEventService {
         const validationError = this.validateEventInput(input);
         if (validationError !== undefined) return Err(validationError);
 
-        const category = input.category ?? "None";
-        if (!this.validCategory(category)) {
-            return Err(ValidationError("Invalid category"));
-        }
 
         const eventInput: CreateEventInput = {
             title: title,
@@ -177,7 +173,7 @@ export class EventService implements IEventService {
             startDate: input.startDate,
             endDate: input.endDate,
             location: location,
-            category: category,
+            category: input.category,
             status: input.status,
             maxCapacity: input.maxCapacity,
             organizerId: organizerId,
@@ -256,6 +252,13 @@ export class EventService implements IEventService {
                 return ValidationError("Status input must be " + allowedStatuses.slice(0, -1).join(", ") + " or " + allowedStatuses[allowedStatuses.length - 1]);
             }
         }
+
+        if (input.category !== undefined) {
+            const category = input.category ?? "None";
+            if (!this.validCategory(category)) {
+                return ValidationError("Invalid category");
+            }
+        }    
     }
 
     async getEvent(id: number, currentUser: { userId: string; role: string } | null): Promise<Result<Event, EventError>> {
