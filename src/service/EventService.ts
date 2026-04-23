@@ -1,7 +1,7 @@
 import { IEventRepository } from "../repository/EventRepository.js";
 import { EventError, EventNotFound, InvalidContent, InvalidSearchInput } from "../lib/errors.js";
 import { Ok, Err, Result } from "../lib/result.js";
-import { CreateEventInput, Event, Category, EditEventInput } from "../model/Event.js";
+import { CATEGORIES, CreateEventInput, Event, Category, EditEventInput } from "../model/Event.js";
 import { ValidationError } from "../lib/errors.js";
 import { UnauthorizedEventActionError } from "../lib/errors.js";
 import { InvalidStateTransitionError } from "../lib/errors.js";
@@ -42,6 +42,11 @@ const LOCATION_MIN = 3;
 
 export class EventService implements IEventService {
     constructor(private readonly repo: IEventRepository) {}
+
+    
+    private validCategory(category: string): category is Category {
+        return CATEGORIES.includes(category as Category);
+    }
 
     async filterEvents( // FIXED ONLY SHOWS PUBLISHED EVENTS, TAKE IN SEARCH PARAMS ALSO, AND USER ROLE (ORGANIZER, ADMIN,ETC)
         category?: string,
@@ -161,7 +166,6 @@ export class EventService implements IEventService {
         const validationError = this.validateEventInput(input);
         if (validationError !== undefined) return Err(validationError);
 
-        // ADD CHECK TO CHECK FOR VALID CATEGORY
 
         const eventInput: CreateEventInput = {
             title: title,
@@ -248,6 +252,13 @@ export class EventService implements IEventService {
                 return ValidationError("Status input must be " + allowedStatuses.slice(0, -1).join(", ") + " or " + allowedStatuses[allowedStatuses.length - 1]);
             }
         }
+
+        if (input.category !== undefined) {
+            const category = input.category ?? "None";
+            if (!this.validCategory(category)) {
+                return ValidationError("Invalid category");
+            }
+        }    
     }
 
     async getEvent(id: number, currentUser: { userId: string; role: string } | null): Promise<Result<Event, EventError>> {
