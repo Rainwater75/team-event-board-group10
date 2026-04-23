@@ -25,8 +25,9 @@ export interface IEventService {
     searchEvents(query: string): Promise<Result<Event[], EventError>>;
 
     filterEvents(
-    category: string,
-    startAfter?: Date,
+    category?: string,
+    timeframe?: "all" | "week" | "weekend",
+    query?: string,
     ): Promise<Result<Event[], EventError>>;
 }
 
@@ -42,27 +43,68 @@ const LOCATION_MIN = 3;
 export class EventService implements IEventService {
     constructor(private readonly repo: IEventRepository) {}
 
-    async filterEvents( // THIS NEEDS TO BE FIXED: SHOULD ONLY SHOW PUBLISHED EVENTS, TAKE IN SEARCH PARAMS ALSO, AND USER ROLE (ORGANIZER, ADMIN,ETC)
-        category: string,
-        startAfter?: Date,
+    async filterEvents( // FIXED ONLY SHOWS PUBLISHED EVENTS, TAKE IN SEARCH PARAMS ALSO, AND USER ROLE (ORGANIZER, ADMIN,ETC)
+        category?: string,
+        timeframe?: "all" | "week" | "weekend",
+        query?: string,
     ): Promise<Result<Event[], EventError>> {
         const result = await this.repo.getAll();
         if (!result.ok) return result;
 
         let events = result.value;
 
+        //Only published events for filter
+        events = events.filter(event => event.status === "published");
+
         // filter by category
-        if (category.trim()) {
-            events = events.filter(event => event.category === category);
-        }
-
-        // filter by date
-        if (startAfter) {
-            events = events.filter(event => new Date(event.startDate) >= startAfter);
-        }
-
-        return Ok(events);
+        if (category && category.trim() && category !== "None") {
+        events = events.filter(event => event.category === category);
     }
+        // Search filter
+        if (query && query.trim()) {
+        const search = query.trim().toLowerCase();
+        events = events.filter(event =>
+            event.title.toLowerCase().includes(search) ||
+            event.description.toLowerCase().includes(search) ||
+            event.location.toLowerCase().includes(search)
+            );
+        }
+
+        // timeframe filter changed to week, weekend, all week
+        const now = new Date();
+        if (timeframe === "all") {
+            events = events.filter(event => new Date(event.startDate) >= now);
+        }
+
+        if (timeframe === "week") {
+            const weekEnd = new Date(now);
+            weekEnd.setDate(now.getDate() + 7);
+
+            events = events.filter(event => {
+                const start = new Date(event.startDate);
+                return start >= now && start <= weekEnd;
+            });
+        }
+
+        if (timeframe === "weekend") {
+            const day = now.getDay(); // 0 Sun ... 6 Sat
+            const daysUntilSaturday = (6 - day + 7) % 7;
+
+            const saturday = new Date(now);
+            saturday.setDate(now.getDate() + daysUntilSaturday);
+            saturday.setHours(0, 0, 0, 0);
+
+            const sundayEnd = new Date(saturday);
+            sundayEnd.setDate(saturday.getDate() + 1);
+            sundayEnd.setHours(23, 59, 59, 999);
+
+            events = events.filter(event => {
+                const start = new Date(event.startDate);
+                return start >= saturday && start <= sundayEnd;
+            });
+                }
+                return Ok(events);
+        }
 
     async publishEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
         const result = await this.repo.getById(id);

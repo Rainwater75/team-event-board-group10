@@ -14,14 +14,14 @@
                 </form>
             </div>
 
-            <!-- HTMX Search Input -->
+             <!-- HTMX Search Input -->
             <div class="search-form" style="flex-grow: 1; max-width: 600px;">
                 <input type="text" 
-                       name="q" 
+                       name="query" 
                        value="<%= query %>" 
                        placeholder="Search events..." 
                        style="width: 100%; padding:14px; border-radius:10px; border:1px solid #ccc; font-size:16px; box-sizing: border-box;"
-                       hx-get="/events" 
+                       hx-get="/events/filter" 
                        hx-trigger="keyup changed delay:500ms, search" 
                        hx-target=".events-grid" 
                        hx-select=".events-grid"
@@ -31,18 +31,34 @@
     </div>
 
     <!-- Filter Form (Optional: Add hx-target=".events-grid" here too for inline filtering) -->
-    <form method="get" action="/events/filter" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom: 20px;">
-        <select name="category" style="min-width:160px; padding:12px; border-radius:10px; border:1px solid #ccc; font-size:16px;">
+    <form method="get" action="/events/filter" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <select
+            name="category"
+            style="min-width:160px; padding:12px; border-radius:10px; border:1px solid #ccc; font-size:16px;"
+        >
             <option value="">All Categories</option>
             <option value="music">Music</option>
             <option value="sports">Sports</option>
             <option value="academic">Academic</option>
         </select>
-        <input type="datetime-local" name="startAfter" style="min-width:220px; padding:12px; border-radius:10px; border:1px solid #ccc; font-size:16px;" />
-        <button type="submit" style="padding:12px 18px; border-radius:10px; border:none; background-color:#2563eb; color:white; font-weight:600; cursor:pointer;">
+
+        <select
+            name="timeframe"
+            style="min-width:180px; padding:12px; border-radius:10px; border:1px solid #ccc; font-size:16px;"
+            >
+            <option value="all">All Upcoming</option>
+            <option value="week">This Week</option>
+            <option value="weekend">This Weekend</option>
+        </select>
+
+        <button
+            type="submit"
+            style="padding:12px 18px; border-radius:10px; border:none; background-color:#2563eb; color:white; font-weight:600; cursor:pointer;"
+        >
             Apply Filters
         </button>
     </form>
+
 
     <!-- The List to be updated -->
     <div class="events-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); /* Creates 3 equal columns */;">
