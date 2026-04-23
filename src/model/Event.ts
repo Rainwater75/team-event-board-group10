@@ -1,6 +1,7 @@
 import { IUserSummary } from "../auth/User.js";
 
-export type Category = "None" | "music" | "sports" | "academic"; //Can change categories later
+export const CATEGORIES = ["None", "music", "sports", "academic"] as const;
+export type Category = typeof CATEGORIES[number]; //Can change categories later
 export type EventStatus = "draft" | "published" | "cancelled" | "past";
 
 export interface IEvent {

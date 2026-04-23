@@ -1,7 +1,7 @@
 import { IEventRepository } from "../repository/EventRepository.js";
 import { EventError, EventNotFound, InvalidContent, InvalidSearchInput } from "../lib/errors.js";
 import { Ok, Err, Result } from "../lib/result.js";
-import { CreateEventInput, Event, Category, EditEventInput } from "../model/Event.js";
+import { CATEGORIES, CreateEventInput, Event, Category, EditEventInput } from "../model/Event.js";
 import { ValidationError } from "../lib/errors.js";
 import { UnauthorizedEventActionError } from "../lib/errors.js";
 import { InvalidStateTransitionError } from "../lib/errors.js";
@@ -42,6 +42,11 @@ const LOCATION_MIN = 3;
 
 export class EventService implements IEventService {
     constructor(private readonly repo: IEventRepository) {}
+
+    
+    private validCategory(category: string): category is Category {
+        return CATEGORIES.includes(category as Category);
+    }
 
     async filterEvents( // FIXED ONLY SHOWS PUBLISHED EVENTS, TAKE IN SEARCH PARAMS ALSO, AND USER ROLE (ORGANIZER, ADMIN,ETC)
         category?: string,
@@ -161,7 +166,10 @@ export class EventService implements IEventService {
         const validationError = this.validateEventInput(input);
         if (validationError !== undefined) return Err(validationError);
 
-        // ADD CHECK TO CHECK FOR VALID CATEGORY
+        const category = input.category ?? "None";
+        if (!this.validCategory(category)) {
+            return Err(ValidationError("Invalid category"));
+        }
 
         const eventInput: CreateEventInput = {
             title: title,
@@ -169,7 +177,7 @@ export class EventService implements IEventService {
             startDate: input.startDate,
             endDate: input.endDate,
             location: location,
-            category: input.category,
+            category: category,
             status: input.status,
             maxCapacity: input.maxCapacity,
             organizerId: organizerId,
