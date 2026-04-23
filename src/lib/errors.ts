@@ -3,6 +3,8 @@ export type EventError =
   | { name: "InvalidContent"; message: string }
   | { name: "ValidationError"; message: string }
   | { name: "UnexpectedDependencyError"; message: string }
+  | { name: "UnauthorizedEventActionError"; message: string }
+  | { name: "InvalidStateTransitionError"; message: string }
   | { name: "InvalidSearchInput"; message: string };
 
 // when the event is not found in the database, we can return this error
@@ -26,6 +28,18 @@ export const ValidationError = (message: string): EventError => ({
 // when there is an unexpected error from a dependency (e.g., database, external API), we can return this error
 export const UnexpectedDependencyError = (message: string): EventError => ({
   name: "UnexpectedDependencyError",
+  message,
+});
+
+// when a user attempts an action they are not authorized to perform
+export const UnauthorizedEventActionError = (message: string): EventError => ({
+  name: "UnauthorizedEventActionError",
+  message,
+});
+
+// when an action is invalid for the event's current state (e.g., publishing a non-draft event)
+export const InvalidStateTransitionError = (message: string): EventError => ({
+  name: "InvalidStateTransitionError",
   message,
 });
 

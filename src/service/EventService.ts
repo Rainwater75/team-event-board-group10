@@ -3,6 +3,8 @@ import { EventError, EventNotFound, InvalidContent, InvalidSearchInput } from ".
 import { Ok, Err, Result } from "../lib/result.js";
 import { CreateEventInput, Event, Category, EditEventInput } from "../model/Event.js";
 import { ValidationError } from "../lib/errors.js";
+import { UnauthorizedEventActionError } from "../lib/errors.js";
+import { InvalidStateTransitionError } from "../lib/errors.js";
 
 export interface IEventService {
     createEvent(
@@ -68,16 +70,16 @@ export class EventService implements IEventService {
 
         const event = result.value;
 
-        if (event.organizerId !== userId) {
-            return Err(ValidationError("Only the organizer can publish this event"));
-        }
-
-        if (event.status !== "draft") {
-            return Err(ValidationError("Event must be draft to publish"));
-        }
-
-        return await this.repo.edit(id, { status: "published" });
+    if (event.organizerId !== userId) {
+        return Err(UnauthorizedEventActionError("Only the organizer can publish this event"));
     }
+
+    if (event.status !== "draft") {
+        return Err(InvalidStateTransitionError("Event must be draft to publish"));
+    }
+
+    return await this.repo.edit(id, { status: "published" });
+}
 
     async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
     const result = await this.repo.getById(id);
@@ -85,12 +87,13 @@ export class EventService implements IEventService {
 
     const event = result.value;
 
+    //Can add permission for admin override but leaving it like this for now
     if (event.organizerId !== userId) {
-        return Err(ValidationError("Only the organizer can cancel this event"));
+        return Err(UnauthorizedEventActionError("Only the organizer can cancel this event"));
     }
 
     if (event.status !== "published") {
-        return Err(ValidationError("Only published events can be cancelled"));
+        return Err(InvalidStateTransitionError("Only published events can be cancelled"));
     }
 
     return await this.repo.edit(id, { status: "cancelled" });
