@@ -75,7 +75,8 @@ class EventController implements IEventController {
 
     private mapErrorStatus(error: EventError | AuthError): number {
         if (error.name === "ValidationError" || error.name === "InvalidContent") return 400; // bad request
-        if (error.name === "AuthorizationRequired") return 403; // forbidden
+        if (error.name === "InvalidStateTransitionError") return 400; // bad request
+        if (error.name === "AuthorizationRequired" || error.name === "UnauthorizedEventActionError") return 403; // forbidden
         if (error.name === "EventNotFound") return 404; // not found
         return 500; // internal server error for unexpected errors
     }
