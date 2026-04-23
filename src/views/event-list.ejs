@@ -45,9 +45,14 @@
       </form>
     </div>
 
-    <form method="get" action="/events" class="search-form" style="flex-grow: 1; max-width: 600px;">
-      <input type="text" name="q" value="<%= query %>" placeholder="Search events..." style="width: 100%; padding:14px; border-radius:10px; border:1px solid #ccc; font-size:16px; box-sizing: border-box;" />
-    </form>
+    <form method="get" action="/events/filter" class="search-form" style="flex-grow: 1; max-width: 600px;">
+  <input
+    type="text"
+    name="query"
+    value="<%= query ?? '' %>"
+    placeholder="Search events..."
+    style="width: 100%; padding:14px; border-radius:10px; border:1px solid #ccc; font-size:16px; box-sizing: border-box;"
+  />
   </div>
 </div>
 
