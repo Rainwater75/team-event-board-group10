@@ -5,7 +5,8 @@ import { CreateEventInput, Event, Category, EditEventInput } from "../model/Even
 import { ValidationError } from "../lib/errors.js";
 import { UnauthorizedEventActionError } from "../lib/errors.js";
 import { InvalidStateTransitionError } from "../lib/errors.js";
-
+import { InvalidCategoryFilterError} from "../lib/errors.js";
+import { InvalidTimeframeFilterError } from "../lib/errors.js";
 export interface IEventService {
     createEvent(
         input: CreateEventInput, 
@@ -52,6 +53,18 @@ export class EventService implements IEventService {
         if (!result.ok) return result;
 
         let events = result.value;
+        const allowedCategories = ["None", "test1", "test2", "test3"];
+        const allowedTimeframes = ["all", "week", "weekend"];
+
+        // validate category
+        if (category && category.trim() && !allowedCategories.includes(category)) {
+            return Err(InvalidCategoryFilterError("Invalid category filter"));
+        }
+
+        // validate timeframe
+        if (timeframe && !allowedTimeframes.includes(timeframe)) {
+            return Err(InvalidTimeframeFilterError("Invalid timeframe filter"));
+        }
 
         //Only published events for filter
         events = events.filter(event => event.status === "published");
