@@ -79,6 +79,8 @@ class EventController implements IEventController {
         if (error.name === "InvalidStateTransitionError") return 400; // bad request
         if (error.name === "AuthorizationRequired" || error.name === "UnauthorizedEventActionError") return 403; // forbidden
         if (error.name === "EventNotFound") return 404; // not found
+        if (error.name === "InvalidCategoryFilterError") return 400; // bad request
+        if (error.name === "InvalidTimeframeFilterError") return 400; // bad request
         return 500; // internal server error for unexpected errors
     }
 
@@ -269,8 +271,16 @@ async cancelEvent(
             const message = this.isEventError(result.value)
                 ? result.value.message
                 : "Failed to filter events.";
+            const statusCode = this.isEventError(result.value)
+                ? this.mapErrorStatus(result.value)
+                : 500;
+
             this.logger.error(`Event filter failed: ${message}`);
-            res.status(500).render("partials/error", { message, layout: false });
+
+            res.status(statusCode).render("partials/error", {
+                message,
+                layout: false,
+            });
             return;
         }
 

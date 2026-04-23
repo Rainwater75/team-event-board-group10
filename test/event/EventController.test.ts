@@ -1,8 +1,7 @@
 import { CreateEventController } from "../../src/controller/EventController.js";
 import type { IAppBrowserSession } from "../../src/session/AppSession.js";
 
-describe("EventController displayOrganizerDashboard", () => {
-  const users = {
+const users = {
     admin: {
       userId: "admin-1",
       email: "admin@example.com",
@@ -37,6 +36,8 @@ describe("EventController displayOrganizerDashboard", () => {
       signedInAt: new Date().toISOString(),
     },
   });
+
+describe("EventController displayOrganizerDashboard", () => {
 
   const makeController = () => {
     const getAllEvents = jest.fn().mockResolvedValue({
@@ -254,5 +255,100 @@ describe("EventController publishEvent / cancelEvent", () => {
         layout: false,
       }),
     );
+  });
+});
+
+describe("EventController filterEvents", () => {
+  it("calls service with valid filters and renders results", async () => {
+    const filterEvents = jest.fn().mockResolvedValue({
+      ok: true,
+      value: [{ id: 1, title: "Filtered Event" }],
+    });
+
+    const controller = CreateEventController(
+      { filterEvents } as any,
+      {} as any,
+      { info: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+    );
+
+    const render = jest.fn();
+
+    await controller.filterEvents(
+      { render } as any,
+      makeSession(users.member),
+      "test1",
+      "",
+      "week",
+    );
+
+    expect(filterEvents).toHaveBeenCalledWith("test1", "week", "");
+    expect(render).toHaveBeenCalledWith(
+      "event-list",
+      expect.objectContaining({
+        events: [{ id: 1, title: "Filtered Event" }],
+      }),
+    );
+  });
+
+  it("returns 400 for invalid category filter", async () => {
+    const filterEvents = jest.fn().mockResolvedValue({
+      ok: false,
+      value: {
+        name: "InvalidCategoryFilterError",
+        message: "Invalid category filter",
+      },
+    });
+
+    const controller = CreateEventController(
+      { filterEvents } as any,
+      {} as any,
+      { info: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+    );
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      render: jest.fn(),
+    };
+
+    await controller.filterEvents(
+      res as any,
+      makeSession(users.member),
+      "badCategory",
+      "",
+      "week",
+    );
+
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it("returns 400 for invalid timeframe filter", async () => {
+    const filterEvents = jest.fn().mockResolvedValue({
+      ok: false,
+      value: {
+        name: "InvalidTimeframeFilterError",
+        message: "Invalid timeframe filter",
+      },
+    });
+
+    const controller = CreateEventController(
+      { filterEvents } as any,
+      {} as any,
+      { info: jest.fn(), warn: jest.fn(), error: jest.fn() } as any,
+    );
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      render: jest.fn(),
+    };
+
+    await controller.filterEvents(
+      res as any,
+      makeSession(users.member),
+      "test1",
+      "",
+      "invalid",
+    );
+
+    expect(res.status).toHaveBeenCalledWith(400);
   });
 });
