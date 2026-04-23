@@ -148,7 +148,11 @@ async cancelEvent(
             ? result.value.message
             : "Unexpected error cancelling event.";
 
-        res.status(400).render("partials/error", {
+        const status = this.isEventError(result.value)
+            ? this.mapErrorStatus(result.value)
+            : 500;
+
+        res.status(status).render("partials/error", {
             message,
             layout: false,
         });
