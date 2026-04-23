@@ -159,6 +159,12 @@ export class EventService implements IEventService {
         return await this.repo.edit(id, input);
     }
 
+    /**
+     * validates the passed event input
+     * @param input the CreateEventInput or EditEventInput to validate
+     * @returns ValidationError if the content is incorrect in the way it is formed, and InvalidContent if
+     * the content has incorrect business logic
+     */
     private validateEventInput(input: CreateEventInput | EditEventInput): EventError | undefined {
         if (input.title !== undefined) {
             const title = input.title.trim();
@@ -184,25 +190,28 @@ export class EventService implements IEventService {
         if (input.startDate !== undefined) {
             const startDate = input.startDate;
             if (isNaN(startDate.getTime())) return ValidationError("Start date is invalid");
-            if (startDate < new Date()) return ValidationError("Start date must be in the future");
+            if (startDate < new Date()) return InvalidContent("Start date must be in the future");
         }
 
         if (input.endDate !== undefined) {
             const endDate = input.endDate;
             if (isNaN(endDate.getTime())) return ValidationError("End date is invalid");
-            if (endDate < new Date()) return ValidationError("End date must be in the future");
+            if (endDate < new Date()) return InvalidContent("End date must be in the future");
         }
 
         if (input.startDate !== undefined && input.endDate !== undefined) {
             if (input.endDate <= input.startDate) {
-                return ValidationError("End date must be after start date");
+                return InvalidContent("End date must be after start date");
             }
         }
 
         if (input.maxCapacity !== undefined) {
             const capacity = input.maxCapacity;
-            if (!Number.isFinite(capacity) || capacity <= 0) {
-                return ValidationError("Max capacity must be greater than 0");
+            if (Number.isNaN(capacity) || !Number.isInteger(capacity) || !Number.isFinite(capacity)) {
+                return ValidationError("Max capacity is invalid")
+            }
+            if (capacity <= 0) {
+                return InvalidContent("Max capacity must be greater than 0");
             }
         }
 
