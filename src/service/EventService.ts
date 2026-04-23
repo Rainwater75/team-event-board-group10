@@ -24,8 +24,9 @@ export interface IEventService {
     getAllEventsByOrganizer(organizerId: string): Promise<Result<Event[], EventError>>;
     searchEvents(query: string): Promise<Result<Event[], EventError>>;
 
-    filterEvents(
+    filterEvents?(
     category: string,
+    query?: string,
     startAfter?: Date,
     ): Promise<Result<Event[], EventError>>;
 }
@@ -42,8 +43,9 @@ const LOCATION_MIN = 3;
 export class EventService implements IEventService {
     constructor(private readonly repo: IEventRepository) {}
 
-    async filterEvents( // THIS NEEDS TO BE FIXED: SHOULD ONLY SHOW PUBLISHED EVENTS, TAKE IN SEARCH PARAMS ALSO, AND USER ROLE (ORGANIZER, ADMIN,ETC)
-        category: string,
+    async filterEvents( // FIXED ONLY SHOWS PUBLISHED EVENTS, TAKE IN SEARCH PARAMS ALSO, AND USER ROLE (ORGANIZER, ADMIN,ETC)
+        category?: string,
+        query?: string,
         startAfter?: Date,
     ): Promise<Result<Event[], EventError>> {
         const result = await this.repo.getAll();
@@ -51,16 +53,27 @@ export class EventService implements IEventService {
 
         let events = result.value;
 
+        //Only published events for filter
+        events = events.filter(event => event.status === "published");
+
         // filter by category
-        if (category.trim()) {
-            events = events.filter(event => event.category === category);
+        if (category && category.trim() && category !== "None") {
+        events = events.filter(event => event.category === category);
+    }
+        // Search filter
+        if (query && query.trim()) {
+        const search = query.trim().toLowerCase();
+        events = events.filter(event =>
+            event.title.toLowerCase().includes(search) ||
+            event.description.toLowerCase().includes(search) ||
+            event.location.toLowerCase().includes(search)
+            );
         }
 
         // filter by date
         if (startAfter) {
             events = events.filter(event => new Date(event.startDate) >= startAfter);
         }
-
         return Ok(events);
     }
     async publishEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
