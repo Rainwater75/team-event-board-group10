@@ -21,7 +21,7 @@
                        value="<%= query %>" 
                        placeholder="Search events..." 
                        style="width: 100%; padding:14px; border-radius:10px; border:1px solid #ccc; font-size:16px; box-sizing: border-box;"
-                       hx-get="/events" 
+                       hx-get="/events/filter" 
                        hx-trigger="keyup changed delay:500ms, search" 
                        hx-target=".events-grid" 
                        hx-select=".events-grid"
@@ -42,11 +42,14 @@
             <option value="academic">Academic</option>
         </select>
 
-        <input
-            type="datetime-local"
-            name="startAfter"
-            style="min-width:220px; padding:12px; border-radius:10px; border:1px solid #ccc; font-size:16px;"
-        />
+        <select
+            name="timeframe"
+            style="min-width:180px; padding:12px; border-radius:10px; border:1px solid #ccc; font-size:16px;"
+            >
+            <option value="all">All Upcoming</option>
+            <option value="week">This Week</option>
+            <option value="weekend">This Weekend</option>
+        </select>
 
         <button
             type="submit"
@@ -55,6 +58,7 @@
             Apply Filters
         </button>
     </form>
+
 
     <!-- The List to be updated -->
     <div class="events-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); /* Creates 3 equal columns */;">
