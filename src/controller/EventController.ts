@@ -43,7 +43,7 @@ export interface IEventController {
     session: IAppBrowserSession,
     category: string,
     query: string,
-    startAfterRaw: string,): Promise<void>
+    timeframe: string,): Promise<void>
 
     publishEvent(
     res: Response,
@@ -245,12 +245,16 @@ async cancelEvent(
         session: IAppBrowserSession,
         category: string,
         query: string,
-        startAfterRaw: string,
+        timeframe: string,
     ): Promise<void> {
-        this.logger.info(`Filtering events with category="${category}" and startAfter="${startAfterRaw}"`);
+        this.logger.info(`Filtering events with category="${category}" and timeframe="${timeframe}"`);
+        //Convert timeframe input to valid filter option
+        let safeTimeframe: "all" | "week" | "weekend" = "all";
 
-        const startAfter = startAfterRaw ? new Date(startAfterRaw) : undefined;
-        const result = await this.service.filterEvents(category, query, startAfter);
+        if (timeframe === "week") safeTimeframe = "week";
+        if (timeframe === "weekend") safeTimeframe = "weekend";
+
+        const result = await this.service.filterEvents(category, safeTimeframe, query);
 
         if (!result.ok) {
             const message = this.isEventError(result.value)
@@ -266,7 +270,7 @@ async cancelEvent(
             events: result.value,
             query: "",
             category,
-            startAfter: startAfterRaw,
+            timeframe,
         });
 }
     
