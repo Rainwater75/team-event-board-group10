@@ -87,11 +87,11 @@ export class EventService implements IEventService {
     const event = result.value;
 
     if (event.organizerId !== userId) {
-        return Err(ValidationError("Only the organizer can cancel this event"));
+        return Err(UnauthorizedEventActionError("Only the organizer can cancel this event"));
     }
 
     if (event.status !== "published") {
-        return Err(ValidationError("Only published events can be cancelled"));
+        return Err(InvalidStateTransitionError("Only published events can be cancelled"));
     }
 
     return await this.repo.edit(id, { status: "cancelled" });
