@@ -80,22 +80,23 @@ export class EventService implements IEventService {
 
         return Ok(events);
     }
+
     async publishEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
-    const result = await this.repo.getById(id);
-    if (!result.ok) return result;
+        const result = await this.repo.getById(id);
+        if (!result.ok) return result;
 
-    const event = result.value;
+        const event = result.value;
 
-    if (event.organizerId !== userId) {
-        return Err(ValidationError("Only the organizer can publish this event"));
+        if (event.organizerId !== userId) {
+            return Err(ValidationError("Only the organizer can publish this event"));
+        }
+
+        if (event.status !== "draft") {
+            return Err(ValidationError("Event must be draft to publish"));
+        }
+
+        return await this.repo.edit(id, { status: "published" });
     }
-
-    if (event.status !== "draft") {
-        return Err(ValidationError("Event must be draft to publish"));
-    }
-
-    return await this.repo.edit(id, { status: "published" });
-}
 
     async cancelEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
     const result = await this.repo.getById(id);
@@ -250,7 +251,7 @@ export class EventService implements IEventService {
     }
 
     async searchEvents(query: string): Promise<Result<Event[], EventError>> {
-        // search req can be empty
+        // search req can be empty, will return all events
         if (query.trim().length > 500) return Err(InvalidSearchInput("Search query is too long"));
         return await this.repo.search(query);
     }
