@@ -1,6 +1,6 @@
 import { IUserSummary } from "../auth/User.js";
 
-export type Category = "None" | "test1" | "test2" | "test3"; // ben i made this up, you can move and change the category types
+export type Category = "None" | "music" | "sports" | "academic"; //Can change categories later
 export type EventStatus = "draft" | "published" | "cancelled" | "past";
 
 export interface IEvent {

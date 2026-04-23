@@ -34,9 +34,28 @@ export interface IEventController {
     ): Promise<void>
 
     showCreateForm(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
+    showEditForm(res: Response, session: IAppBrowserSession, eventId: number, pageError?: string | null): Promise<void>;
     displayOrganizerDashboard(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
     showEventDetails(res: Response, session: IAppBrowserSession, eventId: number): Promise<void>;
     searchEvents(res: Response, session: IAppBrowserSession, query: string): Promise<void>;
+    filterEvents(
+    res: Response,
+    session: IAppBrowserSession,
+    category: string,
+    query: string,
+    timeframe: string,): Promise<void>
+
+    publishEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void>;
+
+cancelEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -57,7 +76,8 @@ class EventController implements IEventController {
 
     private mapErrorStatus(error: EventError | AuthError): number {
         if (error.name === "ValidationError" || error.name === "InvalidContent") return 400; // bad request
-        if (error.name === "AuthorizationRequired") return 403; // forbidden
+        if (error.name === "InvalidStateTransitionError") return 400; // bad request
+        if (error.name === "AuthorizationRequired" || error.name === "UnauthorizedEventActionError") return 403; // forbidden
         if (error.name === "EventNotFound") return 404; // not found
         return 500; // internal server error for unexpected errors
     }
@@ -65,6 +85,92 @@ class EventController implements IEventController {
     private isHtmxRequest(res: Response): boolean {
         return res.req?.get("HX-Request") === "true";
     }
+
+    async publishEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void> {
+    const currentUser = session.authenticatedUser;
+    if (!currentUser) {
+        res.status(401).render("partials/error", {
+            message: AuthenticationRequired("Please log in to continue.").message,
+            layout: false,
+        });
+        return;
+    }
+
+    const result = await this.service.publishEvent(id, currentUser.userId);
+    // Map service-layer errors to the correct HTTP status and error response
+    if (!result.ok) {
+        const message = this.isEventError(result.value)
+            ? result.value.message
+            : "Unexpected error publishing event.";
+
+        const status = this.isEventError(result.value)
+            ? this.mapErrorStatus(result.value)
+            : 500;
+
+    res.status(status).render("partials/error", {
+        message,
+        layout: false,
+        });
+        return;
+    }
+
+    if (this.isHtmxRequest(res)) {
+        res.set("HX-Trigger", JSON.stringify({
+            "dashboard-event-status-updated": { id, status: "published" },
+        }));
+        res.status(204).send();
+        return;
+    }
+
+    res.redirect(`/events/${id}`);
+}
+
+async cancelEvent(
+    res: Response,
+    session: IAppBrowserSession,
+    id: number,
+): Promise<void> {
+    const currentUser = session.authenticatedUser;
+    if (!currentUser) {
+        res.status(401).render("partials/error", {
+            message: AuthenticationRequired("Please log in to continue.").message,
+            layout: false,
+        });
+        return;
+    }
+
+    const result = await this.service.cancelEvent(id, currentUser.userId);
+
+    if (!result.ok) {
+        const message = this.isEventError(result.value)
+            ? result.value.message
+            : "Unexpected error cancelling event.";
+
+        const status = this.isEventError(result.value)
+            ? this.mapErrorStatus(result.value)
+            : 500;
+
+        res.status(status).render("partials/error", {
+            message,
+            layout: false,
+        });
+        return;
+    }
+
+    if (this.isHtmxRequest(res)) {
+        res.set("HX-Trigger", JSON.stringify({
+            "dashboard-event-status-updated": { id, status: "cancelled" },
+        }));
+        res.status(204).send();
+        return;
+    }
+
+    res.redirect(`/events/${id}`);
+}
 
     async createFromForm(
         res: Response,
@@ -100,7 +206,7 @@ class EventController implements IEventController {
             category,
             startDate: startDateRaw
                 ? new Date(startDateRaw)
-                : new Date(Date.now() + 60 * 60 * 1000),
+                : new Date(Date.now() + 60 * 60 * 1000), // double default. one in frontend one in backend
             endDate: endDateRaw
                 ? new Date(endDateRaw)
                 : new Date(Date.now() + 2 * 60 * 60 * 1000),
@@ -132,12 +238,50 @@ class EventController implements IEventController {
 
         this.logger.info(`Created event id: ${result.value.id} by organizer: ${currentUser.userId}`);
         if (isHtmx) {
-            res.set("HX-Redirect", "/events");
-            res.status(204).send();
+            res.set("HX-Trigger", "event-created");
+            res.status(200).render("partials/success", {
+                message: "Event created successfully.",
+                eventId: result.value.id,
+                layout: false,
+            });
             return;
         }
         res.redirect("/events");
     }
+
+    async filterEvents(
+        res: Response,
+        session: IAppBrowserSession,
+        category: string,
+        query: string,
+        timeframe: string,
+    ): Promise<void> {
+        this.logger.info(`Filtering events with category="${category}" and timeframe="${timeframe}"`);
+        //Convert timeframe input to valid filter option
+        let safeTimeframe: "all" | "week" | "weekend" = "all";
+
+        if (timeframe === "week") safeTimeframe = "week";
+        if (timeframe === "weekend") safeTimeframe = "weekend";
+
+        const result = await this.service.filterEvents(category, safeTimeframe, query);
+
+        if (!result.ok) {
+            const message = this.isEventError(result.value)
+                ? result.value.message
+                : "Failed to filter events.";
+            this.logger.error(`Event filter failed: ${message}`);
+            res.status(500).render("partials/error", { message, layout: false });
+            return;
+        }
+
+        res.render("event-list", {
+            session,
+            events: result.value,
+            query: "",
+            category,
+            timeframe,
+        });
+}
     
     async editFromForm(
         res: Response,
@@ -234,11 +378,11 @@ class EventController implements IEventController {
 
         this.logger.info(`Edited event id: ${id} by organizer: ${currentUser.userId}`);
         if (isHtmx) {
-            res.set("HX-Redirect", "/home");
+            res.set("HX-Redirect", `/events/${id}`);
             res.status(204).send();
             return;
         }
-        res.redirect("/home");
+        res.redirect(`/events/${id}`);
     }
 
     async showEventDetails(
@@ -315,6 +459,60 @@ class EventController implements IEventController {
         return Promise.resolve(); // returning here to fix typing error
     }
 
+    async showEditForm(
+        res: Response, 
+        session: IAppBrowserSession,
+        eventId: number,
+        pageError: string | null = null
+    ): Promise<void> {
+        const currentUser = session.authenticatedUser;
+        if (!currentUser) {
+            res.status(401).render("partials/error", {
+                message: AuthenticationRequired("Please log in to continue.").message,
+                layout: false,
+            });
+            return;
+        }
+
+        const result = await this.service.getEvent(eventId, currentUser);
+
+        // Error handling
+        if (!result.ok && this.isEventError(result.value)) {
+            const status = this.mapErrorStatus(result.value);
+
+            const log = status === 400 ? this.logger.warn : this.logger.error;
+            log.call(this.logger, `Failed to fetch event: ${result.value.message}`);
+
+            res.status(status).render("partials/error", {
+                message: result.value.message,
+                layout: false,
+            });
+            return;
+        }
+        if (!result.ok) {
+            res.status(500).render("partials/error", {
+                message: "Unexpected error fetching event.",
+                layout: false,
+            });
+            return;
+        }
+
+        const event = result.value;
+        const isOrganizer = currentUser.userId === event.organizerId;
+        const isAdmin = currentUser.role === "admin";
+
+        if (!isOrganizer && !isAdmin) {
+            this.logger.warn(`User ${currentUser.userId} attempted to access edit form for event ${eventId} without authorization.`);
+            res.status(403).render("partials/error", {
+                message: AuthorizationRequired("You are not authorized to edit this event.").message,
+                layout: false,
+            });
+            return;
+        }
+
+        res.render("edit-event", { pageError, session, event });
+    }
+
     async displayOrganizerDashboard(
         res: Response, 
         session: IAppBrowserSession,
@@ -328,11 +526,14 @@ class EventController implements IEventController {
             });
             return Promise.resolve();
         }  
-        const eventsResult = await this.service.getAllEventsByOrganizer(currentUser.userId);
+        const isAdmin = currentUser.role === "admin";
+        const eventsResult = isAdmin
+            ? await this.service.getAllEvents()
+            : await this.service.getAllEventsByOrganizer(currentUser.userId);
         if (!eventsResult.ok) {
             const message = this.isEventError(eventsResult.value)
                 ? eventsResult.value.message
-                : "Failed to load organizer events.";
+                : "Failed to load dashboard events.";
             this.logger.error(`Failed to load organizer dashboard events: ${message}`);
             res.render("organizerDashboard", { pageError: message, session, events: [] });
             return;
