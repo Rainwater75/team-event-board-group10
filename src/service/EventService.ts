@@ -26,8 +26,8 @@ export interface IEventService {
 
     filterEvents(
     category?: string,
+    timeframe?: "all" | "week" | "weekend",
     query?: string,
-    startAfter?: Date,
     ): Promise<Result<Event[], EventError>>;
 }
 
@@ -45,8 +45,8 @@ export class EventService implements IEventService {
 
     async filterEvents( // FIXED ONLY SHOWS PUBLISHED EVENTS, TAKE IN SEARCH PARAMS ALSO, AND USER ROLE (ORGANIZER, ADMIN,ETC)
         category?: string,
+        timeframe?: "all" | "week" | "weekend",
         query?: string,
-        startAfter?: Date,
     ): Promise<Result<Event[], EventError>> {
         const result = await this.repo.getAll();
         if (!result.ok) return result;
@@ -70,12 +70,41 @@ export class EventService implements IEventService {
             );
         }
 
-        // filter by date
-        if (startAfter) {
-            events = events.filter(event => new Date(event.startDate) >= startAfter);
+        // timeframe filter changed to week, weekend, all week
+        const now = new Date();
+        if (timeframe === "all") {
+            events = events.filter(event => new Date(event.startDate) >= now);
         }
-        return Ok(events);
-    }
+
+        if (timeframe === "week") {
+            const weekEnd = new Date(now);
+            weekEnd.setDate(now.getDate() + 7);
+
+            events = events.filter(event => {
+                const start = new Date(event.startDate);
+                return start >= now && start <= weekEnd;
+            });
+        }
+
+        if (timeframe === "weekend") {
+            const day = now.getDay(); // 0 Sun ... 6 Sat
+            const daysUntilSaturday = (6 - day + 7) % 7;
+
+            const saturday = new Date(now);
+            saturday.setDate(now.getDate() + daysUntilSaturday);
+            saturday.setHours(0, 0, 0, 0);
+
+            const sundayEnd = new Date(saturday);
+            sundayEnd.setDate(saturday.getDate() + 1);
+            sundayEnd.setHours(23, 59, 59, 999);
+
+            events = events.filter(event => {
+                const start = new Date(event.startDate);
+                return start >= saturday && start <= sundayEnd;
+            });
+                }
+                return Ok(events);
+        }
 
     async publishEvent(id: number, userId: string): Promise<Result<Event, EventError>> {
         const result = await this.repo.getById(id);
