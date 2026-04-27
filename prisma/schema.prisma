@@ -30,8 +30,15 @@ model Event {
   maxCapacity     Int
   organizerId     String
   organizerName   String?
-  // attendingUsers  User[] @relation("EventAttendees", references: [id])
+  attendingUsers  User[]
 }
 
-
+model User {
+  id              String   @id
+  email           String   @unique
+  displayName     String
+  role            String   @default("user")
+  passwordHash    String
+  attendingEvents Event[]
+}
 
