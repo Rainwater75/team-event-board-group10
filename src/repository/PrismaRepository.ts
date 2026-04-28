@@ -3,37 +3,11 @@ import { Ok, Err, type Result } from "../lib/result.js";
 import { EditEventInput, Event, type CreateEventInput } from "../model/Event.js";
 import { type EventError, EventNotFound, ValidationError } from "../lib/errors.js";
 import type { IEventRepository } from "./EventRepository.js";
-import { Event as PrismaEvent} from "@prisma/client";
-import e from "express";
-import { error } from "node:console";
 
-// this is a type that simplifies using the prisma client into simple actions
-type PrismaEventDelegate = {
-    create(args: { data: Omit<PrismaEvent, "id"> }): Promise<PrismaEvent>;
-    findUnique(args: { where: { id: number } }): Promise<PrismaEvent | null>;
-    findMany(args?: {
-        where?: {
-            organizerId?: string;
-            OR?: Array<{
-                title?: { contains: string; mode?: "insensitive" };
-                description?: { contains: string; mode?: "insensitive" };
-                location?: { contains: string; mode?: "insensitive" };
-            }>;
-        };
-        orderBy?: { id: "asc" | "desc" };
-    }): Promise<PrismaEvent[]>;
-    update(args: { where: { id: number }; data: Partial<Omit<PrismaEvent, "id">> }): Promise<PrismaEvent>;
-};
 
 
 class PrismaEventRepository implements IEventRepository {
     constructor(private prisma: PrismaClient) {}
-
-    // getter to access PrismaEventDelegate
-    private get events(): PrismaEventDelegate {
-        // treat this.prisma as if it has an "event" property that behaves like the PrismaEventDelegate type defined above
-        return (this.prisma as unknown as { event: PrismaEventDelegate }).event;
-    }
 
     // helper method to convert a PrismaEvent record to our Event model
     private toEvent(record: {
@@ -69,7 +43,7 @@ class PrismaEventRepository implements IEventRepository {
     async add(input: CreateEventInput): Promise<Result<Event, EventError>> {
         try {
 
-            const event = await this.events.create({
+            const event = await this.prisma.event.create({
                 data: {
                     title: input.title,
                     description: input.description,
@@ -107,7 +81,7 @@ class PrismaEventRepository implements IEventRepository {
     }
 
     async getAllByOrganizer(organizerId: string): Promise<Result<Event[], EventError>> {
-        const filtered = await this.events.findMany({ where: { organizerId } });
+        const filtered = await this.prisma.event.findMany({ where: { organizerId } });
         return Ok(filtered.map(this.toEvent));
     }
 
