@@ -25,15 +25,16 @@ export function createComposedApp(
   const resolvedLogger = logger ?? CreateLoggingService();
 
   // NEW PRISMA CODE (for both user & event repositories)
-  const prisma = new PrismaClient({ adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./dev.db", }), });
+  let prisma: PrismaClient | null = null;
+  mode === "prisma" ? prisma = new PrismaClient({ adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./dev.db", }), }) : null;
   mode === "prisma" ? resolvedLogger.info("Using Prisma repositories") : resolvedLogger.info("Using in-memory repositories");
 
-  const repository = mode === "prisma" ? CreatePrismaEventRepository(prisma) : CreateInMemoryEventRepository();
+  const repository = mode === "prisma" && prisma ? CreatePrismaEventRepository(prisma) : CreateInMemoryEventRepository();
 
 //  const repository = CreateInMemoryEventRepository();
 
   // Authentication & authorization wiring
-  const authUsers = mode === "prisma" ? CreatePrismaUserRepository(prisma) : CreateInMemoryUserRepository();
+  const authUsers = mode === "prisma" && prisma ? CreatePrismaUserRepository(prisma) : CreateInMemoryUserRepository();
   const passwordHasher = CreatePasswordHasher();
   const authService = CreateAuthService(authUsers, passwordHasher);
   const adminUserService = CreateAdminUserService(authUsers, passwordHasher);
