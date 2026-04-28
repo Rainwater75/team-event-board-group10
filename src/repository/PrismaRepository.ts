@@ -5,11 +5,63 @@ import { type EventError, EventNotFound, ValidationError } from "../lib/errors.j
 import type { IEventRepository } from "./EventRepository.js";
 
 
+
 class PrismaEventRepository implements IEventRepository {
     constructor(private prisma: PrismaClient) {}
 
+    // helper method to convert a PrismaEvent record to our Event model
+    private toEvent(record: {
+        id: number;
+        title: string;
+        description: string;
+        startDate: Date;
+        endDate: Date;
+        location: string;
+        category: string;
+        status: string;
+        maxCapacity: number;
+        organizerId: string;
+        organizerName: string | null;
+    }): Event {
+        return Object.assign(
+            new Event(record.id, {
+                title: record.title,
+                description: record.description,
+                startDate: record.startDate,
+                endDate: record.endDate,
+                location: record.location,
+                category: record.category as CreateEventInput["category"],
+                status: record.status as CreateEventInput["status"],
+                maxCapacity: record.maxCapacity,
+                organizerId: record.organizerId,
+                organizerName: record.organizerName ?? undefined,
+            }, record.organizerId),
+            { attendingUsers: [] }
+        );
+    }
+
     async add(input: CreateEventInput): Promise<Result<Event, EventError>> {
-        return Err(ValidationError("Not implemented"));
+        try {
+
+            const event = await this.prisma.event.create({
+                data: {
+                    title: input.title,
+                    description: input.description,
+                    startDate: input.startDate,
+                    endDate: input.endDate,
+                    location: input.location,
+                    category: input.category ?? "None",
+                    status: input.status ?? "draft",
+                    maxCapacity: input.maxCapacity,
+                    organizerId: input.organizerId,
+                    organizerName: input.organizerName ?? null,
+                },
+            });
+
+            return Ok(this.toEvent(event));
+        } catch {
+            return Err(ValidationError("Unable to create event."));
+        }
     }
 
     async edit(id: number, input: EditEventInput): Promise<Result<Event, EventError>> {
@@ -29,11 +81,16 @@ class PrismaEventRepository implements IEventRepository {
     }
 
     async getAllByOrganizer(organizerId: string): Promise<Result<Event[], EventError>> {
-        return Err(ValidationError("Not implemented"));
+        const filtered = await this.prisma.event.findMany({ where: { organizerId } });
+        return Ok(filtered.map(this.toEvent));
     }
 
     async search(query: string): Promise<Result<Event[], EventError>> {
         return Err(ValidationError("Not implemented"));
     }
 
+}
+
+export function CreatePrismaEventRepository(prisma: PrismaClient): IEventRepository {
+    return new PrismaEventRepository(prisma);
 }

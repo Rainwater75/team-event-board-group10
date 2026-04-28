@@ -10,29 +10,27 @@ import type { ILoggingService } from "./service/LoggingService";
 import { CreateEventService } from "./service/EventService";
 import { CreateEventController } from "./controller/EventController";
 import { CreateInMemoryEventRepository } from "./repository/InMemoryEventRepository";
+import { CreatePrismaEventRepository } from "./repository/PrismaRepository";
 import { CreateInMemoryRsvpRepository } from "./repository/InMemoryRsvpRepository";
 import { CreateRsvpService } from "./service/RsvpService";
 import { CreateRsvpController } from "./controller/RsvpController";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaClient } from "@prisma/client";
 
 export function createComposedApp(
-//   mode: "memory" | "prisma",
   logger?: ILoggingService
 ): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
-
-  // UNCOMMENT WHEN PRISMA IS IMPLEMENTED and imported
-//   const repository = 
-//     mode === "prisma" 
-//       ? CreatePrismaEventRepository(
-//         new PrismaClient({
-//           adapter: new PrismaBetterSqlite3({
-//             url: process.env.DATABASE_URL ?? "file:./dev.db",
-//           }),
-//         })
-//       )
-//       : CreateInMemoryEventRepository();
-
-  const repository = CreateInMemoryEventRepository();
+  const usePrisma = (process.env.DATA_STORE ?? "memory") === "prisma";
+  const repository = usePrisma
+    ? CreatePrismaEventRepository(
+        new PrismaClient({
+          adapter: new PrismaBetterSqlite3({
+            url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
+          }),
+        })
+      )
+    : CreateInMemoryEventRepository();
 
   // Authentication & authorization wiring
   const authUsers = CreateInMemoryUserRepository();
