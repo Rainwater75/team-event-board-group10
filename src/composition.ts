@@ -17,12 +17,20 @@ import { CreateRsvpController } from "./controller/RsvpController";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@prisma/client";
 import { CreatePrismaUserRepository } from "./auth/PrismaUserRepository";
+import { runSeed } from "./seed";
 
 export function createComposedApp(
   logger?: ILoggingService
 ): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
   const usePrisma = (process.env.DATA_STORE ?? "memory") === "prisma";
+
+  usePrisma ?? runSeed(new PrismaClient({ // runs seed (creates default users in userDB) if using Prisma
+    adapter: new PrismaBetterSqlite3({
+      url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
+    }),
+  }));
+
   const repository = usePrisma
     ? CreatePrismaEventRepository(
         new PrismaClient({
