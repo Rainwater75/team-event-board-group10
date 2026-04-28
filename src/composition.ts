@@ -18,6 +18,8 @@ import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { CreatePrismaEventRepository } from "./repository/PrismaRepository";
 import { CreatePrismaUserRepository } from "./auth/PrismaUserRepository";
 
+let prismaInstance: PrismaClient | null = null;
+
 export function createComposedApp(
    mode: "memory" | "prisma",
   logger?: ILoggingService
@@ -25,16 +27,21 @@ export function createComposedApp(
   const resolvedLogger = logger ?? CreateLoggingService();
 
   // NEW PRISMA CODE (for both user & event repositories)
-  let prisma: PrismaClient | null = null;
-  mode === "prisma" ? prisma = new PrismaClient({ adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./dev.db", }), }) : null;
-  mode === "prisma" ? resolvedLogger.info("Using Prisma repositories") : resolvedLogger.info("Using in-memory repositories");
+  if (mode === "prisma" && !prismaInstance) {
+    prismaInstance = new PrismaClient(); // It will automatically use prisma.config.ts settings
+    resolvedLogger.info("Using Prisma repositories");
+  } else if (mode === "memory") {
+    resolvedLogger.info("Using in-memory repositories");
+  }
+  mode === "prisma" ? prismaInstance = 
+  new PrismaClient({ adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./dev.db", }),}): null;
 
-  const repository = mode === "prisma" && prisma ? CreatePrismaEventRepository(prisma) : CreateInMemoryEventRepository();
+  const repository = mode === "prisma" && prismaInstance ? CreatePrismaEventRepository(prismaInstance) : CreateInMemoryEventRepository();
 
 //  const repository = CreateInMemoryEventRepository();
 
   // Authentication & authorization wiring
-  const authUsers = mode === "prisma" && prisma ? CreatePrismaUserRepository(prisma) : CreateInMemoryUserRepository();
+  const authUsers = mode === "prisma" && prismaInstance ? CreatePrismaUserRepository(prismaInstance) : CreateInMemoryUserRepository();
   const passwordHasher = CreatePasswordHasher();
   const authService = CreateAuthService(authUsers, passwordHasher);
   const adminUserService = CreateAdminUserService(authUsers, passwordHasher);
