@@ -25,11 +25,11 @@ export function createComposedApp(
   const resolvedLogger = logger ?? CreateLoggingService();
   const usePrisma = (process.env.DATA_STORE ?? "memory") === "prisma";
 
-  usePrisma ?? runSeed(new PrismaClient({ // runs seed (creates default users in userDB) if using Prisma
+  usePrisma ? runSeed(new PrismaClient({ // runs seed (creates default users in userDB) if using Prisma
     adapter: new PrismaBetterSqlite3({
       url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
     }),
-  }));
+  })) : resolvedLogger.info("Using in-memory data store (data will not persist across restarts)");
 
   const repository = usePrisma
     ? CreatePrismaEventRepository(
