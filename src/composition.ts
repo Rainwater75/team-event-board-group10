@@ -16,6 +16,7 @@ import { CreateRsvpService } from "./service/RsvpService";
 import { CreateRsvpController } from "./controller/RsvpController";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { PrismaClient } from "@prisma/client";
+import { CreatePrismaUserRepository } from "./auth/PrismaUserRepository";
 
 export function createComposedApp(
   logger?: ILoggingService
@@ -33,7 +34,14 @@ export function createComposedApp(
     : CreateInMemoryEventRepository();
 
   // Authentication & authorization wiring
-  const authUsers = CreateInMemoryUserRepository();
+  const authUsers = usePrisma ? CreatePrismaUserRepository(
+    new PrismaClient({
+      adapter: new PrismaBetterSqlite3({
+        url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
+      }),
+    })
+  ) : CreateInMemoryUserRepository();
+  
   const passwordHasher = CreatePasswordHasher();
   const authService = CreateAuthService(authUsers, passwordHasher);
   const adminUserService = CreateAdminUserService(authUsers, passwordHasher);
