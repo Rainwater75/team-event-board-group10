@@ -17,24 +17,26 @@ import { PrismaClient } from "@prisma/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 import { CreatePrismaEventRepository } from "./repository/PrismaRepository";
 import { CreatePrismaUserRepository } from "./auth/PrismaUserRepository";
+import { runSeed } from "../prisma/seed";
 
 let prismaInstance: PrismaClient | null = null;
+let seeded: boolean = false;
 
-export function createComposedApp(
-   mode: "memory" | "prisma",
-  logger?: ILoggingService
-): IApp {
+export function createComposedApp( mode: "memory" | "prisma", logger?: ILoggingService ): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
 
   // NEW PRISMA CODE (for both user & event repositories)
-  if (mode === "prisma" && !prismaInstance) {
-    prismaInstance = new PrismaClient(); // It will automatically use prisma.config.ts settings
+  if (mode === "prisma") {
+    // It will automatically use prisma.config.ts settings
     resolvedLogger.info("Using Prisma repositories");
+    prismaInstance = new PrismaClient({ adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./dev.db", }),}); 
+    seeded ? resolvedLogger.info("Prisma database already seeded") : 
+    runSeed(prismaInstance).then(() => { seeded = true; resolvedLogger.info("Prisma db seeding complete.")});
   } else if (mode === "memory") {
     resolvedLogger.info("Using in-memory repositories");
+  } else {
+    resolvedLogger.warn(`Unknown mode "${mode}", defaulting to in-memory repositories`);
   }
-  mode === "prisma" ? prismaInstance = 
-  new PrismaClient({ adapter: new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? "file:./dev.db", }),}): null;
 
   const repository = mode === "prisma" && prismaInstance ? CreatePrismaEventRepository(prismaInstance) : CreateInMemoryEventRepository();
 
