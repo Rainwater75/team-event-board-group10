@@ -107,7 +107,8 @@ class PrismaEventRepository implements IEventRepository {
     }
 
     async getAllByOrganizer(organizerId: string): Promise<Result<Event[], EventError>> {
-        return Err(ValidationError("Not implemented"));
+        const filtered = await this.events.findMany({ where: { organizerId } });
+        return Ok(filtered.map(this.toEvent));
     }
 
     async search(query: string): Promise<Result<Event[], EventError>> {
