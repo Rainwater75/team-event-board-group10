@@ -3,14 +3,8 @@ import { Ok, Err, type Result } from "../lib/result.js";
 import { EditEventInput, Event, type CreateEventInput } from "../model/Event.js";
 import { type EventError, EventNotFound, ValidationError } from "../lib/errors.js";
 import type { IEventRepository } from "./EventRepository.js";
-import type {
-  IRsvpRepository,
-  IRsvpRecord,
-  RsvpStatus,
-} from "./RsvpRepository.js";
-import { RsvpDependencyError, type RsvpError } from "../lib/RsvpErrors.js";
 
-class PrismaRepository implements IEventRepository, IRsvpRepository {
+class PrismaRepository implements IEventRepository {
   constructor(private prisma: PrismaClient) { }
 
   // helper method to convert a PrismaEvent record to our Event model
@@ -122,65 +116,36 @@ class PrismaRepository implements IEventRepository, IRsvpRepository {
   }
 
   async search(query: string): Promise<Result<Event[], EventError>> {
-    const lowerQuery = query.toLowerCase();
     const now = new Date();
-    const events = await this.prisma.event.findMany({
-      where: {
-        status: "published",
-        endDate: { gt: now },
-        OR: lowerQuery ? [
-          { title: { contains: lowerQuery, mode: 'insensitive' } },
-          { description: { contains: lowerQuery, mode: 'insensitive' } },
-          { location: { contains: lowerQuery, mode: 'insensitive' } },
-        ] : undefined,
-      },
-    });
-    return Ok(events.map((e) => this.toEvent(e)));
-  }
-
-
-  // RSVP METHODS (NEW)
-
-
-  async findByEventAndUser(
-    eventId: number,
-    userId: string,
-  ): Promise<Result<IRsvpRecord | null, RsvpError>> {
-    try {
-      const record = await this.prisma.rsvp.findUnique({
-        where: { eventId_userId: { eventId, userId } },
+    const lowerQuery = query.trim().toLowerCase();
+  
+    if (!lowerQuery) {
+      const events = await this.prisma.event.findMany({
+        where: {
+          status: "published",
+          endDate: { gt: now },
+        },
       });
-
-      if (!record) return Ok(null);
-
-      return Ok({
-        eventId: record.eventId,
-        userId: record.userId,
-        status: record.status as RsvpStatus,
-        createdAt: record.createdAt,
-        updatedAt: record.updatedAt,
-      });
-    } catch {
-      return Err(RsvpDependencyError("Failed to find RSVP."));
+  
+      return Ok(events.map((e) => this.toEvent(e)));
     }
-
+  
     const events = await this.prisma.event.findMany({
       where: {
         status: "published",
         endDate: { gt: now },
-        OR: lowerQuery ? [
+        OR: [
           { title: { contains: lowerQuery } },
           { description: { contains: lowerQuery } },
           { location: { contains: lowerQuery } },
-        ] : undefined,
+        ],
       },
     });
+  
     return Ok(events.map((e) => this.toEvent(e)));
   }
-
-  // RSVP methods go here
 }
 
-export function CreatePrismaEventRepository(prisma: PrismaClient): IEventRepository {
-  return new PrismaEventRepository(prisma);
-}
+export function CreatePrismaRepository(prisma: PrismaClient): IEventRepository {
+    return new PrismaRepository(prisma);
+  }
