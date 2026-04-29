@@ -59,10 +59,31 @@ class PrismaRepository implements IEventRepository, IRsvpRepository {
           return Err(ValidationError("Unable to create event."));
         }
       }
-    
-      async edit(): Promise<Result<Event, EventError>> {
-        return Err(ValidationError("Not implemented"));
+
+  async edit(id: number, input: EditEventInput): Promise<Result<Event, EventError>> {
+    try {
+      const existingEvent = await this.prisma.event.findUnique({ where: { id } });
+      if (!existingEvent) {
+        return Err(EventNotFound(`Event ${id} not found.`));
       }
+
+      const updateData: { [key: string]: any } = {};
+      for (const key in input) {
+        if (input[key as keyof EditEventInput] !== undefined) {
+          updateData[key] = input[key as keyof EditEventInput];
+        }
+      }
+
+      const updatedEvent = await this.prisma.event.update({
+        where: { id },
+        data: updateData,
+      });
+
+      return Ok(this.toEvent(updatedEvent));
+    } catch (error) {
+      return Err(ValidationError(`Failed to update event ${id}.`));
+    }
+  }
     
       async getById(id: number): Promise<Result<Event, EventError>> {
         const event = await this.prisma.event.findUnique({ where: { id } });
