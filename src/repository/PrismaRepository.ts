@@ -94,9 +94,9 @@ class PrismaEventRepository implements IEventRepository {
             status: "published",
             endDate: { gt: now },
             OR: lowerQuery ? [
-              { title: { contains: lowerQuery, mode: 'insensitive' } },
-              { description: { contains: lowerQuery, mode: 'insensitive' } },
-              { location: { contains: lowerQuery, mode: 'insensitive' } },
+              { title: { contains: lowerQuery } },
+              { description: { contains: lowerQuery } },
+              { location: { contains: lowerQuery } },
             ] : undefined,
           },
         });
