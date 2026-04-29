@@ -100,9 +100,9 @@ class PrismaRepository implements IEventRepository, IRsvpRepository {
           const record = await this.prisma.rsvp.findUnique({
             where: { eventId_userId: { eventId, userId } },
           });
-      
+    
           if (!record) return Ok(null);
-      
+    
           return Ok({
             eventId: record.eventId,
             userId: record.userId,
@@ -113,24 +113,62 @@ class PrismaRepository implements IEventRepository, IRsvpRepository {
         } catch {
           return Err(RsvpDependencyError("Failed to find RSVP."));
         }
-
-        const events = await this.prisma.event.findMany({
-          where: {
-            status: "published",
-            endDate: { gt: now },
-            OR: lowerQuery ? [
-              { title: { contains: lowerQuery } },
-              { description: { contains: lowerQuery } },
-              { location: { contains: lowerQuery } },
-            ] : undefined,
-          },
-        });
-        return Ok(events.map((e) => this.toEvent(e)));
+      }
+    
+      async upsert(record: IRsvpRecord): Promise<Result<IRsvpRecord, RsvpError>> {
+        try {
+          await this.prisma.rsvp.upsert({
+            where: {
+              eventId_userId: {
+                eventId: record.eventId,
+                userId: record.userId,
+              },
+            },
+            update: {
+              status: record.status,
+              updatedAt: record.updatedAt,
+            },
+            create: record,
+          });
+    
+          return Ok(record);
+        } catch {
+          return Err(RsvpDependencyError("Failed to upsert RSVP."));
+        }
+      }
+    
+      async countGoingByEvent(eventId: number): Promise<Result<number, RsvpError>> {
+        try {
+          const count = await this.prisma.rsvp.count({
+            where: { eventId, status: "going" },
+          });
+          return Ok(count);
+        } catch {
+          return Err(RsvpDependencyError("Failed to count RSVPs."));
+        }
+      }
+    
+      async listByEvent(eventId: number): Promise<Result<IRsvpRecord[], RsvpError>> {
+        try {
+          const records = await this.prisma.rsvp.findMany({
+            where: { eventId },
+          });
+    
+          return Ok(
+            records.map((r) => ({
+              eventId: r.eventId,
+              userId: r.userId,
+              status: r.status as RsvpStatus,
+              createdAt: r.createdAt,
+              updatedAt: r.updatedAt,
+            }))
+          );
+        } catch {
+          return Err(RsvpDependencyError("Failed to list RSVPs."));
+        }
+      }
     }
-
-    // RSVP methods go here
-}
-
-export function CreatePrismaEventRepository(prisma: PrismaClient): IEventRepository {
-    return new PrismaEventRepository(prisma);
-}
+    
+    export function CreatePrismaRepository(prisma: PrismaClient) {
+      return new PrismaRepository(prisma);
+    }
