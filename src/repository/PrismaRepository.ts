@@ -96,8 +96,24 @@ class PrismaRepository implements IEventRepository, IRsvpRepository {
         return Ok(events.map(this.toEvent.bind(this)));
       }
     
-      async updateStatus(): Promise<Result<Event, EventError>> {
-        return Err(ValidationError("Not implemented"));
+      async updateStatus(
+        id: number,
+        status: "draft" | "published" | "cancelled" | "past"
+      ): Promise<Result<Event, EventError>> {
+        try {
+          const existingEvent = await this.prisma.event.findUnique({ where: { id } });
+          if (!existingEvent) {
+            return Err(EventNotFound(`Event ${id} not found.`));
+          }
+          const updatedEvent = await this.prisma.event.update({
+            where: { id },
+            data: { status: status },
+          });
+          return Ok(this.toEvent(updatedEvent));
+        } catch (error) {
+          console.error("Prisma update status error:", error);
+          return Err(ValidationError(`Failed to update event status for event ${id}.`));
+        }
       }
     
       async getAllByOrganizer(organizerId: string): Promise<Result<Event[], EventError>> {
