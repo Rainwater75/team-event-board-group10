@@ -10,7 +10,7 @@ import type { ILoggingService } from "./service/LoggingService";
 import { CreateEventService } from "./service/EventService";
 import { CreateEventController } from "./controller/EventController";
 import { CreateInMemoryEventRepository } from "./repository/InMemoryEventRepository";
-import { CreatePrismaEventRepository } from "./repository/PrismaRepository";
+import { CreatePrismaRepository } from "./repository/PrismaRepository";
 import { CreateInMemoryRsvpRepository } from "./repository/InMemoryRsvpRepository";
 import { CreateRsvpService } from "./service/RsvpService";
 import { CreateRsvpController } from "./controller/RsvpController";
@@ -23,7 +23,7 @@ export function createComposedApp(
   const resolvedLogger = logger ?? CreateLoggingService();
   const usePrisma = (process.env.DATA_STORE ?? "memory") === "prisma";
   const repository = usePrisma
-    ? CreatePrismaEventRepository(
+    ? CreatePrismaRepository(
         new PrismaClient({
           adapter: new PrismaBetterSqlite3({
             url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
