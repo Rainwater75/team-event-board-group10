@@ -266,9 +266,7 @@ class EventController implements IEventController {
             const statusCode = this.isEventError(result.value)
                 ? this.mapErrorStatus(result.value)
                 : 500;
-
             this.logger.error(`Event filter failed: ${message}`);
-
             res.status(statusCode).render("partials/error", {
                 message,
                 layout: false,
@@ -283,7 +281,7 @@ class EventController implements IEventController {
             category,
             timeframe,
         });
-}
+    }
     
     async editFromForm(
         res: Response,
@@ -557,10 +555,6 @@ class EventController implements IEventController {
     }
 }
 
-export function CreateEventController(
-    service: IEventService,
-    rsvpService: IRsvpService,
-    logger: ILoggingService,
-): IEventController {
+export function CreateEventController( service: IEventService, rsvpService: IRsvpService, logger: ILoggingService ): IEventController {
     return new EventController(service, rsvpService, logger);
 }
