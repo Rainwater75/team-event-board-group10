@@ -112,6 +112,8 @@ class PrismaEventRepository implements IEventRepository {
         });
         return Ok(events.map((e) => this.toEvent(e)));
     }
+
+    // RSVP methods go here
 }
 
 export function CreatePrismaEventRepository(prisma: PrismaClient): IEventRepository {
