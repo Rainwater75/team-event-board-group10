@@ -42,5 +42,14 @@ model User {
   attendingEvents Event[]
 }
 
+model Rsvp {
+  eventId   Int
+  userId    String
+  status    String
+  createdAt DateTime
+  updatedAt DateTime
 
+  event Event @relation(fields: [eventId], references: [id])
 
+  @@id([eventId, userId])
+}
