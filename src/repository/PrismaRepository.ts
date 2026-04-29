@@ -69,7 +69,9 @@ class PrismaEventRepository implements IEventRepository {
     }
 
     async getById(id: number): Promise<Result<Event, EventError>> {
-        return Err(ValidationError("Not implemented"));
+      const event = await this.prisma.event.findUnique({ where: { id } });
+      if (!event) return Err(EventNotFound(`Event ${id} not found.`));
+      return Ok(this.toEvent(event));
     }
 
     async getAll(): Promise<Result<Event[], EventError>> {
