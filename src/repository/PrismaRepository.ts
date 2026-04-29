@@ -4,8 +4,6 @@ import { EditEventInput, Event, type CreateEventInput } from "../model/Event.js"
 import { type EventError, EventNotFound, ValidationError } from "../lib/errors.js";
 import type { IEventRepository } from "./EventRepository.js";
 
-
-
 class PrismaEventRepository implements IEventRepository {
     constructor(private prisma: PrismaClient) {}
 
