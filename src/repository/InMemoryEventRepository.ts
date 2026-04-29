@@ -78,6 +78,7 @@ class InMemoryEventRepository implements IEventRepository {
 
         return Ok(event);
     }
+
     async getAllByOrganizer(organizerId: string): Promise<Result<Event[], EventError>> {
         const filteredEvents = Array.from(this.events.values()).filter(event => event.organizerId === organizerId);
         return Ok(filteredEvents);
@@ -97,10 +98,9 @@ class InMemoryEventRepository implements IEventRepository {
         });
         return Ok(filteredEvents);
     }
-
 }
 
 // factory function 
 export function CreateInMemoryEventRepository(): IEventRepository {
-  return new InMemoryEventRepository();
+    return new InMemoryEventRepository();
 }

@@ -84,11 +84,33 @@ class PrismaRepository implements IEventRepository, IRsvpRepository {
         return Ok(filtered.map(this.toEvent.bind(this)));
       }
     
-      async search(): Promise<Result<Event[], EventError>> {
-        return Err(ValidationError("Not implemented"));
+      async search(query: string): Promise<Result<Event[], EventError>> {
+        const now = new Date();
+        const lowerQuery = query.trim().toLowerCase();
+        if (!lowerQuery) { // return all if query is empty/whitespace
+            const events = await this.prisma.event.findMany({
+                where: {
+                    status: "published",
+                    endDate: { gt: now },
+                },
+            });
+            return Ok(events.map((e) => this.toEvent(e)));
+        }
+
+        const events = await this.prisma.event.findMany({
+          where: {
+            status: "published",
+            endDate: { gt: now },
+            OR: lowerQuery ? [
+              { title: { contains: lowerQuery } },
+              { description: { contains: lowerQuery } },
+              { location: { contains: lowerQuery } },
+            ] : undefined,
+          },
+        });
+        return Ok(events.map((e) => this.toEvent(e)));
       }
-    
-    
+        
       // RSVP METHODS (NEW)
 
     

@@ -89,90 +89,82 @@ class EventController implements IEventController {
     }
 
     async publishEvent(
-    res: Response,
-    session: IAppBrowserSession,
-    id: number,
-): Promise<void> {
-    const currentUser = session.authenticatedUser;
-    if (!currentUser) {
-        res.status(401).render("partials/error", {
-            message: AuthenticationRequired("Please log in to continue.").message,
-            layout: false,
-        });
-        return;
-    }
+        res: Response,
+        session: IAppBrowserSession,
+        id: number,
+    ): Promise<void> {
+        const currentUser = session.authenticatedUser;
+        if (!currentUser) {
+            res.status(401).render("partials/error", {
+                message: AuthenticationRequired("Please log in to continue.").message,
+                layout: false,
+            });
+            return;
+        }
 
-    const result = await this.service.publishEvent(id, currentUser.userId);
-    // Map service-layer errors to the correct HTTP status and error response
-    if (!result.ok) {
-        const message = this.isEventError(result.value)
-            ? result.value.message
-            : "Unexpected error publishing event.";
+        const result = await this.service.publishEvent(id, currentUser.userId);
+        // Map service-layer errors to the correct HTTP status and error response
+        if (!result.ok) {
+            const message = this.isEventError(result.value)
+                ? result.value.message
+                : "Unexpected error publishing event.";
 
-        const status = this.isEventError(result.value)
-            ? this.mapErrorStatus(result.value)
-            : 500;
-
-    res.status(status).render("partials/error", {
-        message,
-        layout: false,
-        });
-        return;
-    }
-
-    if (this.isHtmxRequest(res)) {
-        res.set("HX-Trigger", JSON.stringify({
-            "dashboard-event-status-updated": { id, status: "published" },
-        }));
-        res.status(204).send();
-        return;
-    }
-
-    res.redirect(`/events/${id}`);
-}
-
-async cancelEvent(
-    res: Response,
-    session: IAppBrowserSession,
-    id: number,
-): Promise<void> {
-    const currentUser = session.authenticatedUser;
-    if (!currentUser) {
-        res.status(401).render("partials/error", {
-            message: AuthenticationRequired("Please log in to continue.").message,
-            layout: false,
-        });
-        return;
-    }
-
-    const result = await this.service.cancelEvent(id, currentUser.userId);
-
-    if (!result.ok) {
-        const message = this.isEventError(result.value)
-            ? result.value.message
-            : "Unexpected error cancelling event.";
-
-        const status = this.isEventError(result.value)
-            ? this.mapErrorStatus(result.value)
-            : 500;
+            const status = this.isEventError(result.value)
+                ? this.mapErrorStatus(result.value)
+                : 500;
 
         res.status(status).render("partials/error", {
             message,
             layout: false,
-        });
-        return;
+            });
+            return;
+        }
+
+        if (this.isHtmxRequest(res)) {
+            res.set("HX-Trigger", JSON.stringify({
+                "dashboard-event-status-updated": { id, status: "published" },
+            }));
+            res.status(204).send();
+            return;
+        }
+
+        res.redirect(`/events/${id}`);
     }
 
-    if (this.isHtmxRequest(res)) {
-        res.set("HX-Trigger", JSON.stringify({
-            "dashboard-event-status-updated": { id, status: "cancelled" },
-        }));
-        res.status(204).send();
-        return;
-    }
+    async cancelEvent( res: Response, session: IAppBrowserSession, id: number ): Promise<void> {
+        const currentUser = session.authenticatedUser;
+        if (!currentUser) {
+            res.status(401).render("partials/error", {
+                message: AuthenticationRequired("Please log in to continue.").message,
+                layout: false,
+            });
+            return;
+        }
+        const result = await this.service.cancelEvent(id, currentUser.userId);
 
-    res.redirect(`/events/${id}`);
-}
+        if (!result.ok) {
+            const message = this.isEventError(result.value)
+                ? result.value.message
+                : "Unexpected error cancelling event.";
+            const status = this.isEventError(result.value)
+                ? this.mapErrorStatus(result.value)
+                : 500;
+            res.status(status).render("partials/error", {
+                message,
+                layout: false,
+            });
+            return;
+        }
+
+        if (this.isHtmxRequest(res)) {
+            res.set("HX-Trigger", JSON.stringify({
+                "dashboard-event-status-updated": { id, status: "cancelled" },
+            }));
+            res.status(204).send();
+            return;
+        }
+        res.redirect(`/events/${id}`);
+    }
 
     async createFromForm(
         res: Response,
@@ -274,9 +266,7 @@ async cancelEvent(
             const statusCode = this.isEventError(result.value)
                 ? this.mapErrorStatus(result.value)
                 : 500;
-
             this.logger.error(`Event filter failed: ${message}`);
-
             res.status(statusCode).render("partials/error", {
                 message,
                 layout: false,
@@ -291,7 +281,7 @@ async cancelEvent(
             category,
             timeframe,
         });
-}
+    }
     
     async editFromForm(
         res: Response,
@@ -565,10 +555,6 @@ async cancelEvent(
     }
 }
 
-export function CreateEventController(
-    service: IEventService,
-    rsvpService: IRsvpService,
-    logger: ILoggingService,
-): IEventController {
+export function CreateEventController( service: IEventService, rsvpService: IRsvpService, logger: ILoggingService ): IEventController {
     return new EventController(service, rsvpService, logger);
 }
