@@ -121,8 +121,21 @@ class PrismaRepository implements IEventRepository, IRsvpRepository {
         return Ok(filtered.map(this.toEvent.bind(this)));
       }
     
-      async search(): Promise<Result<Event[], EventError>> {
-        return Err(ValidationError("Not implemented"));
+      async search(query: string): Promise<Result<Event[], EventError>> {
+        const lowerQuery = query.toLowerCase();
+        const now = new Date();
+        const events = await this.prisma.event.findMany({
+          where: {
+            status: "published",
+            endDate: { gt: now },
+            OR: lowerQuery ? [
+              { title: { contains: lowerQuery, mode: 'insensitive' } },
+              { description: { contains: lowerQuery, mode: 'insensitive' } },
+              { location: { contains: lowerQuery, mode: 'insensitive' } },
+            ] : undefined,
+          },
+        });
+        return Ok(events.map((e) => this.toEvent(e)));
       }
     
     
