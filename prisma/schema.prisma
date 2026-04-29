@@ -19,19 +19,29 @@ datasource db {
 // }
 
 model Event {
-  id              Int      @id @default(autoincrement())
-  title           String
-  description     String
-  startDate       DateTime
-  endDate         DateTime
-  location        String
-  category        String   @default("None")
-  status          String   @default("draft")
-  maxCapacity     Int
-  organizerId     String
-  organizerName   String?
-  // attendingUsers  User[] @relation("EventAttendees", references: [id])
+  id            Int      @id @default(autoincrement())
+  title         String
+  description   String
+  startDate     DateTime
+  endDate       DateTime
+  location      String
+  category      String   @default("None")
+  status        String   @default("draft")
+  maxCapacity   Int
+  organizerId   String
+  organizerName String?
+
+  rsvps Rsvp[]
 }
 
+model Rsvp {
+  eventId   Int
+  userId    String
+  status    String
+  createdAt DateTime
+  updatedAt DateTime
 
+  event Event @relation(fields: [eventId], references: [id])
 
+  @@id([eventId, userId])
+}
