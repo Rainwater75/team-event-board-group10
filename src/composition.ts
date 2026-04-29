@@ -1,67 +1,82 @@
+import { PrismaClient } from "@prisma/client";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+
 import { CreateAdminUserService } from "./auth/AdminUserService";
 import { CreateAuthController } from "./auth/AuthController";
 import { CreateAuthService } from "./auth/AuthService";
 import { CreateInMemoryUserRepository } from "./auth/InMemoryUserRepository";
+import { CreatePrismaUserRepository } from "./auth/PrismaUserRepository";
 import { CreatePasswordHasher } from "./auth/PasswordHasher";
+
 import { CreateApp } from "./app";
 import type { IApp } from "./contracts";
-import { CreateLoggingService } from "./service/LoggingService";
-import type { ILoggingService } from "./service/LoggingService";
-import { CreateEventService } from "./service/EventService";
+
 import { CreateEventController } from "./controller/EventController";
 import { CreateInMemoryEventRepository } from "./repository/InMemoryEventRepository";
-import { CreatePrismaRepository } from "./repository/PrismaRepository";
 import { CreateInMemoryRsvpRepository } from "./repository/InMemoryRsvpRepository";
+import { CreatePrismaRepository } from "./repository/PrismaRepository";
+
+import { CreateEventService } from "./service/EventService";
+import { CreateLoggingService } from "./service/LoggingService";
+import type { ILoggingService } from "./service/LoggingService";
 import { CreateRsvpService } from "./service/RsvpService";
 import { CreateRsvpController } from "./controller/RsvpController";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import { PrismaClient } from "@prisma/client";
-import { CreatePrismaUserRepository } from "./auth/PrismaUserRepository";
-import { runSeed } from "./seed";
 
-export function createComposedApp(
-  logger?: ILoggingService
-): IApp {
+export function createComposedApp(logger?: ILoggingService): IApp {
   const resolvedLogger = logger ?? CreateLoggingService();
   const usePrisma = (process.env.DATA_STORE ?? "memory") === "prisma";
 
-  usePrisma ? runSeed(new PrismaClient({ // runs seed (creates default users in userDB) if using Prisma
-    adapter: new PrismaBetterSqlite3({
-      url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
-    }),
-  })) : resolvedLogger.info("Using in-memory data store (data will not persist across restarts)");
+  const prismaClient = usePrisma
+    ? new PrismaClient({
+        adapter: new PrismaBetterSqlite3({
+          url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
+        }),
+      })
+    : null;
 
-  const repository = usePrisma
-    ? CreatePrismaRepository(
-        new PrismaClient({
-          adapter: new PrismaBetterSqlite3({
-            url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
-          }),
-        })
-      )
-    : CreateInMemoryEventRepository();
+  const eventRepository =
+    usePrisma && prismaClient
+      ? CreatePrismaRepository(prismaClient)
+      : CreateInMemoryEventRepository();
 
-  // Authentication & authorization wiring
-  const authUsers = usePrisma ? CreatePrismaUserRepository(
-    new PrismaClient({
-      adapter: new PrismaBetterSqlite3({
-        url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
-      }),
-    })
-  ) : CreateInMemoryUserRepository();
-  
+  const rsvpRepository =
+    usePrisma && prismaClient
+      ? CreatePrismaRepository(prismaClient)
+      : CreateInMemoryRsvpRepository();
+
+  const userRepository =
+    usePrisma && prismaClient
+      ? CreatePrismaUserRepository(prismaClient)
+      : CreateInMemoryUserRepository();
+
   const passwordHasher = CreatePasswordHasher();
-  const authService = CreateAuthService(authUsers, passwordHasher);
-  const adminUserService = CreateAdminUserService(authUsers, passwordHasher);
-  const authController = CreateAuthController(authService, adminUserService, resolvedLogger);
 
-  const service = CreateEventService(repository);
+  const authService = CreateAuthService(userRepository, passwordHasher);
+  const adminUserService = CreateAdminUserService(userRepository, passwordHasher);
+  const authController = CreateAuthController(
+    authService,
+    adminUserService,
+    resolvedLogger,
+  );
 
-  // RSVP wiring
-  const rsvpRepository = CreateInMemoryRsvpRepository();
-  const rsvpService = CreateRsvpService(repository, rsvpRepository, authUsers);
+  const eventService = CreateEventService(eventRepository);
+  const rsvpService = CreateRsvpService(
+    eventRepository,
+    rsvpRepository,
+    userRepository,
+  );
+
   const rsvpController = CreateRsvpController(rsvpService, resolvedLogger);
-  const controller = CreateEventController(service, rsvpService, resolvedLogger);
+  const eventController = CreateEventController(
+    eventService,
+    rsvpService,
+    resolvedLogger,
+  );
 
-  return CreateApp(authController, resolvedLogger, controller, rsvpController);
+  return CreateApp(
+    authController,
+    resolvedLogger,
+    eventController,
+    rsvpController,
+  );
 }
