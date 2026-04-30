@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  git checkout -b task/fix-prisma-datasource-url
+  url      = env("DATABASE_URL")
 }
 
 // TODO: Define your project's data models here.
