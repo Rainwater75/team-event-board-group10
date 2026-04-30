@@ -5,10 +5,9 @@ import { type EventError, EventNotFound, ValidationError } from "../lib/errors.j
 import type { IEventRepository } from "./EventRepository.js";
 
 class PrismaRepository implements IEventRepository {
-  constructor(private prisma: PrismaClient) { }
+  constructor(private prisma: PrismaClient) {}
 
   // helper method to convert a PrismaEvent record to our Event model
-
   private toEvent(record: any): Event {
     return Object.assign(
       new Event(
@@ -142,10 +141,10 @@ class PrismaRepository implements IEventRepository {
       )
     `;
   
-    return Ok(events.map((e) => this.toEvent(e)));
+    return Ok(events.map((e: any) => this.toEvent(e)));
   }
 }
 
 export function CreatePrismaRepository(prisma: PrismaClient): IEventRepository {
-    return new PrismaRepository(prisma);
-  }
+  return new PrismaRepository(prisma);
+}
