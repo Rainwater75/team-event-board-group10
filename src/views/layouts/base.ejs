@@ -31,7 +31,7 @@
     <div class="max-w-5xl mx-auto">
 
       <!-- Navbar -->
-      <nav class="flex items-center justify-between gap-3 mb-6 flex-wrap">
+      <nav class="flex items-center justify-between gap-6 mb-6 flex-wrap">
         <a
           href="<%= session?.authenticatedUser ? '/home' : '/login' %>"
           class="inline-flex items-center gap-2.5 px-4 py-3 rounded-xl bg-backgroundmd shadow-lg font-bold text-textlt no-underline transition hover:bg-backgroundmd/80"
@@ -41,23 +41,21 @@
         </a>
         
         <% if (session?.authenticatedUser) { %>
-          <div class="flex items-center gap-2 flex-wrap">
-            <a href="/events" class="px-4 py-2.5 rounded-lg bg-backgroundlt shadow-sm text-sm font-medium text-textlt no-underline hover:bg-backgroundmd transition">Events</a>
-            <a href="/events/new" class="px-4 py-2.5 rounded-lg bg-highlightlt text-textlt shadow-sm text-sm font-medium no-underline hover:bg-highlightdk transition">Create Event</a>
-            <a href="/dashboard/organizer" class="px-4 py-2.5 rounded-lg bg-backgroundlt shadow-sm text-sm font-medium text-textlt no-underline hover:bg-backgroundmd transition">Organizer Dashboard</a>
+          <div class="flex items-center flex-wrap justify-between flex-grow">
+            <a href="/events" class="no-underline hover:text-highlightlt transition">Events</a>
+            <a href="/events/new" class="no-underline hover:text-highlightlt transition">Create Event</a>
+            <a href="/dashboard/organizer" class="no-underline hover:text-highlightlt transition">Organizer Dashboard</a>
+            <% if (session.authenticatedUser.role === "admin") { %>
+              <a href="/admin/users" class="no-underline hover:text-highlightlt transition">
+                Manage Users
+              </a>
+            <% } %>
           </div>
         <% } %>
 
         <div class="flex items-center gap-3 flex-wrap">
           <% if (session?.authenticatedUser) { %>
-
-            <% if (session.authenticatedUser.role === "admin") { %>
-              <a href="/admin/users" class="text-highlightlt font-semibold no-underline hover:underline">
-                Manage Users
-              </a>
-            <% } %>
-
-            <span class="text-backgroundlt">
+            <span class="text-xs">
               Signed in as 
               <strong class="text-textlt">
                 <%= session.authenticatedUser.displayName %>
@@ -68,7 +66,7 @@
             <form method="post" action="/logout" class="m-0">
               <button
                 type="submit"
-                class="px-3.5 py-2 rounded-lg bg-backgroundmd text-textlt border-0 cursor-pointer hover:bg-backgroundlt text-sm font-medium"
+                class="inline-flex items-center gap-2.5 px-4 py-3 rounded-xl bg-backgroundmd shadow-lg text-textlt no-underline transition hover:bg-backgroundmd/80 cursor-pointer"
               >
                 Log out
               </button>
