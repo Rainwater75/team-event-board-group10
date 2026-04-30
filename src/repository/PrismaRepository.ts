@@ -127,7 +127,7 @@ class PrismaRepository implements IEventRepository {
         },
       });
   
-      return Ok(events.map((e) => this.toEvent(e)));
+      return Ok(events.map((e: any) => this.toEvent(e)));
     }
 
     const searchTerm = `%${lowerQuery}%`;
