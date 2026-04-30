@@ -129,18 +129,18 @@ class PrismaRepository implements IEventRepository {
   
       return Ok(events.map((e) => this.toEvent(e)));
     }
-  
-    const events = await this.prisma.event.findMany({
-      where: {
-        status: "published",
-        endDate: { gt: now },
-        OR: [
-          { title: { contains: lowerQuery } },
-          { description: { contains: lowerQuery } },
-          { location: { contains: lowerQuery } },
-        ],
-      },
-    });
+
+    const searchTerm = `%${lowerQuery}%`;
+    const events = await this.prisma.$queryRaw<Event[]>`
+      SELECT * FROM Event 
+      WHERE status = 'published' 
+      AND endDate > ${now}
+      AND (
+        LOWER(title) LIKE ${searchTerm} OR 
+        LOWER(description) LIKE ${searchTerm} OR 
+        LOWER(location) LIKE ${searchTerm}
+      )
+    `;
   
     return Ok(events.map((e) => this.toEvent(e)));
   }
