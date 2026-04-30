@@ -7,6 +7,17 @@
 
     <!-- Tailwind -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+      @theme {
+        --color-highlightdk: #008083;
+        --color-highlightlt: #00A19C;
+        --color-backgrounddk: #2C4250;
+        --color-backgroundmd: #465666;
+        --color-backgroundlt: #637583;
+        --color-textlt: #FFFFFF;
+        --color-textdk: #000000;
+      }
+    </style>
 
     <!-- HTMX (MUST be before Alpine for best behavior) -->
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
@@ -16,24 +27,24 @@
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
   </head>
 
-  <body class="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 text-slate-900 p-6">
+  <body class="min-h-screen bg-backgrounddk text-textlt p-6">
     <div class="max-w-5xl mx-auto">
 
       <!-- Navbar -->
       <nav class="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <a
           href="<%= session?.authenticatedUser ? '/home' : '/login' %>"
-          class="inline-flex items-center gap-2.5 px-4 py-3 rounded-xl bg-white border border-slate-200 shadow-lg font-bold text-slate-900 no-underline"
+          class="inline-flex items-center gap-2.5 px-4 py-3 rounded-xl bg-backgroundmd shadow-lg font-bold text-textlt no-underline transition hover:bg-backgroundlt"
         >
-          <span class="w-2.5 h-2.5 rounded-full bg-gradient-to-b from-blue-400 to-blue-600"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-highlightlt "></span>
           Project Starter
         </a>
         
         <% if (session?.authenticatedUser) { %>
           <div class="flex items-center gap-2 flex-wrap">
-            <a href="/events" class="px-4 py-2.5 rounded-lg bg-white border border-slate-200 shadow-sm text-sm font-medium text-slate-700 no-underline hover:bg-slate-50 transition">Events</a>
-            <a href="/events/new" class="px-4 py-2.5 rounded-lg bg-blue-600 text-white shadow-sm text-sm font-medium no-underline hover:bg-blue-700 transition">Create Event</a>
-            <a href="/dashboard/organizer" class="px-4 py-2.5 rounded-lg bg-white border border-slate-200 shadow-sm text-sm font-medium text-slate-700 no-underline hover:bg-slate-50 transition">Organizer Dashboard</a>
+            <a href="/events" class="px-4 py-2.5 rounded-lg bg-backgroundlt shadow-sm text-sm font-medium text-textlt no-underline hover:bg-backgroundmd transition">Events</a>
+            <a href="/events/new" class="px-4 py-2.5 rounded-lg bg-highlightlt text-textlt shadow-sm text-sm font-medium no-underline hover:bg-highlightdk transition">Create Event</a>
+            <a href="/dashboard/organizer" class="px-4 py-2.5 rounded-lg bg-backgroundlt shadow-sm text-sm font-medium text-textlt no-underline hover:bg-backgroundmd transition">Organizer Dashboard</a>
           </div>
         <% } %>
 
@@ -41,14 +52,14 @@
           <% if (session?.authenticatedUser) { %>
 
             <% if (session.authenticatedUser.role === "admin") { %>
-              <a href="/admin/users" class="text-blue-700 font-semibold no-underline hover:underline">
+              <a href="/admin/users" class="text-highlightlt font-semibold no-underline hover:underline">
                 Manage Users
               </a>
             <% } %>
 
-            <span class="text-slate-500">
+            <span class="text-backgroundlt">
               Signed in as 
-              <strong class="text-slate-700">
+              <strong class="text-textlt">
                 <%= session.authenticatedUser.displayName %>
               </strong>
               (<%= session.authenticatedUser.role %>)
@@ -57,14 +68,14 @@
             <form method="post" action="/logout" class="m-0">
               <button
                 type="submit"
-                class="px-3.5 py-2 rounded-lg bg-white text-blue-700 border border-slate-200 cursor-pointer hover:bg-blue-50 text-sm font-medium"
+                class="px-3.5 py-2 rounded-lg bg-backgroundmd text-textlt border-0 cursor-pointer hover:bg-backgroundlt text-sm font-medium"
               >
                 Log out
               </button>
             </form>
 
           <% } else { %>
-            <a href="/login" class="text-blue-700 font-semibold no-underline hover:underline">
+            <a href="/login" class="text-highlightlt font-semibold no-underline hover:underline">
               Log in
             </a>
           <% } %>

@@ -147,3 +147,5 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+prisma/migrations/migration_lock.toml
+prisma/migrations/20260430192333_init/migration.sql
