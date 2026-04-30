@@ -26,7 +26,10 @@
         </div>
 
         <div class="mb-4">
-            <label for="description" class="block text-gray-700 text-sm font-bold mb-2">Description</label>
+            <div class="flex items-center justify-between">
+                <label for="description" class="block text-gray-700 text-sm font-bold mb-2">Description</label>
+                <span id="characterCount" class="text-sm text-gray-500">0/200</span>
+            </div>
             <textarea id="description" name="description" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
         </div>
 
@@ -90,6 +93,15 @@
         }
     }
 
+    function descriptionCharacterCount(){
+        const descriptionInput = document.getElementById("description");
+        const characterCount = document.getElementById("characterCount");
+        if (!descriptionInput || !characterCount) return;
+
+        const count = descriptionInput.value.length;
+        characterCount.textContent = `${count}/1000`;
+    }
+
     document.addEventListener("DOMContentLoaded", setDefaultEventTimes);
 
     document.body.addEventListener("event-created", function () {
@@ -98,4 +110,6 @@
         form.reset();
         setDefaultEventTimes();
     });
+
+    document.getElementById("description").addEventListener("input", descriptionCharacterCount);
 </script>
