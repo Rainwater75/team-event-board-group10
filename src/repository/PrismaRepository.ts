@@ -5,10 +5,9 @@ import { type EventError, EventNotFound, ValidationError } from "../lib/errors.j
 import type { IEventRepository } from "./EventRepository.js";
 
 class PrismaRepository implements IEventRepository {
-  constructor(private prisma: PrismaClient) { }
+  constructor(private prisma: PrismaClient) {}
 
   // helper method to convert a PrismaEvent record to our Event model
-
   private toEvent(record: any): Event {
     return Object.assign(
       new Event(
@@ -127,25 +126,25 @@ class PrismaRepository implements IEventRepository {
         },
       });
   
-      return Ok(events.map((e) => this.toEvent(e)));
+      return Ok(events.map((e: any) => this.toEvent(e)));
     }
+
+    const searchTerm = `%${lowerQuery}%`;
+    const events = await this.prisma.$queryRaw<Event[]>`
+      SELECT * FROM Event 
+      WHERE status = 'published' 
+      AND endDate > ${now}
+      AND (
+        LOWER(title) LIKE ${searchTerm} OR 
+        LOWER(description) LIKE ${searchTerm} OR 
+        LOWER(location) LIKE ${searchTerm}
+      )
+    `;
   
-    const events = await this.prisma.event.findMany({
-      where: {
-        status: "published",
-        endDate: { gt: now },
-        OR: [
-          { title: { contains: lowerQuery } },
-          { description: { contains: lowerQuery } },
-          { location: { contains: lowerQuery } },
-        ],
-      },
-    });
-  
-    return Ok(events.map((e) => this.toEvent(e)));
+    return Ok(events.map((e: any) => this.toEvent(e)));
   }
 }
 
 export function CreatePrismaRepository(prisma: PrismaClient): IEventRepository {
-    return new PrismaRepository(prisma);
-  }
+  return new PrismaRepository(prisma);
+}
