@@ -59,7 +59,7 @@
             <div>
                 <label for="category" class="block text-gray-700 text-sm font-bold mb-2">Category</label>
                 <select name="category" id="category" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                    <% const categories = ["None", "test1", "test2", "test3"]; %>
+                    <% const categories = ["None", "music", "sports", "academic"]; %>                <option value="None">Select a category</option>
                     <% categories.forEach(cat => { %>
                         <option value="<%= cat %>" <%= event.category === cat ? 'selected' : '' %>><%= cat %></option>
                     <% }); %>

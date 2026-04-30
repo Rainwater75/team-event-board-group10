@@ -5,7 +5,9 @@ export type EventError =
   | { name: "UnexpectedDependencyError"; message: string }
   | { name: "UnauthorizedEventActionError"; message: string }
   | { name: "InvalidStateTransitionError"; message: string }
-  | { name: "InvalidSearchInput"; message: string };
+  | { name: "InvalidSearchInput"; message: string }
+  | { name: "InvalidCategoryFilterError"; message: string }
+  | { name: "InvalidTimeframeFilterError"; message: string };
 
 // when the event is not found in the database, we can return this error
 export const EventNotFound = (message: string): EventError => ({
@@ -46,5 +48,17 @@ export const InvalidStateTransitionError = (message: string): EventError => ({
 // when the search input is invalid
 export const InvalidSearchInput = (message: string): EventError => ({
   name: "InvalidSearchInput",
+  message,
+});
+
+// when provided filter is not one of the allowed value
+export const InvalidCategoryFilterError = (message: string): EventError => ({
+  name: "InvalidCategoryFilterError",
+  message,
+});
+
+// when provided time filter is not valid
+export const InvalidTimeframeFilterError = (message: string): EventError => ({
+  name: "InvalidTimeframeFilterError",
   message,
 });
