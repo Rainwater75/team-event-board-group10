@@ -34,7 +34,7 @@
       <nav class="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <a
           href="<%= session?.authenticatedUser ? '/home' : '/login' %>"
-          class="inline-flex items-center gap-2.5 px-4 py-3 rounded-xl bg-backgroundmd shadow-lg font-bold text-textlt no-underline transition hover:bg-backgroundlt"
+          class="inline-flex items-center gap-2.5 px-4 py-3 rounded-xl bg-backgroundmd shadow-lg font-bold text-textlt no-underline transition hover:bg-backgroundmd/80"
         >
           <span class="w-2.5 h-2.5 rounded-full bg-highlightlt "></span>
           Project Starter
@@ -75,7 +75,7 @@
             </form>
 
           <% } else { %>
-            <a href="/login" class="text-highlightlt font-semibold no-underline hover:underline">
+            <a href="/login" class="text-highlightlt font-semibold no-underline hover:underline hover:text-highlightlt/80">
               Log in
             </a>
           <% } %>
