@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Project Starter</title>
+    <title>Group 10 Event Board</title>
 
     <!-- Tailwind -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -27,64 +27,80 @@
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
   </head>
 
-  <body class="min-h-screen bg-backgrounddk text-textlt p-6">
-    <div class="max-w-5xl mx-auto">
+  <body x-data="{ sidebarOpen: false }" class="min-h-screen bg-backgrounddk text-textlt flex-1">
+    <!-- Header bar -->
+    <header class="flex h-20 items-center justify-between flex-1 gap-6 flex-wrap p-4 bg-backgrounddk border-b-1 border-backgroundmd shadow-lg">
+      <button @click.stop="sidebarOpen = !sidebarOpen" class="lg:hidden text-textlt">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+      </button>
+      
+      <a href="/home" class="text-2xl tracking-tight font-semibold">
+        Group 10 Event Board
+      </a>
 
-      <!-- Navbar -->
-      <nav class="flex items-center justify-between gap-6 mb-6 flex-wrap">
-        <a
-          href="<%= session?.authenticatedUser ? '/home' : '/login' %>"
-          class="inline-flex items-center gap-2.5 px-4 py-3 rounded-xl bg-backgroundmd shadow-lg font-bold text-textlt no-underline transition hover:bg-backgroundmd/80"
-        >
-          <span class="w-2.5 h-2.5 rounded-full bg-highlightlt "></span>
-          Project Starter
+      <% if (session?.authenticatedUser) { %>
+        <button popovertarget="my-popover" class="w-12 h-12 rounded-full bg-highlightlt text-2xl flex items-center justify-center border-1 border-backgroundmd">
+          <% 
+            const parts = session.authenticatedUser.displayName.split(' ');
+            const initials = parts.map(p => p[0].toUpperCase());
+            const avatarText = initials[0] + (initials.length > 1 ? initials[initials.length - 1] : '');
+          %>
+          <span><%= avatarText %></span>
+        </button>
+      <% } else { %>
+        <a href="/login" class="text-highlightlt font-semibold no-underline hover:underline hover:text-highlightlt/80">
+          Log in
         </a>
-        
-        <% if (session?.authenticatedUser) { %>
-          <div class="flex items-center flex-wrap justify-between flex-grow">
-            <a href="/events" class="no-underline hover:text-highlightlt transition">Events</a>
-            <a href="/events/new" class="no-underline hover:text-highlightlt transition">Create Event</a>
-            <a href="/dashboard/organizer" class="no-underline hover:text-highlightlt transition">Organizer Dashboard</a>
-            <% if (session.authenticatedUser.role === "admin") { %>
-              <a href="/admin/users" class="no-underline hover:text-highlightlt transition">
-                Manage Users
-              </a>
-            <% } %>
-          </div>
-        <% } %>
+      <% } %>
+    </header>
 
-        <div class="flex items-center gap-3 flex-wrap">
-          <% if (session?.authenticatedUser) { %>
-            <span class="text-xs">
-              Signed in as 
-              <strong class="text-textlt">
-                <%= session.authenticatedUser.displayName %>
-              </strong>
-              (<%= session.authenticatedUser.role %>)
-            </span>
+    <% if (session?.authenticatedUser) { %>
+      <div 
+        popover="hint" 
+        id="my-popover"
+        class="p-4 m-2 rounded-xl bg-backgrounddk text-textlt border-1 border-backgroundmd shadow-lg"
+        style="position-area: bottom;"
+      >
+        <div class="text-xl">
+          <%= session.authenticatedUser.displayName %>
+        </div>
+        <div class="text-sm capitalize">
+          <%= session.authenticatedUser.role %>
+        </div>
+        <form method="post" action="/logout" class="m-0">
+          <button type="submit" class="text-highlightlt font-semibold no-underline hover:underline hover:text-highlightlt/80 cursor-pointer">
+            Log out
+          </button>
+        </form>
+      </div>
+    <% } %>
 
-            <form method="post" action="/logout" class="m-0">
-              <button
-                type="submit"
-                class="inline-flex items-center gap-2.5 px-4 py-3 rounded-xl bg-backgroundmd shadow-lg text-textlt no-underline transition hover:bg-backgroundmd/80 cursor-pointer"
-              >
-                Log out
-              </button>
-            </form>
-
-          <% } else { %>
-            <a href="/login" class="text-highlightlt font-semibold no-underline hover:underline hover:text-highlightlt/80">
-              Log in
+    <div class="relative min-h-screen lg:flex">
+      <!-- Sidebar -->
+      <aside
+        @click.away="sidebarOpen = false"
+        class="fixed inset-y-0 left-0 z-50 w-64 bg-backgrounddk border-r-1 border-backgroundmd shadow-lg p-6 transform -translate-x-full transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-auto"
+        :class="{ 'translate-x-0': sidebarOpen }"
+      >
+        <nav class="flex flex-col gap-4">
+          <a href="/home" class="no-underline hover:text-highlightlt transition">Home</a>
+          <a href="/events" class="no-underline hover:text-highlightlt transition">Events</a>
+          <a href="/events/new" class="no-underline hover:text-highlightlt transition">Create Event</a>
+          <a href="/dashboard/organizer" class="no-underline hover:text-highlightlt transition">Organizer Dashboard</a>
+          <% if (session?.authenticatedUser && session.authenticatedUser.role === "admin") { %>
+            <a href="/admin/users" class="no-underline hover:text-highlightlt transition">
+              Manage Users
             </a>
           <% } %>
-        </div>
-      </nav>
+        </nav>
+      </aside>
 
-      <!-- Main content -->
-      <main class="max-w-5xl mx-auto">
-        <%- body %>
-      </main>
-
+      <!-- Main content area -->
+      <div class="flex-1 p-6">
+        <main class="max-w-5xl mx-auto">
+          <%- body %>
+        </main>
+      </div>
     </div>
   </body>
 </html>
