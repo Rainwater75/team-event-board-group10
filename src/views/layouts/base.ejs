@@ -39,7 +39,7 @@
       </a>
 
       <% if (session?.authenticatedUser) { %>
-        <button popovertarget="my-popover" class="w-12 h-12 rounded-full bg-highlightlt text-2xl flex items-center justify-center border-1 border-backgroundmd">
+        <button popovertarget="my-popover" class="w-12 h-12 rounded-full bg-highlightlt text-2xl flex items-center justify-center border-1 border-backgroundmd cursor-pointer">
           <% 
             const parts = session.authenticatedUser.displayName.split(' ');
             const initials = parts.map(p => p[0].toUpperCase());
