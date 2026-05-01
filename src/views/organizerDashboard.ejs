@@ -1,8 +1,8 @@
 <section class="max-w-6xl mx-auto" x-data="dashboardEvents()" x-init="init()" x-on:dashboard-event-status-updated.window="applyStatusUpdate($event.detail)">
 	<div class="mb-6">
-		<a href="/home" class="text-blue-600 hover:underline text-sm font-medium">← Back to home</a>
-		<h1 class="text-3xl font-bold text-slate-900 mt-2">Organizer Dashboard</h1>
-		<p class="text-slate-500"><%= session?.authenticatedUser?.role === "admin" ? "All events grouped by status." : "Your events grouped by status." %></p>
+		<a href="/home" class="text-highlightlt hover:underline text-sm">← Back to home</a>
+		<h1 class="text-3xl font-bold mt-2">Organizer Dashboard</h1>
+		<p><%= session?.authenticatedUser?.role === "admin" ? "All events grouped by status." : "Your events grouped by status." %></p>
 	</div>
 
 	<div id="dashboard-feedback" class="mb-4"></div>
@@ -14,43 +14,43 @@
 	<% } %>
 
 	<div class="mb-6">
-		<a href="/events/new" class="inline-block px-4 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition">
+		<a href="/events/new" class="px-4 py-2.5 rounded-lg bg-highlightlt text-white font-medium cursor-pointer hover:bg-highlightlt/80">
 			+ New Event
 		</a>
 	</div>
 
-	<div x-show="events.length === 0" class="p-6 border border-slate-200 rounded-xl bg-white shadow-sm">
-		<section class="p-6 border border-slate-200 rounded-xl bg-white shadow-sm">
-			<h2 class="text-lg font-semibold text-slate-900">No events yet</h2>
-			<p class="text-slate-500 mt-1">Create your first event to get started.</p>
+	<div x-show="events.length === 0" class="p-6 rounded-xl bg-backgroundmd shadow-sm">
+		<section class="p-6 rounded-xl bg-backgroundmd shadow-sm">
+			<h2 class="text-lg font-semibold text-textlt">No events yet</h2>
+			<p class="text-textlt mt-1">Create your first event to get started.</p>
 		</section>
 	</div>
 
 	<!-- PUBLISHED EVENTS -->
 	<div x-show="events.length > 0" class="space-y-5">
-		<section class="p-4 border border-slate-200 rounded-xl bg-white">
+		<section class="p-4 rounded-xl bg-backgroundmd">
 			<div class="flex items-center justify-between mb-3">
-				<h2 class="text-lg font-semibold text-slate-800">Published</h2>
-				<span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700" x-text="publishedEvents().length"></span>
+				<h2 class="text-lg font-semibold">Published</h2>
+				<span class="text-xs px-2 py-1 rounded-full bg-backgroundlt" x-text="publishedEvents().length"></span>
 			</div>
 
 			<template x-if="publishedEvents().length === 0">
-				<p class="text-sm text-slate-500">No published events.</p>
+				<p class="text-sm">No published events.</p>
 			</template>
 
 			<div class="space-y-3">
 				<template x-for="event in publishedEvents()" :key="event.id">
-					<article class="p-3 border border-slate-200 rounded-lg bg-white">
-						<h3 class="font-semibold text-slate-900" x-text="event.title"></h3>
-						<p class="text-sm text-slate-500 mt-1" x-text="formatDate(event.startDate)"></p>
-						<p class="text-sm text-slate-600" x-text="event.category || 'None'"></p>
-						<p class="text-sm text-slate-700 mt-2">
+					<article class="p-3 rounded-lg bg-backgroundlt">
+						<h3 class="font-semibold" x-text="event.title"></h3>
+						<p class="text-sm mt-1" x-text="formatDate(event.startDate)"></p>
+						<p class="text-sm" x-text="event.category || 'None'"></p>
+						<p class="text-sm mt-2">
 							Attending: <strong x-text="attendeeCount(event)"></strong> / <span x-text="event.maxCapacity"></span>
 						</p>
 						<div class="mt-3 flex flex-wrap gap-2">
-							<a :href="`/events/${event.id}`" class="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">View</a>
+							<a :href="`/events/${event.id}`" class="px-4 py-2 rounded-lg bg-highlightlt text-white text-sm font-medium cursor-pointer hover:bg-highlightlt/80">View</a>
 							<form :action="`/events/${event.id}/cancel`" x-bind:hx-post="`/events/${event.id}/cancel`" hx-target="#dashboard-feedback" hx-swap="innerHTML" method="POST" class="m-0" onsubmit="return confirm('Cancel this event?');">
-								<button type="submit" class="px-3 py-2 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition">Cancel Event</button>
+								<button type="submit" class="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-medium cursor-pointer hover:bg-red-700">Cancel Event</button>
 							</form>
 						</div>
 					</article>
@@ -59,29 +59,29 @@
 		</section>
 
 		<!-- DRAFT EVENTS -->
-		<section class="p-4 border border-slate-200 rounded-xl bg-white">
+		<section class="p-4 rounded-xl bg-backgroundmd">
 			<div class="flex items-center justify-between mb-3">
-				<h2 class="text-lg font-semibold text-slate-800">Draft</h2>
-				<span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700" x-text="draftEvents().length"></span>
+				<h2 class="text-lg font-semibold">Draft</h2>
+				<span class="text-xs px-2 py-1 rounded-full bg-backgroundlt" x-text="draftEvents().length"></span>
 			</div>
 
 			<template x-if="draftEvents().length === 0">
-				<p class="text-sm text-slate-500">No draft events.</p>
+				<p class="text-sm">No draft events.</p>
 			</template>
 
 			<div class="space-y-3">
 				<template x-for="event in draftEvents()" :key="event.id">
-					<article class="p-3 border border-slate-200 rounded-lg bg-white">
-						<h3 class="font-semibold text-slate-900" x-text="event.title"></h3>
-						<p class="text-sm text-slate-500 mt-1" x-text="formatDate(event.startDate)"></p>
-						<p class="text-sm text-slate-600" x-text="event.category || 'None'"></p>
-						<p class="text-sm text-slate-700 mt-2">
+					<article class="p-3 rounded-lg bg-backgroundlt">
+						<h3 class="font-semibold" x-text="event.title"></h3>
+						<p class="text-sm mt-1" x-text="formatDate(event.startDate)"></p>
+						<p class="text-sm" x-text="event.category || 'None'"></p>
+						<p class="text-sm mt-2">
 							Attending: <strong x-text="attendeeCount(event)"></strong> / <span x-text="event.maxCapacity"></span>
 						</p>
 						<div class="mt-3 flex flex-wrap gap-2">
-							<a :href="`/events/${event.id}`" class="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">View</a>
+							<a :href="`/events/${event.id}`" class="px-4 py-2 rounded-lg bg-highlightlt text-white text-sm font-medium cursor-pointer hover:bg-highlightlt/80">View</a>
 							<form :action="`/events/${event.id}/publish`" x-bind:hx-post="`/events/${event.id}/publish`" hx-target="#dashboard-feedback" hx-swap="innerHTML" method="POST" class="m-0">
-								<button type="submit" class="px-3 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition">Publish Event</button>
+								<button type="submit" class="px-4 py-2 rounded-lg bg-highlightlt text-white text-sm font-medium cursor-pointer hover:bg-highlightlt/80">Publish Event</button>
 							</form>
 						</div>
 					</article>
@@ -90,27 +90,27 @@
 		</section>
 
 		<!-- CANCELLED / PAST EVENTS -->
-		<section class="p-4 border border-slate-200 rounded-xl bg-white">
+		<section class="p-4 rounded-xl bg-backgroundmd">
 			<div class="flex items-center justify-between mb-3">
-				<h2 class="text-lg font-semibold text-slate-800">Cancelled / Past</h2>
-				<span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700" x-text="cancelledOrPastEvents().length"></span>
+				<h2 class="text-lg font-semibold">Cancelled / Past</h2>
+				<span class="text-xs px-2 py-1 rounded-full bg-backgroundlt" x-text="cancelledOrPastEvents().length"></span>
 			</div>
 
 			<template x-if="cancelledOrPastEvents().length === 0">
-				<p class="text-sm text-slate-500">No cancelled or past events.</p>
+				<p class="text-sm">No cancelled or past events.</p>
 			</template>
 
 			<div class="space-y-3">
 				<template x-for="event in cancelledOrPastEvents()" :key="event.id">
-					<article class="p-3 border border-slate-200 rounded-lg bg-white">
-						<h3 class="font-semibold text-slate-900" x-text="event.title"></h3>
-						<p class="text-sm text-slate-500 mt-1" x-text="formatDate(event.startDate)"></p>
-						<p class="text-sm text-slate-600" x-text="event.category || 'None'"></p>
-						<p class="text-sm text-slate-700 mt-2">
+					<article class="p-3 rounded-lg bg-backgroundlt">
+						<h3 class="font-semibold" x-text="event.title"></h3>
+						<p class="text-sm mt-1" x-text="formatDate(event.startDate)"></p>
+						<p class="text-sm" x-text="event.category || 'None'"></p>
+						<p class="text-sm mt-2">
 							Attending: <strong x-text="attendeeCount(event)"></strong> / <span x-text="event.maxCapacity"></span>
 						</p>
 						<div class="mt-3 flex flex-wrap gap-2">
-							<a :href="`/events/${event.id}`" class="px-3 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">View</a>
+							<a :href="`/events/${event.id}`" class="px-4 py-2 rounded-lg bg-highlightlt text-white text-sm font-medium cursor-pointer hover:bg-highlightlt/80">View</a>
 						</div>
 					</article>
 				</template>
