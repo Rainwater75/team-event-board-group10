@@ -98,6 +98,58 @@ class InMemoryEventRepository implements IEventRepository {
         return Ok(filteredEvents);
     }
 
+    async filterEvents(
+        category?: string,
+        timeframe: "all" | "week" | "weekend" = "all",
+        query?: string,
+        ): Promise<Result<Event[], EventError>> {
+        const now = new Date();
+
+        let events = Array.from(this.events.values()).filter(
+            event => event.status === "published" && event.startDate >= now
+        );
+
+        if (category && category.trim() && category !== "None") {
+            events = events.filter(event => event.category === category);
+        }
+
+        if (query && query.trim()) {
+            const search = query.trim().toLowerCase();
+            events = events.filter(event =>
+            event.title.toLowerCase().includes(search) ||
+            event.description.toLowerCase().includes(search) ||
+            event.location.toLowerCase().includes(search)
+            );
+        }
+
+        if (timeframe === "week") {
+            const weekEnd = new Date(now);
+            weekEnd.setDate(now.getDate() + 7);
+
+            events = events.filter(event =>
+            event.startDate >= now && event.startDate <= weekEnd
+            );
+        }
+
+        if (timeframe === "weekend") {
+            const day = now.getDay();
+            const daysUntilSaturday = (6 - day + 7) % 7;
+
+            const saturday = new Date(now);
+            saturday.setDate(now.getDate() + daysUntilSaturday);
+            saturday.setHours(0, 0, 0, 0);
+
+            const sundayEnd = new Date(saturday);
+            sundayEnd.setDate(saturday.getDate() + 1);
+            sundayEnd.setHours(23, 59, 59, 999);
+
+            events = events.filter(event =>
+            event.startDate >= saturday && event.startDate <= sundayEnd
+            );
+        }
+
+             return Ok(events);
+    }
 }
 
 // factory function 
