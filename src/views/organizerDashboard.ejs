@@ -90,20 +90,20 @@
 		</section>
 
 		<!-- CANCELLED / PAST EVENTS -->
-		<section class="p-4 border border-slate-200 rounded-xl bg-white" x-data="{ expanded: false }">
+		<section class="p-4 border border-backgroundlt rounded-xl bg-backgroundmd" x-data="{ expanded: false }">
 			<div class="flex items-center justify-between mb-3">
 				<div class="flex items-center gap-3 flex-1 cursor-pointer" @click="expanded = !expanded">
-					<svg class="w-5 h-5 text-slate-600 transition-transform" :class="{ 'rotate-90': expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<svg class="w-5 h-5 text-textlt transition-transform" :class="{ 'rotate-90': expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
 					</svg>
-					<h2 class="text-lg font-semibold text-slate-800">Cancelled / Past</h2>
+					<h2 class="text-lg font-semibold">Cancelled / Past</h2>
 				</div>
-				<span class="text-xs px-2 py-1 rounded-full bg-slate-100 text-slate-700" x-text="cancelledOrPastEvents().length"></span>
+				<span class="text-xs px-2 py-1 rounded-full bg-backgroundlt" x-text="cancelledOrPastEvents().length"></span>
 			</div>
 
 			<div x-show="expanded" x-transition class="mt-4">
 				<template x-if="cancelledOrPastEvents().length === 0">
-					<p class="text-sm text-slate-500">No cancelled or past events.</p>
+					<p class="text-sm">No cancelled or past events.</p>
 				</template>
 		<section class="p-4 rounded-xl bg-backgroundmd">
 			<div class="flex items-center justify-between mb-3">
