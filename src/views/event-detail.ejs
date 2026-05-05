@@ -1,4 +1,7 @@
-<div class="max-w-4xl my-10 mx-auto leading-relaxed bg-backgroundmd rounded-2xl p-6 shadow-xl ">
+<div
+  class="max-w-4xl my-10 mx-auto leading-relaxed bg-backgroundmd rounded-2xl p-6 shadow-xl"
+  x-data="{ attendeesOpen: false }"
+>
   <div class="flex justify-between items-start mb-8">
     <div>
       <h1 class="text-4xl m-0 mb-4 break-all tracking-tight"><%= event.title %></h1>
@@ -7,45 +10,50 @@
       <% } %>
       <span class="bg-green-500/20 text-textlt/90 py-1.5 px-3.5 rounded-full text-sm font-semibold capitalize"><%= event.category %></span>
     </div>
-    <a href="/events" class="text-highlightlt text-sm hover: no-underline">&larr; Back to Events</a>
+    <a href="/events" class="text-highlightlt text-sm no-underline hover:underline">&larr; Back to Events</a>
   </div>
 
   <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-8">
-    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
-      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Status</span>
+    <div class="bg-backgroundlt rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider font-bold mb-1">Status</span>
       <span class="text-base font-medium capitalize"><%= event.status %></span>
     </div>
-    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
-      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Date</span>
+
+    <div class="bg-backgroundlt rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider font-bold mb-1">Date</span>
       <span class="text-base font-medium">📅 <%= event.startDate.toDateString() %></span>
     </div>
-    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
-      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Time</span>
-      <span class="text-base font-medium">⏰ <%= event.startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %> – <%= event.endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span>
+
+    <div class="bg-backgroundlt rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider font-bold mb-1">Time</span>
+      <span class="text-base font-medium">
+        ⏰ <%= event.startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %> – <%= event.endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %>
+      </span>
     </div>
-    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
-      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Location</span>
+
+    <div class="bg-backgroundlt rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider font-bold mb-1">Location</span>
       <span class="text-base font-medium">📍 <%= event.location %></span>
     </div>
-    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
-      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Organizer</span>
+
+    <div class="bg-backgroundlt rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider font-bold mb-1">Organizer</span>
       <span class="text-base font-medium">👤 <%= event.organizerName %></span>
     </div>
-    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
-      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Attendance</span>
-      <span class="text-base font-medium">🎟️ <%= attendingCount %> / <%= event.maxCapacity %></span>
+
+    <div class="bg-backgroundlt rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider font-bold mb-1">Attendance</span>
+      <span id="attendance-count" class="text-base font-medium">🎟️ <%= attendingCount %> / <%= event.maxCapacity %></span>
     </div>
   </div>
 
   <div class="bg-backgroundlt border-l-4 border-highlightlt p-5 my-8 text-base">
-    <h4 class="mt-0  text-lg">About this event</h4>
+    <h4 class="mt-0 text-lg">About this event</h4>
     <%= event.description %>
   </div>
 
   <div class="flex justify-between items-center border-t-2 border-textlt/20 pt-8">
-    <div>
-      
-    </div>
+    <div></div>
 
     <div class="flex gap-3 items-center">
       <% if (canRSVP) { %>
@@ -59,18 +67,24 @@
       <% } %>
 
       <% if (canEdit) { %>
-        <a href="/events/<%= event.id %>/edit" class="px-4 py-2.5 rounded-lg bg-highlightlt text-white font-medium cursor-pointer hover:bg-highlightlt/80">Edit Event</a>
+        <a href="/events/<%= event.id %>/edit" class="px-4 py-2.5 rounded-lg bg-highlightlt text-white font-medium cursor-pointer hover:bg-highlightlt/80">
+          Edit Event
+        </a>
       <% } %>
 
       <% if (event.status === "draft") { %>
         <form method="POST" action="/events/<%= event.id %>/publish" class="m-0">
-          <button type="submit" class="px-4 py-2.5 rounded-lg bg-highlightlt text-white font-medium cursor-pointer hover:bg-highlightlt/80">Publish Event</button>
+          <button type="submit" class="px-4 py-2.5 rounded-lg bg-highlightlt text-white font-medium cursor-pointer hover:bg-highlightlt/80">
+            Publish Event
+          </button>
         </form>
       <% } %>
 
       <% if (canCancel) { %>
         <form method="POST" action="/events/<%= event.id %>/cancel" class="m-0" onsubmit="return confirm('Are you sure?');">
-          <button type="submit" class="px-4 py-2.5 rounded-lg bg-highlightlt text-white font-medium cursor-pointer hover:bg-highlightlt/80">Cancel Event</button>
+          <button type="submit" class="px-4 py-2.5 rounded-lg bg-highlightlt text-white font-medium cursor-pointer hover:bg-highlightlt/80">
+            Cancel Event
+          </button>
         </form>
       <% } %>
 
@@ -78,9 +92,11 @@
         <button
           class="mt-1 px-4 py-2.5 rounded-lg bg-highlightlt text-white font-medium cursor-pointer hover:bg-highlightlt/80"
           hx-get="/events/<%= event.id %>/attendees"
-          hx-target="#attendee-list-panel"
-          hx-swap="outerHTML"
+          hx-target="#attendee-list-content"
+          hx-swap="innerHTML"
           type="button"
+          @click="attendeesOpen = !attendeesOpen"
+          x-text="attendeesOpen ? 'Hide Attendees' : 'View Attendees'"
         >
           View Attendees
         </button>
@@ -88,5 +104,13 @@
     </div>
   </div>
 
-  <div id="attendee-list-panel" class="mt-6"></div>
+  <div id="attendee-list-panel" class="mt-6">
+    <div
+      x-show="attendeesOpen"
+      x-transition.opacity.duration.200ms
+      class="mt-4"
+    >
+      <div id="attendee-list-content"></div>
+    </div>
+  </div>
 </div>
