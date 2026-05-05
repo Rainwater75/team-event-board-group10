@@ -1,16 +1,3 @@
-<!-- Login section if not signed in -->
-<% if (!session?.authenticatedUser) { %>
-  <section class="mb-12 p-8 rounded-2xl bg-backgroundmd shadow-lg text-center">
-    <h2 class="text-3xl font-bold mb-4">Join Our Community</h2>
-    <p class="text-textlt/80 mb-6 max-w-2xl mx-auto">
-      Sign up to create your own events, RSVP to events, and connect with others in your community.
-    </p>
-    <a href="/login" class="px-6 py-3 rounded-lg bg-highlightlt text-backgrounddk font-semibold no-underline hover:bg-highlightlt/80 transition inline-block">
-      Sign In or Create Account
-    </a>
-  </section>
-<% } %>
-
 <!-- Welcome Section -->
 <section class="mb-12 p-8 rounded-2xl bg-gradient-to-br from-highlightdk to-highlightlt shadow-lg text-textlt">
   <div class="max-w-3xl">
@@ -23,15 +10,9 @@
       <a href="/events" class="px-6 py-3 rounded-lg bg-textlt text-highlightdk font-semibold no-underline hover:bg-textlt/90 transition cursor-pointer">
         Browse Events
       </a>
-      <% if (session?.authenticatedUser) { %>
-        <a href="/events/new" class="px-6 py-3 rounded-lg bg-white/20 border-2 border-textlt text-textlt font-semibold no-underline hover:bg-white/30 transition cursor-pointer">
-          Create Event
-        </a>
-      <% } else { %>
-        <a href="/login" class="px-6 py-3 rounded-lg bg-white/20 border-2 border-textlt text-textlt font-semibold no-underline hover:bg-white/30 transition cursor-pointer">
-          Sign In to Create
-        </a>
-      <% } %>
+      <a href="/events/new" class="px-6 py-3 rounded-lg bg-white/20 border-2 border-textlt text-textlt font-semibold no-underline hover:bg-white/30 transition cursor-pointer">
+        Create Event
+      </a>
     </div>
   </div>
 </section>
