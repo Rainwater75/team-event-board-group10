@@ -2,32 +2,43 @@
 <section class="mb-12 p-8 rounded-2xl bg-gradient-to-br from-highlightdk to-highlightlt shadow-lg text-textlt">
   <div class="max-w-3xl">
     <h1 class="mb-4 text-5xl font-bold tracking-tight">Welcome to Event Board</h1>
+    <% if (session?.authenticatedUser?.displayName) { 
+         const firstName = session.authenticatedUser.displayName.split(/\s+/)[0]; 
+    %>
+      <p class="mb-3 text-xl font-semibold text-textlt/95">Hello <%= firstName %></p>
+    <% } %>
     <p class="mb-6 text-lg opacity-90">
       Discover and attend events or create your own! Connect with your community and never miss out on what's happening.
     </p>
-    
-    <div class="flex flex-wrap gap-4">
-      <a href="/events" class="px-6 py-3 rounded-lg bg-textlt text-highlightdk font-semibold no-underline hover:bg-textlt/90 transition cursor-pointer">
-        Browse Events
-      </a>
-      <a href="/events/new" class="px-6 py-3 rounded-lg bg-white/20 border-2 border-textlt text-textlt font-semibold no-underline hover:bg-white/30 transition cursor-pointer">
-        Create Event
-      </a>
-    </div>
   </div>
 </section>
 
 <!-- Info Section -->
-<section class="mb-12 grid grid-cols-1 md:grid-cols-2 gap-6">
-  <div class="p-6 rounded-2xl bg-backgroundmd shadow-lg">
-    <h3 class="text-2xl font-bold text-highlightlt mb-3"> Discover Events</h3>
-    <p class="text-textlt/80">Browse our collection of events organized by category, date, and location. Find the perfect event for you.</p>
+<section class="mb-12 grid grid-cols-1 gap-6 md:grid-cols-2">
+  <div class="group rounded-3xl border border-white/10 bg-backgroundmd p-7 shadow-lg transition duration-300">
+    <h3 class="mb-3 text-2xl font-bold text-textlt">Discover Events</h3>
+    <p class="mb-6 text-textlt/80">
+      Browse our collection of events organized by category, date, and location. Find the perfect event for you.
+    </p>
+    <a href="/events" class="inline-flex items-center justify-center rounded-xl bg-textlt px-5 py-3 font-semibold text-backgrounddk no-underline transition hover:bg-textlt/90">
+      Browse Events
+    </a>
   </div>
   
-  <div class="p-6 rounded-2xl bg-backgroundmd shadow-lg">
-    <h3 class="text-2xl font-bold text-highlightlt mb-3"> Create & Organize</h3>
-    <p class="text-textlt/80">Organize your own events and manage attendees. Track RSVPs and engage with your community.</p>
+  <div class="group rounded-3xl border border-white/10 bg-backgroundmd p-7 shadow-lg transition duration-300">  
+    <h3 class="mb-3 text-2xl font-bold text-textlt">Create & Organize</h3>
+    <p class="mb-6 text-textlt/80">
+      Organize and manage your own events. Track RSVPs and engage with your community.
+    </p>
+    <% if (session?.authenticatedUser) { %>
+      <a href="/events/new" class="inline-flex items-center justify-center rounded-xl border border-white/20 bg-highlightlt px-5 py-3 font-semibold text-textlt no-underline transition hover:bg-highlightlt/90">
+        Create Event
+      </a>
+    <% } else { %>
+      <a href="/login" class="inline-flex items-center justify-center rounded-xl border border-white/20 bg-highlightlt px-5 py-3 font-semibold text-textlt no-underline transition hover:bg-highlightlt/90">
+        Sign In to Create
+      </a>
+    <% } %>
   </div>
 </section>
-
 
