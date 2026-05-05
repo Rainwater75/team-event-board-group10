@@ -95,5 +95,27 @@
         endInput.value = toDateTimeLocal(new Date("<%= event.endDate.toISOString() %>"));
     }
 
-    document.addEventListener("DOMContentLoaded", setEventTimes);
+    document.addEventListener("DOMContentLoaded", () => {
+        setEventTimes();
+
+        const form = document.querySelector('form[action="/events/<%= event.id %>/edit"]');
+        if (!form) return;
+
+        let isDirty = false;
+
+        form.addEventListener('input', () => {
+            isDirty = true;
+        });
+
+        form.addEventListener('submit', () => {
+            isDirty = false;
+        });
+
+        window.addEventListener('beforeunload', (event) => {
+            if (isDirty) {
+                event.preventDefault();
+                event.returnValue = '';
+            }
+        });
+    });
 </script>
