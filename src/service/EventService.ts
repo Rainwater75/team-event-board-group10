@@ -58,7 +58,7 @@ export class EventService implements IEventService {
         if (!result.ok) return result;
 
         let events = result.value;
-        const allowedCategories = ["None", "test1", "test2", "test3"];
+        const allowedCategories = ["None", "music", "sports", "academic"];
         const allowedTimeframes = ["all", "week", "weekend"];
 
         // validate category
