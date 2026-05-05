@@ -12,36 +12,29 @@
             return ''; 
         } 
      }">
-
     <!-- Header Section -->
     <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
         <div class="flex-1">
             <h1 class="text-3xl md:text-4xl m-0 mb-2 break-all tracking-tight font-bold">
                 <%= event.title %>
             </h1>
-
             <template x-if="relativeTime">
                 <div x-text="relativeTime" class="text-highlightlt font-bold text-lg uppercase tracking-widest mb-4"></div>
             </template>
-
             <div class="flex flex-wrap gap-4 items-center">
                 <div class="flex gap-3 items-center">
                     <% if (isDraft) { %>
-                        <span class="text-textlt/90 bg-amber-500/50 py-2 px-4 rounded-full text-base font-bold">⚠️ Draft</span>
+                    <span class="text-textlt/90 bg-amber-500/50 py-2 px-4 rounded-full text-base font-bold">⚠️ Draft</span>
                     <% } %>
                     <% if (event.status === 'cancelled') { %>
-                        <span class="text-textlt/90 bg-red-500/50 py-2 px-4 rounded-full text-base font-bold">🚫 Cancelled</span>
+                    <span class="text-textlt/90 bg-red-500/50 py-2 px-4 rounded-full text-base font-bold">🚫 Cancelled</span>
                     <% } %>
                     <span class="bg-green-500/20 text-textlt/90 py-2 px-4 rounded-full text-base font-bold capitalize">
                         <%= event.category %>
                     </span>
                 </div>
-
                 <!-- Inline Small Location -->
-                <a href="https://google.com/maps?q=<%= encodeURIComponent(event.location) %>" 
-                   target="_blank" 
-                   rel="noopener noreferrer" 
-                   class="text-highlightlt hover:opacity-80 transition-all no-underline text-lg font-black flex items-center gap-1.5 drop-shadow-sm">
+                <a href="https://google.com/maps?q=<%= encodeURIComponent(event.location) %>" target="_blank" rel="noopener noreferrer" class="text-highlightlt hover:opacity-80 transition-all no-underline text-lg font-black flex items-center gap-1.5 drop-shadow-sm">
                     📍 <%= event.location %>
                 </a>
             </div>
@@ -87,35 +80,31 @@
     <div class="flex flex-col md:flex-row justify-end items-center border-t-2 border-textlt/20 pt-10 gap-4">
         <div class="flex flex-wrap gap-4 items-center">
             <% if (canRSVP) { %>
-                <%- include("partials/rsvp-button", { eventId: event.id, attendeeCount: attendingCount, maxCapacity: event.maxCapacity, rsvpStatus: null, pageError: null }) %>
+            <%- include("partials/rsvp-button", { eventId: event.id, attendeeCount: attendingCount, maxCapacity: event.maxCapacity, rsvpStatus: null, pageError: null }) %>
             <% } %>
-
+            
             <% if (canEdit) { %>
-                <a href="/events/<%= event.id %>/edit" class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors">Edit Event</a>
-                
-                <% if (event.status === "draft") { %>
-                    <form method="POST" action="/events/<%= event.id %>/publish" class="m-0">
-                        <button type="submit" class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors">Publish Event</button>
-                    </form>
-                <% } %>
-
-                <% if (event.status !== "cancelled") { %>
-                    <form method="POST" action="/events/<%= event.id %>/cancel" class="m-0" onsubmit="return confirm('Are you sure?');">
-                        <button type="submit" class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors">Cancel Event</button>
-                    </form>
-                <% } %>
+            <a href="/events/<%= event.id %>/edit" class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors">Edit Event</a>
+            
+            <% if (event.status === "draft") { %>
+            <form method="POST" action="/events/<%= event.id %>/publish" class="m-0">
+                <button type="submit" class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors">Publish Event</button>
+            </form>
             <% } %>
-
+            
+            <% if (event.status === "published") { %>
+            <form method="POST" action="/events/<%= event.id %>/cancel" class="m-0" onsubmit="return confirm('Are you sure?');">
+                <button type="submit" class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors">Cancel Event</button>
+            </form>
+            <% } %>
+            <% } %>
+            
             <% if (canEdit || session?.authenticatedUser?.role === "admin") { %>
-                <button class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors" 
-                        hx-get="/events/<%= event.id %>/attendees" 
-                        hx-target="#attendee-list-panel" 
-                        type="button">
-                    View Attendees
-                </button>
+            <button class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors" hx-get="/events/<%= event.id %>/attendees" hx-target="#attendee-list-panel" type="button">
+                View Attendees
+            </button>
             <% } %>
         </div>
     </div>
-
     <div id="attendee-list-panel" class="mt-8"></div>
 </div>
