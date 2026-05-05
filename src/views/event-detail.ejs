@@ -1,105 +1,82 @@
-<div class="max-w-5xl my-10 mx-auto leading-relaxed bg-backgroundmd rounded-2xl p-6 md:p-10 shadow-xl"
-     x-data="{ 
-        get relativeTime() {
-            const start = new Date('<%= event.startDate.toISOString() %>');
-            const now = new Date();
-            const diffTime = start - now;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+<div class="max-w-5xl my-10 mx-auto leading-relaxed bg-backgroundmd rounded-2xl p-6 md:p-10 shadow-xl" x-data="{ get relativeTime() { const start = new Date('<%= event.startDate.toISOString() %>'); const now = new Date(); const diffTime = start - now; const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); if (diffDays < 0) return ''; if (diffDays === 0) return 'Happening Today'; if (diffDays === 1) return 'Starting Tomorrow'; if (diffDays <= 7) return `In ${diffDays} days`; return ''; } }"> 
+    <!-- Header Section --> 
+    <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-8"> 
+        <div class="flex-1"> 
+            <h1 class="text-3xl md:text-4xl m-0 mb-2 break-all tracking-tight font-bold"><%= event.title %></h1> 
+            <template x-if="relativeTime"> 
+                <div x-text="relativeTime" class="text-highlightlt font-bold text-lg uppercase tracking-widest mb-4"></div> 
+            </template> 
+            <div class="flex flex-wrap gap-4 items-center"> 
+                <div class="flex gap-3 items-center">
+                    <% if (isDraft) { %> <span class="text-textlt/90 bg-amber-500/50 py-2 px-4 rounded-full text-base font-bold">⚠️ Draft</span> <% } %> 
+                    <span class="bg-green-500/20 text-textlt/90 py-2 px-4 rounded-full text-base font-bold capitalize"><%= event.category %></span> 
+                </div>
+                <!-- Inline Small Location -->
+                <a href="https://www.google.com/maps/place/<%= encodeURIComponent(event.location) %>" target="_blank" rel="noopener noreferrer" class="text-white hover:text-highlightlt transition-colors no-underline text-base font-medium flex items-center gap-1.5">
+                    📍 <%= event.location %>
+                </a>
+            </div> 
+        </div> 
+        <a href="/events" class="text-highlightlt text-lg font-semibold hover:underline">&larr; Back to Events</a> 
+    </div> 
+
+    <!-- Content Section --> 
+    <div class="mb-8"> 
+        <div class="bg-backgroundlt border-l-8 border-highlightlt p-6 md:p-8 shadow-sm rounded-r-xl"> 
+            <h4 class="mt-0 text-xl text-white font-bold text-highlightlt mb-3">About this event</h4> 
+            <div class="text-lg md:text-xl text-white"><%= event.description %></div> 
+        </div> 
+    </div> 
+
+    <!-- Info Grid --> 
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10"> 
+        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300"> 
+            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Status</span> 
+            <span class="text-base font-medium capitalize"><%= event.status %></span> 
+        </div> 
+        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300"> 
+            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Date</span> 
+            <span class="text-base font-medium">📅 <%= event.startDate.toDateString() %></span> 
+        </div> 
+        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300"> 
+            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Time</span> 
+            <span class="text-base font-medium">⏰ <%= event.startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span> 
+        </div> 
+        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300"> 
+            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Organizer</span> 
+            <span class="text-base font-medium">👤 <%= event.organizerName %></span> 
+        </div> 
+        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300"> 
+            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Attendance</span> 
+            <span class="text-base font-medium">🎟️ <%= attendingCount %> / <%= event.maxCapacity %></span> 
+        </div> 
+    </div> 
+
+    <!-- Actions --> 
+    <div class="flex flex-col md:flex-row justify-end items-center border-t-2 border-textlt/20 pt-10 gap-4"> 
+        <div class="flex flex-wrap gap-4 items-center"> 
+            <% if (canRSVP) { %> 
+                <%- include("partials/rsvp-button", { eventId: event.id, attendeeCount: attendingCount, maxCapacity: event.maxCapacity, rsvpStatus: null, pageError: null }) %> 
+            <% } %> 
             
-            if (diffDays < 0) return ''; 
-            if (diffDays === 0) return 'Happening Today';
-            if (diffDays === 1) return 'Starting Tomorrow';
-            if (diffDays <= 7) return `In ${diffDays} days`;
-            return ''; 
-        }
-     }">
-    
-    <!-- Header Section -->
-    <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
-        <div class="flex-1">
-            <h1 class="text-3xl md:text-4xl m-0 mb-2 break-all tracking-tight font-bold"><%= event.title %></h1>
-            
-            <template x-if="relativeTime">
-                <div x-text="relativeTime" class="text-highlightlt font-bold text-lg uppercase tracking-widest mb-4"></div>
-            </template>
-            
-            <div class="flex flex-wrap gap-3 items-center">
-                <% if (isDraft) { %>
-                    <span class="text-textlt/90 bg-amber-500/50 py-2 px-4 rounded-full text-base font-bold">⚠️ Draft</span>
+            <% if (canEdit) { %> 
+                <a href="/events/<%= event.id %>/edit" class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors">Edit Event</a> 
+                
+                <% if (event.status === "draft") { %>
+                    <form method="POST" action="/events/<%= event.id %>/publish" class="m-0">
+                        <button type="submit" class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors">Publish Event</button>
+                    </form>
                 <% } %>
-                <span class="bg-green-500/20 text-textlt/90 py-2 px-4 rounded-full text-base font-bold capitalize"><%= event.category %></span>
-            </div>
-        </div>
-        <a href="/events" class="text-highlightlt text-lg font-semibold hover:underline">&larr; Back to Events</a>
-    </div>
 
-    <!-- Inline Content: About & Location Side-by-Side -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <!-- About Section (Description text set to White) -->
-        <div class="lg:col-span-2 bg-backgroundlt border-l-8 border-highlightlt p-6 md:p-8 shadow-sm rounded-r-xl">
-            <h4 class="mt-0 text-xl text-white font-bold text-highlightlt mb-3">About this event</h4>
-            <div class="text-lg md:text-xl text-white"><%= event.description %></div>
-        </div>
-
-        <!-- Location Tab (Subtle Background, White Location Text, Fixed URL) -->
-        <div class="bg-highlightlt/10 border-l-8 border-highlightlt p-6 md:p-8 shadow-sm rounded-r-xl flex flex-col justify-center">
-            <span class="text-xs uppercase tracking-widest font-black text-highlightlt/70 block mb-2">Location</span>
-            <a href="https://www.google.com/maps/place/<%= encodeURIComponent(event.location) %>" 
-               target="_blank" 
-               rel="noopener noreferrer"
-               class="text-xl md:text-2xl font-bold text-white hover:opacity-80 transition-all flex flex-wrap items-center gap-2 no-underline leading-tight">
-                📍 <%= event.location %>
-                <span class="text-[10px] font-bold bg-highlightlt/20 text-highlightlt px-2 py-0.5 rounded mt-1">Open Map ↗</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- Info Grid (Including Attendance Section) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
-        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300">
-            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Status</span>
-            <span class="text-base font-medium capitalize"><%= event.status %></span>
-        </div>
-        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300">
-            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Date</span>
-            <span class="text-base font-medium">📅 <%= event.startDate.toDateString() %></span>
-        </div>
-        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300">
-            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Time</span>
-            <span class="text-base font-medium">⏰ <%= event.startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span>
-        </div>
-        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300">
-            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Organizer</span>
-            <span class="text-base font-medium">👤 <%= event.organizerName %></span>
-        </div>
-        <!-- Attendance Section -->
-        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300">
-            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Attendance</span>
-            <span class="text-base font-medium">🎟️ <%= attendingCount %> / <%= event.maxCapacity %></span>
-        </div>
-    </div>
-
-    <!-- Actions -->
-    <div class="flex flex-col md:flex-row justify-end items-center border-t-2 border-textlt/20 pt-10 gap-4">
-        <div class="flex flex-wrap gap-4 items-center">
-            <% if (canRSVP) { %>
-                <%- include("partials/rsvp-button", { eventId: event.id, attendeeCount: attendingCount, maxCapacity: event.maxCapacity, rsvpStatus: null, pageError: null }) %>
-            <% } %>
+                <form method="POST" action="/events/<%= event.id %>/cancel" class="m-0" onsubmit="return confirm('Are you sure?');">
+                    <button type="submit" class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors">Cancel Event</button>
+                </form>
+            <% } %> 
             
-            <% if (canEdit) { %>
-                <a href="/events/<%= event.id %>/edit" class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors">Edit Event</a>
-            <% } %>
-
-            <% if (canEdit || session?.authenticatedUser?.role === "admin") { %>
-                <button class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors" 
-                        hx-get="/events/<%= event.id %>/attendees" 
-                        hx-target="#attendee-list-panel" 
-                        type="button">
-                    View Attendees
-                </button>
-            <% } %>
-        </div>
-    </div>
-    
-    <div id="attendee-list-panel" class="mt-8"></div>
+            <% if (canEdit || session?.authenticatedUser?.role === "admin") { %> 
+                <button class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors" hx-get="/events/<%= event.id %>/attendees" hx-target="#attendee-list-panel" type="button"> View Attendees </button> 
+            <% } %> 
+        </div> 
+    </div> 
+    <div id="attendee-list-panel" class="mt-8"></div> 
 </div>
