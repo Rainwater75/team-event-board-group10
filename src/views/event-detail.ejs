@@ -11,9 +11,25 @@
   </div>
 
   <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-8">
-    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
-      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Status</span>
-      <span class="text-base font-medium capitalize"><%= event.status %></span>
+      <div id="event-status-panel"
+        class="bg-backgroundlt rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+        <span class="text-xs uppercase tracking-wider font-bold mb-1">Status</span>
+      
+        <span x-data="{ changed: false }" x-init="changed = true; setTimeout(() => changed = false, 600)"
+          :class="changed ? 'scale-110 ring-4 ring-sky-300' : ''" class="inline-block w-fit px-3 py-1 rounded-full font-bold transition-all duration-500 capitalize
+      
+            <% if (event.status === 'draft') { %>
+              bg-gray-200 text-gray-800
+            <% } else if (event.status === 'published') { %>
+              bg-green-200 text-green-800
+            <% } else if (event.status === 'cancelled') { %>
+              bg-red-200 text-red-800
+            <% } else if (event.status === 'past') { %>
+              bg-blue-200 text-blue-800
+            <% } %>
+          ">
+          <%= event.status %>
+        </span>
     </div>
     <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
       <span class="text-xs uppercase tracking-wider  font-bold mb-1">Date</span>
