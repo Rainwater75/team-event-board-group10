@@ -1,7 +1,7 @@
 import { IEventRepository } from "../repository/EventRepository.js";
 import { EventError, EventNotFound, InvalidContent, InvalidSearchInput } from "../lib/errors.js";
 import { Ok, Err, Result } from "../lib/result.js";
-import { CATEGORIES, CreateEventInput, Event, Category, EditEventInput } from "../model/Event.js";
+import { CATEGORIES, CreateEventInput, Event, Category, EditEventInput, EventStatus } from "../model/Event.js";
 import { ValidationError } from "../lib/errors.js";
 import { UnauthorizedEventActionError } from "../lib/errors.js";
 import { InvalidStateTransitionError } from "../lib/errors.js";
@@ -176,11 +176,7 @@ export class EventService implements IEventService {
             return Err(ValidationError("Max capacity is required"));
         }
 
-        const validationError = this.validateEventInput(input);
-        if (validationError !== undefined) return Err(validationError);
-
-
-        const eventInput: CreateEventInput = {
+        const normalizedEventInput: CreateEventInput = {
             title: title,
             description: description,
             startDate: input.startDate,
@@ -192,14 +188,36 @@ export class EventService implements IEventService {
             organizerId: organizerId,
             organizerName: organizerDisplayName,
         };
-        return await this.repo.add(eventInput);
+
+        const validationError = this.validateEventInput(normalizedEventInput);
+        if (validationError !== undefined) return Err(validationError);
+
+        return await this.repo.add(normalizedEventInput);
     }
 
     async editEvent(id: number, input: EditEventInput): Promise<Result<Event, EventError>> {
-        const validationError = this.validateEventInput(input);
+        let status = input.status;
+        if (status !== undefined) {
+            status = status.trim().toLowerCase() as EventStatus;
+        }
+
+        console.log(status)
+
+        const normalizedEventInput: EditEventInput = {
+            title: input.title,
+            description: input.description,
+            startDate: input.startDate,
+            endDate: input.endDate,
+            location: input.location,
+            category: input.category, 
+            maxCapacity: input.maxCapacity,
+            status: status
+        };
+
+        const validationError = this.validateEventInput(normalizedEventInput);
         if (validationError !== undefined) return Err(validationError);
 
-        return await this.repo.edit(id, input);
+        return await this.repo.edit(id, normalizedEventInput);
     }
 
     /**

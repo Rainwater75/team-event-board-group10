@@ -1,57 +1,79 @@
-<div id="attendee-list-panel" style="margin-top: 24px;">
-    <% if (pageError) { %>
-      <div style="margin-bottom: 12px; color: #b91c1c; background: #fee2e2; border: 1px solid #fecaca; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem;">
-        <%= pageError %>
+<div id="attendee-list-content" class="grid gap-4">
+  <% if (pageError) { %>
+    <%- include("error", { message: pageError }) %>
+  <% } else if (attendeeGroups) { %>
+
+    <section class="p-4 rounded-xl bg-backgroundlt border border-highlightlt/40 shadow-md">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-semibold">Attending</h3>
+        <span class="text-xs px-2 py-1 rounded-full bg-highlightlt/30">
+          <%= attendeeGroups.attending.length %>
+        </span>
       </div>
-    <% } else if (attendeeGroups) { %>
-      <div style="display: grid; gap: 18px;">
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;">
-          <h3 style="margin: 0 0 10px 0; font-size: 1rem; color: #0f172a;">Attending</h3>
-          <% if (attendeeGroups.attending.length === 0) { %>
-            <p style="margin: 0; color: #64748b;">No attendees yet.</p>
-          <% } else { %>
-            <ul style="margin: 0; padding-left: 20px; color: #334155;">
-              <% attendeeGroups.attending.forEach((person) => { %>
-                <li>
-                  <strong><%= person.displayName %></strong>
-                  <span style="color: #64748b;">— <%= person.createdAt.toLocaleString() %></span>
-                </li>
-              <% }) %>
-            </ul>
-          <% } %>
-        </div>
-  
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;">
-          <h3 style="margin: 0 0 10px 0; font-size: 1rem; color: #0f172a;">Waitlisted</h3>
-          <% if (attendeeGroups.waitlisted.length === 0) { %>
-            <p style="margin: 0; color: #64748b;">No waitlisted attendees.</p>
-          <% } else { %>
-            <ul style="margin: 0; padding-left: 20px; color: #334155;">
-              <% attendeeGroups.waitlisted.forEach((person) => { %>
-                <li>
-                  <strong><%= person.displayName %></strong>
-                  <span style="color: #64748b;">— <%= person.createdAt.toLocaleString() %></span>
-                </li>
-              <% }) %>
-            </ul>
-          <% } %>
-        </div>
-  
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;">
-          <h3 style="margin: 0 0 10px 0; font-size: 1rem; color: #0f172a;">Cancelled</h3>
-          <% if (attendeeGroups.cancelled.length === 0) { %>
-            <p style="margin: 0; color: #64748b;">No cancelled RSVPs.</p>
-          <% } else { %>
-            <ul style="margin: 0; padding-left: 20px; color: #334155;">
-              <% attendeeGroups.cancelled.forEach((person) => { %>
-                <li>
-                  <strong><%= person.displayName %></strong>
-                  <span style="color: #64748b;">— <%= person.createdAt.toLocaleString() %></span>
-                </li>
-              <% }) %>
-            </ul>
-          <% } %>
-        </div>
+
+      <% if (attendeeGroups.attending.length === 0) { %>
+        <p class="text-sm text-textlt/80">No attendees yet.</p>
+      <% } else { %>
+        <ul class="grid gap-2">
+          <% attendeeGroups.attending.forEach((person) => { %>
+            <li class="p-3 rounded-lg bg-backgroundmd">
+              <strong><%= person.displayName %></strong>
+              <span class="block text-sm text-textlt/70">
+                <%= person.createdAt.toLocaleString() %>
+              </span>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </section>
+
+    <section class="p-4 rounded-xl bg-backgroundlt border border-yellow-500/40 shadow-md">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-semibold">Waitlisted</h3>
+        <span class="text-xs px-2 py-1 rounded-full bg-yellow-500/30">
+          <%= attendeeGroups.waitlisted.length %>
+        </span>
       </div>
-    <% } %>
-  </div>
+
+      <% if (attendeeGroups.waitlisted.length === 0) { %>
+        <p class="text-sm text-textlt/80">No waitlisted attendees.</p>
+      <% } else { %>
+        <ul class="grid gap-2">
+          <% attendeeGroups.waitlisted.forEach((person) => { %>
+            <li class="p-3 rounded-lg bg-backgroundmd">
+              <strong><%= person.displayName %></strong>
+              <span class="block text-sm text-textlt/70">
+                <%= person.createdAt.toLocaleString() %>
+              </span>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </section>
+
+    <section class="p-4 rounded-xl bg-backgroundlt border border-red-500/40 shadow-md">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-semibold">Cancelled</h3>
+        <span class="text-xs px-2 py-1 rounded-full bg-red-500/30">
+          <%= attendeeGroups.cancelled.length %>
+        </span>
+      </div>
+
+      <% if (attendeeGroups.cancelled.length === 0) { %>
+        <p class="text-sm text-textlt/80">No cancelled RSVPs.</p>
+      <% } else { %>
+        <ul class="grid gap-2">
+          <% attendeeGroups.cancelled.forEach((person) => { %>
+            <li class="p-3 rounded-lg bg-backgroundmd">
+              <strong><%= person.displayName %></strong>
+              <span class="block text-sm text-textlt/70">
+                <%= person.createdAt.toLocaleString() %>
+              </span>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </section>
+
+  <% } %>
+</div>

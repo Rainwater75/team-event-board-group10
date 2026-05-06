@@ -1,30 +1,48 @@
-<div id="rsvp-panel">
-    <% 
-      const label =
-        rsvpStatus === "going" ? "Cancel RSVP" :
-        rsvpStatus === "waitlisted" ? "Leave Waitlist" :
-        rsvpStatus === "cancelled" ? "RSVP Again" :
-        (typeof attendeeCount === "number" && typeof maxCapacity === "number" && attendeeCount >= maxCapacity
-          ? "Join Waitlist"
-          : "RSVP Now");
-    %>
-  
-    <% if (pageError) { %>
-      <div style="margin-bottom: 10px; color: #b91c1c; background: #fee2e2; border: 1px solid #fecaca; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem;">
-        <%= pageError %>
-      </div>
-    <% } %>
-  
-    <form
-      method="POST"
-      action="/events/<%= eventId %>/rsvp"
-      hx-post="/events/<%= eventId %>/rsvp"
-      hx-target="#rsvp-panel"
-      hx-swap="outerHTML"
-      style="margin: 0;"
+<div
+  id="rsvp-panel"
+  x-data="{ visible: false }"
+  x-init="$nextTick(() => visible = true)"
+  x-show="visible"
+  x-transition.opacity.duration.200ms
+>
+  <% 
+    const isGoing = rsvpStatus === "going";
+    const isWaitlisted = rsvpStatus === "waitlisted";
+    const isCancelled = rsvpStatus === "cancelled";
+
+    const label =
+      isGoing ? "Cancel RSVP" :
+      isWaitlisted ? "Leave Waitlist" :
+      isCancelled ? "RSVP Again" :
+      (attendeeCount >= maxCapacity ? "Join Waitlist" : "RSVP Now");
+
+    const buttonClass =
+      isGoing
+        ? "bg-red-500 hover:bg-red-500/80"              // cancel state
+        : isWaitlisted
+        ? "bg-yellow-500 hover:bg-yellow-500/80"        // waitlist
+        : "bg-highlightlt hover:bg-highlightlt/80";     // default (matches team)
+  %>
+
+  <% if (pageError) { %>
+    <div class="mb-3 p-3 rounded-lg bg-red-500/20 border border-red-500 text-sm">
+      <%= pageError %>
+    </div>
+  <% } %>
+
+  <form
+    method="POST"
+    action="/events/<%= eventId %>/rsvp"
+    hx-post="/events/<%= eventId %>/rsvp"
+    hx-target="#rsvp-panel"
+    hx-swap="outerHTML"
+    class="m-0"
+  >
+    <button
+      type="submit"
+      class="px-4 py-2.5 rounded-lg text-white font-medium cursor-pointer transition <%= buttonClass %>"
     >
-      <button type="submit" class="btn btn-rsvp">
-        <%= label %>
-      </button>
-    </form>
-  </div>
+      <%= label %>
+    </button>
+  </form>
+</div>

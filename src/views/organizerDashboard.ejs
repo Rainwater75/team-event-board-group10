@@ -105,12 +105,7 @@
 				<template x-if="cancelledOrPastEvents().length === 0">
 					<p class="text-sm">No cancelled or past events.</p>
 				</template>
-		<section class="p-4 rounded-xl bg-backgroundmd">
-			<div class="flex items-center justify-between mb-3">
-				<h2 class="text-lg font-semibold">Cancelled / Past</h2>
-				<span class="text-xs px-2 py-1 rounded-full bg-backgroundlt" x-text="cancelledOrPastEvents().length"></span>
-			</div>
-
+	
 			<template x-if="cancelledOrPastEvents().length === 0">
 				<p class="text-sm">No cancelled or past events.</p>
 			</template>
