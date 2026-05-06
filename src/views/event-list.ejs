@@ -29,25 +29,16 @@
     </div>
 
     <!-- Filter Form -->
-    <form 
-        x-data="{ category: '', timeframe: 'all' }"
-        hx-get="/events/filter" 
-        hx-target=".events-grid" 
-        hx-select=".events-grid"
-        hx-swap="outerHTML"
-        hx-push-url="true" 
-        class="flex gap-2.5 flex-wrap items-center mb-6"
-    >
-        <select name="category"
-    x-model="category"
-    class="px-4 py-3 rounded-xl shadow-lg text-textlt transition cursor-pointer"
-    :class="category ? 'bg-highlightlt ring-2 ring-textlt' : 'bg-backgroundlt'"
-  >
-    <option value="">All Categories</option>
-    <option value="music">Music</option>
-    <option value="sports">Sports</option>
-    <option value="academic">Academic</option>
-  </select>
+    <form x-data="{ category: '', timeframe: 'all' }" hx-get="/events/filter" hx-target=".events-grid"
+        hx-select=".events-grid" hx-swap="outerHTML" hx-push-url="true" class="flex gap-2.5 flex-wrap items-center mb-6">
+        <select name="category" x-model="category"
+            class="px-4 py-3 rounded-xl shadow-lg text-textlt transition cursor-pointer"
+            :class="category ? 'bg-highlightlt ring-2 ring-textlt' : 'bg-backgroundlt'">
+            <option value="">All Categories</option>
+            <option value="music">Music</option>
+            <option value="sports">Sports</option>
+            <option value="academic">Academic</option>
+        </select>
 
 <select name="timeframe"
     x-model="timeframe"
