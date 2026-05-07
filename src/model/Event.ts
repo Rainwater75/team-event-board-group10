@@ -14,7 +14,7 @@ export interface IEvent {
     category: Category; 
     status: EventStatus;
     maxCapacity: number;
-    organizerId: string; // CHANGE THIS TO UUID
+    organizerId: string;
     organizerName?: string;
     attendingUsers: IUserSummary[];
 };
@@ -28,7 +28,7 @@ export interface CreateEventInput {
     category?: Category; 
     maxCapacity: number;
     status?: EventStatus;
-    organizerId: string; //required
+    organizerId: string;
     organizerName?: string;
 };
 

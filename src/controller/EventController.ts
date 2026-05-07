@@ -56,6 +56,8 @@ cancelEvent(
     session: IAppBrowserSession,
     id: number,
 ): Promise<void>;
+
+displayHome(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void>;
 }
 
 class EventController implements IEventController {
@@ -562,6 +564,15 @@ async cancelEvent(
             return;
         }  
         res.render("event-list", { session, events: result.value, query });
+    }
+
+    async displayHome(res: Response, session: IAppBrowserSession, pageError?: string | null): Promise<void> {
+        this.logger.info("Rendering home page");
+        
+        res.render("home", {
+            session,
+            pageError,
+        });
     }
 }
 

@@ -1,180 +1,129 @@
-<style>
-  .event-details-container {
-    max-width: 850px;
-    margin: 40px auto;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-  }
-
-  .detail-box {
-    background: #f8fafc;
-    border: 1px solid #edf2f7;
-    border-radius: 12px;
-    padding: 15px 20px;
-    display: flex;
-    flex-direction: column;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-
-  .detail-box:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    border-color: #cbd5e0;
-  }
-
-  .detail-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #64748b;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  .detail-value {
-    font-size: 1rem;
-    color: #1e293b;
-    font-weight: 500;
-  }
-
-  .category-badge {
-    background: #dcfce7;
-    color: #166534;
-    padding: 6px 14px;
-    border-radius: 99px;
-    font-size: 0.85rem;
-    font-weight: 600;
-  }
-
-  .btn {
-    padding: 12px 24px;
-    border-radius: 10px;
-    font-weight: 600;
-    text-decoration: none;
-    transition: all 0.2s;
-    cursor: pointer;
-    border: none;
-    display: inline-block;
-  }
-
-  .btn-home { color: #64748b; font-size: 0.9rem; }
-  .btn-home:hover { color: #1e293b; }
-
-  .btn-rsvp { background: #2563eb; color: white; }
-  .btn-rsvp:hover { background: #1d4ed8; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
-
-  .btn-edit { background: white; color: #475569; border: 1px solid #cbd5e0; }
-  .btn-edit:hover { background: #f1f5f9; }
-
-  .btn-cancel { background: #ef4444; color: white; }
-  .btn-cancel:hover { background: #dc2626; }
-
-  .btn-attendees { background: #0f766e; color: white; }
-  .btn-attendees:hover { background: #115e59; }
-
-  .description-area {
-    background: #fff;
-    border-left: 4px solid #e2e8f0;
-    padding: 20px;
-    margin: 30px 0;
-    color: #475569;
-    font-size: 1.05rem;
-  }
-</style>
-
-<div class="event-details-container">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
-    <div>
-      <h1 style="font-size: 2.75rem; margin: 0 0 15px 0; color: #0f172a; letter-spacing: -0.02em;"><%= event.title %></h1>
-      <span class="category-badge"><%= event.category %></span>
+<div class="max-w-5xl my-10 mx-auto leading-relaxed bg-backgroundmd rounded-2xl p-6 md:p-10 shadow-xl"
+     x-data="{ 
+        get relativeTime() { 
+            const start = new Date('<%= event.startDate.toISOString() %>'); 
+            const now = new Date(); 
+            const diffTime = start - now; 
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+            if (diffDays < 0) return ''; 
+            if (diffDays === 0) return 'Happening Today'; 
+            if (diffDays === 1) return 'Starting Tomorrow'; 
+            if (diffDays <= 7) return `In ${diffDays} days`; 
+            return ''; 
+        } 
+     }">
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
+        <div class="flex-1">
+            <h1 class="text-3xl md:text-4xl m-0 mb-2 break-all tracking-tight font-bold">
+                <%= event.title %>
+            </h1>
+            <template x-if="relativeTime">
+                <div x-text="relativeTime" class="text-highlightlt font-bold text-lg uppercase tracking-widest mb-4"></div>
+            </template>
+            <div class="flex flex-wrap gap-4 items-center">
+                <div class="flex gap-3 items-center">
+                    <% if (isDraft) { %>
+                    <span class="text-textlt/90 bg-amber-500/50 py-2 px-4 rounded-full text-base font-bold">⚠️ Draft</span>
+                    <% } %>
+                    <% if (event.status === 'cancelled') { %>
+                    <span class="text-textlt/90 bg-red-500/50 py-2 px-4 rounded-full text-base font-bold">🚫 Cancelled</span>
+                    <% } %>
+                    <span class="bg-green-500/20 text-textlt/90 py-2 px-4 rounded-full text-base font-bold capitalize">
+                        <%= event.category %>
+                    </span>
+                </div>
+                <!-- Inline Small Location -->
+                <a href="https://google.com/maps?q=<%= encodeURIComponent(event.location) %>" target="_blank" rel="noopener noreferrer" class="text-highlightlt hover:opacity-80 transition-all no-underline text-lg font-black flex items-center gap-1.5 drop-shadow-sm">
+                    📍 <%= event.location %>
+                </a>
+            </div>
+        </div>
+        <a href="/events" class="text-highlightlt text-lg font-semibold hover:underline">&larr; Back to Events</a>
     </div>
-    <a href="/events" class="btn-home">&larr; Back to Events</a>
-  </div>
 
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px;">
-    <div class="detail-box">
-      <span class="detail-label">Status</span>
-      <span class="detail-value"><%= event.status %></span>
+    <!-- About Section -->
+    <div class="mb-8">
+        <div class="bg-backgroundlt border-l-8 border-highlightlt p-6 md:p-8 shadow-sm rounded-r-xl">
+            <h4 class="mt-0 text-xl text-white font-bold text-highlightlt mb-3">About this event</h4>
+            <div class="text-lg md:text-xl text-white">
+                <%= event.description %>
+            </div>
+        </div>
     </div>
-    <div class="detail-box">
-      <span class="detail-label">Date</span>
-      <span class="detail-value">📅 <%= event.startDate.toDateString() %></span>
+
+  <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-8">
+      <div id="event-status-panel"
+        class="bg-backgroundlt rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+        <span class="text-xs uppercase tracking-wider font-bold mb-1">Status</span>
+      
+        <span x-data="{ changed: false }" x-init="changed = true; setTimeout(() => changed = false, 600)"
+          :class="changed ? 'scale-110 ring-4 ring-sky-300' : ''" class="inline-block w-fit px-3 py-1 rounded-full font-bold transition-all duration-500 capitalize
+      
+            <% if (event.status === 'draft') { %>
+              bg-gray-200 text-gray-800
+            <% } else if (event.status === 'published') { %>
+              bg-green-200 text-green-800
+            <% } else if (event.status === 'cancelled') { %>
+              bg-red-200 text-red-800
+            <% } else if (event.status === 'past') { %>
+              bg-blue-200 text-blue-800
+            <% } %>
+          ">
+          <%= event.status %>
+        </span>
     </div>
-    <div class="detail-box">
-      <span class="detail-label">Time</span>
-      <span class="detail-value">⏰ <%= event.startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %> – <%= event.endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span>
+    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Date</span>
+      <span class="text-base font-medium">📅 <%= event.startDate.toDateString() %></span>
     </div>
-    <div class="detail-box">
-      <span class="detail-label">Location</span>
-      <span class="detail-value">📍 <%= event.location %></span>
+    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Time</span>
+      <span class="text-base font-medium">⏰ <%= event.startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %> – <%= event.endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span>
     </div>
-    <div class="detail-box">
-      <span class="detail-label">Organizer</span>
-      <span class="detail-value">👤 <%= event.organizerName %></span>
+    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Location</span>
+      <span class="text-base font-medium">📍 <%= event.location %></span>
     </div>
-    <div class="detail-box">
-      <span class="detail-label">Attendance</span>
-      <span class="detail-value">🎟️ <%= attendingCount %> / <%= event.maxCapacity %></span>
+    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Organizer</span>
+      <span class="text-base font-medium">👤 <%= event.organizerName %></span>
+    </div>
+    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Attendance</span>
+      <span class="text-base font-medium">🎟️ <%= attendingCount %> / <%= event.maxCapacity %></span>
     </div>
   </div>
 
-  <div class="description-area">
-    <h4 style="margin-top:0; color: #1e293b; font-size: 1.1rem;">About this event</h4>
-    <%= event.description %>
-  </div>
-
-  <div style="display: flex; justify-content: space-between; align-items: center; border-top: 2px solid #f1f5f9; padding-top: 30px;">
-    <div>
-      <% if (isDraft) { %>
-        <span style="color: #92400e; background: #fef3c7; padding: 8px 16px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;">⚠️ Draft Mode</span>
-      <% } %>
+    <!-- Actions -->
+    <div class="flex flex-col md:flex-row justify-end items-center border-t-2 border-textlt/20 pt-10 gap-4">
+        <div class="flex flex-wrap gap-4 items-center">
+            <% if (canRSVP) { %>
+            <%- include("partials/rsvp-button", { eventId: event.id, attendeeCount: attendingCount, maxCapacity: event.maxCapacity, rsvpStatus: null, pageError: null }) %>
+            <% } %>
+            
+            <% if (canEdit) { %>
+            <a href="/events/<%= event.id %>/edit" class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors">Edit Event</a>
+            
+            <% if (event.status === "draft") { %>
+            <form method="POST" action="/events/<%= event.id %>/publish" class="m-0">
+                <button type="submit" class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors">Publish Event</button>
+            </form>
+            <% } %>
+            
+            <% if (event.status === "published") { %>
+            <form method="POST" action="/events/<%= event.id %>/cancel" class="m-0" onsubmit="return confirm('Are you sure?');">
+                <button type="submit" class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors">Cancel Event</button>
+            </form>
+            <% } %>
+            <% } %>
+            
+            <% if (canEdit || session?.authenticatedUser?.role === "admin") { %>
+            <button class="px-6 py-3 rounded-lg bg-highlightlt text-white text-lg font-medium hover:bg-highlightlt/80 transition-colors" hx-get="/events/<%= event.id %>/attendees" hx-target="#attendee-list-panel" type="button">
+                View Attendees
+            </button>
+            <% } %>
+        </div>
     </div>
-
-    <div style="display: flex; gap: 12px; align-items: center;">
-      <% if (canRSVP) { %>
-        <%- include("partials/rsvp-button", {
-          eventId: event.id,
-          attendeeCount: attendingCount,
-          maxCapacity: event.maxCapacity,
-          rsvpStatus: null,
-          pageError: null
-        }) %>
-      <% } %>
-
-      <% if (canEdit) { %>
-        <a href="/events/<%= event.id %>/edit" class="btn btn-edit">Edit Event</a>
-      <% } %>
-
-      <% if (event.status === "draft") { %>
-        <form method="POST" action="/events/<%= event.id %>/publish" style="margin: 0;">
-          <button type="submit" class="btn btn-rsvp">Publish Event</button>
-        </form>
-      <% } %>
-
-      <% if (canCancel) { %>
-        <form method="POST" action="/events/<%= event.id %>/cancel" style="margin: 0;" onsubmit="return confirm('Are you sure?');">
-          <button type="submit" class="btn btn-cancel">Cancel Event</button>
-        </form>
-      <% } %>
-
-      <% if (canEdit || session?.authenticatedUser?.role === "admin") { %>
-        <button
-          class="btn btn-attendees"
-          hx-get="/events/<%= event.id %>/attendees"
-          hx-target="#attendee-list-panel"
-          hx-swap="outerHTML"
-          type="button"
-        >
-          View Attendees
-        </button>
-      <% } %>
-    </div>
-  </div>
-
-  <div id="attendee-list-panel" style="margin-top: 24px;"></div>
+    <div id="attendee-list-panel" class="mt-8"></div>
 </div>

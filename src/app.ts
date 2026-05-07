@@ -254,7 +254,7 @@ class ExpressApp implements IApp {
 
         const browserSession = recordPageView(sessionStore(req));
         this.logger.info(`GET /home for ${browserSession.browserLabel}`);
-        res.render("home", { session: browserSession, pageError: null });
+        await this.controller.displayHome(res, browserSession, null);
       }),
     );
 
@@ -292,13 +292,24 @@ class ExpressApp implements IApp {
       asyncHandler(async (req, res) => {
         if (!this.requireAuthenticated(req, res)) return;
 
-        const session = touchAppSession(sessionStore(req));
-        const category = typeof req.query.category === "string" ? req.query.category : "";
-        const query = typeof req.query.query === "string" ? req.query.query : "";
-        const startAfterRaw = typeof req.query.startAfter === "string" ? req.query.startAfter : "";
-        const startAfter = typeof req.query.startAfter === "string" ? req.query.startAfter : "";
+        const browserSession = touchAppSession(sessionStore(req));
 
-        await this.controller.filterEvents(res, session, category, query, startAfter);
+        const category =
+          typeof req.query.category === "string" ? req.query.category : "";
+
+        const query =
+          typeof req.query.query === "string" ? req.query.query : "";
+
+        const timeframe =
+          typeof req.query.timeframe === "string" ? req.query.timeframe : "all";
+
+        await this.controller.filterEvents(
+          res,
+          browserSession,
+          category,
+          query,      
+          timeframe   
+        );
       }),
     );
 

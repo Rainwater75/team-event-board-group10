@@ -143,6 +143,72 @@ class PrismaRepository implements IEventRepository {
   
     return Ok(events.map((e: any) => this.toEvent(e)));
   }
+
+async filterEvents(
+  category?: string,
+  timeframe: "all" | "week" | "weekend" = "all",
+  query?: string,
+): Promise<Result<Event[], EventError>> {
+  const now = new Date();
+
+  const where: any = {
+    status: "published",
+    startDate: {
+      gte: now,
+    },
+  };
+
+  if (category && category.trim() && category !== "None") {
+    where.category = category;
+  }
+
+  if (timeframe === "week") {
+    const weekEnd = new Date(now);
+    weekEnd.setDate(now.getDate() + 7);
+
+    where.startDate = {
+      gte: now,
+      lte: weekEnd,
+    };
+  }
+
+  if (timeframe === "weekend") {
+    const day = now.getDay();
+    const daysUntilSaturday = (6 - day + 7) % 7;
+
+    const saturday = new Date(now);
+    saturday.setDate(now.getDate() + daysUntilSaturday);
+    saturday.setHours(0, 0, 0, 0);
+
+    const sundayEnd = new Date(saturday);
+    sundayEnd.setDate(saturday.getDate() + 1);
+    sundayEnd.setHours(23, 59, 59, 999);
+
+    where.startDate = {
+      gte: saturday,
+      lte: sundayEnd,
+    };
+  }
+
+  if (query && query.trim()) {
+    const search = query.trim();
+
+    where.OR = [
+      { title: { contains: search } },
+      { description: { contains: search } },
+      { location: { contains: search } },
+    ];
+  }
+
+  const events = await this.prisma.event.findMany({
+    where,
+    orderBy: {
+      startDate: "asc",
+    },
+  });
+
+  return Ok(events.map(this.toEvent.bind(this)));
+  }
 }
 
 export function CreatePrismaRepository(prisma: PrismaClient): IEventRepository {
