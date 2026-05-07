@@ -52,29 +52,48 @@
         </div>
     </div>
 
-    <!-- Info Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
-        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300">
-            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Status</span>
-            <span class="text-base font-medium capitalize"><%= event.status %></span>
-        </div>
-        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300">
-            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Date</span>
-            <span class="text-base font-medium">📅 <%= event.startDate.toDateString() %></span>
-        </div>
-        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300">
-            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Time</span>
-            <span class="text-base font-medium">⏰ <%= event.startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span>
-        </div>
-        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300">
-            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Organizer</span>
-            <span class="text-base font-medium">👤 <%= event.organizerName %></span>
-        </div>
-        <div class="bg-backgroundlt rounded-xl py-4 px-6 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-transparent hover:border-slate-300">
-            <span class="text-xs uppercase tracking-wider font-bold mb-1 opacity-70">Attendance</span>
-            <span class="text-base font-medium">🎟️ <%= attendingCount %> / <%= event.maxCapacity %></span>
-        </div>
+  <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-8">
+      <div id="event-status-panel"
+        class="bg-backgroundlt rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+        <span class="text-xs uppercase tracking-wider font-bold mb-1">Status</span>
+      
+        <span x-data="{ changed: false }" x-init="changed = true; setTimeout(() => changed = false, 600)"
+          :class="changed ? 'scale-110 ring-4 ring-sky-300' : ''" class="inline-block w-fit px-3 py-1 rounded-full font-bold transition-all duration-500 capitalize
+      
+            <% if (event.status === 'draft') { %>
+              bg-gray-200 text-gray-800
+            <% } else if (event.status === 'published') { %>
+              bg-green-200 text-green-800
+            <% } else if (event.status === 'cancelled') { %>
+              bg-red-200 text-red-800
+            <% } else if (event.status === 'past') { %>
+              bg-blue-200 text-blue-800
+            <% } %>
+          ">
+          <%= event.status %>
+        </span>
     </div>
+    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Date</span>
+      <span class="text-base font-medium">📅 <%= event.startDate.toDateString() %></span>
+    </div>
+    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Time</span>
+      <span class="text-base font-medium">⏰ <%= event.startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %> – <%= event.endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></span>
+    </div>
+    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Location</span>
+      <span class="text-base font-medium">📍 <%= event.location %></span>
+    </div>
+    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Organizer</span>
+      <span class="text-base font-medium">👤 <%= event.organizerName %></span>
+    </div>
+    <div class="bg-backgroundlt  rounded-xl py-4 px-5 flex flex-col transition-transform transition-shadow duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300">
+      <span class="text-xs uppercase tracking-wider  font-bold mb-1">Attendance</span>
+      <span class="text-base font-medium">🎟️ <%= attendingCount %> / <%= event.maxCapacity %></span>
+    </div>
+  </div>
 
     <!-- Actions -->
     <div class="flex flex-col md:flex-row justify-end items-center border-t-2 border-textlt/20 pt-10 gap-4">
