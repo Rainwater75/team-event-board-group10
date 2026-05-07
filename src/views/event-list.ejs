@@ -41,42 +41,66 @@
     </div>
   </div>
 
-  <!-- Filter Form -->
-  <form hx-get="/events/filter" hx-target="#events-list" hx-select="#events-list" hx-push-url="true" class="flex gap-2.5 flex-wrap items-center mb-6">
-    <select name="category" class="px-4 py-3 rounded-xl bg-backgroundlt shadow-lg text-textlt no-underline transition cursor-pointer" >
-      <option value="">All Categories</option>
-      <option value="music">Music</option>
-      <option value="sports">Sports</option>
-      <option value="academic">Academic</option>
-    </select>
-    <select name="timeframe" class="px-4 py-3 rounded-xl bg-backgroundlt shadow-lg text-textlt no-underline transition cursor-pointer" >
-      <option value="all">All Upcoming</option>
-      <option value="week">This Week</option>
-      <option value="weekend">This Weekend</option>
-    </select>
-    <button type="submit" class="px-4 py-3 rounded-xl bg-highlightlt shadow-lg text-textlt no-underline transition hover:bg-highlightlt/80 cursor-pointer" >
-      Apply Filters
-    </button>
-  </form>
+    <!-- Filter Form -->
+    <form x-data="{ category: '', timeframe: 'all' }" hx-get="/events/filter" hx-target=".events-grid"
+        hx-select=".events-grid" hx-swap="outerHTML" hx-push-url="true" class="flex gap-2.5 flex-wrap items-center mb-6">
+        <select name="category" x-model="category"
+            class="px-4 py-3 rounded-xl shadow-lg text-textlt transition cursor-pointer"
+            :class="category ? 'bg-highlightlt ring-2 ring-textlt' : 'bg-backgroundlt'">
+            <option value="">All Categories</option>
+            <option value="music">Music</option>
+            <option value="sports">Sports</option>
+            <option value="academic">Academic</option>
+        </select>
 
-  <!-- The List Grid -->
-  <div class="events-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    <!-- Inner container to prevent layout breakage during HTMX swap -->
-    <div id="events-list" class="contents">
-      <% if (events.length > 0) { %>
-        <% events.forEach(event => { %>
-          <div class="event-card flex flex-col justify-between rounded-xl shadow-md bg-backgroundlt p-5">
-            <div>
-              <h3 class="font-bold text-lg mb-2.5 mt-0"><%= event.title %></h3>
-              <p class="text-sm leading-normal">
-                <%= event.description.length > 150 ? event.description.slice(0, 150) + "..." : event.description %>
-              </p>
-              <p class="text-xs mt-3 font-bold">
-                📅 <%= new Date(event.startDate).toLocaleString([], {dateStyle: 'medium', timeStyle: 'short'}) %>
-              </p>
-              <p class="text-xs mt-3 font-bold">
-                📍 <%= event.location %>
-              </p>
+<select name="timeframe"
+    x-model="timeframe"
+    class="px-4 py-3 rounded-xl shadow-lg text-textlt transition cursor-pointer"
+    :class="timeframe !== 'all' ? 'bg-highlightlt ring-2 ring-textlt' : 'bg-backgroundlt'"
+  >
+    <option value="all">All Upcoming</option>
+    <option value="week">This Week</option>
+    <option value="weekend">This Weekend</option>
+  </select>
+
+<button type="submit"
+    class="px-4 py-3 rounded-xl bg-highlightlt shadow-lg text-textlt transition hover:bg-highlightlt/80 cursor-pointer"
+  >
+    Apply Filters
+  </button>
+<a href="/events" x-show="category || timeframe !== 'all'"
+    class="px-4 py-3 rounded-xl bg-backgroundlt shadow-lg text-textlt transition hover:bg-backgrounddk cursor-pointer">
+    Clear Filters
+</a>
+</form>
+
+
+    <!-- The List to be updated by HTMX -->
+    <div class="events-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <% if (events.length > 0) { %>
+            <% events.forEach(event => { %>
+                <div class="event-card flex flex-col justify-between rounded-xl shadow-md bg-backgroundlt p-5">
+                    <div>
+                        <h3 class="font-bold text-lg mb-2.5 mt-0"><%= event.title %></h3>
+                        <p class="text-sm leading-normal">
+                            <%= event.description.length > 150 ? event.description.slice(0, 150) + "..." : event.description %>
+                        </p>
+                        <p class="text-xs mt-3 font-bold">
+                            📅 <%= new Date(event.startDate).toLocaleString([], {dateStyle: 'medium', timeStyle: 'short'}) %>
+                        </p>
+                        <p class="text-xs mt-3 font-bold">
+                            📍 <%= event.location %>
+                        </p>
+                    </div>
+                    <a href="/events/<%= event.id %>" class="btn-check mt-4 text-center px-4 py-3 rounded-xl bg-highlightlt shadow-lg text-textlt no-underline transition hover:bg-highlightlt/80 cursor-pointer">
+                        Check it Out!
+                    </a>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="no-events col-span-3 text-center py-10">
+                <h3 class="text-xl font-semibold">No events found</h3>
+                <p class="mt-2">Try searching for something else or create a new event!</p>
             </div>
             <a href="/events/<%= event.id %>" class="btn-check mt-4 text-center px-4 py-3 rounded-xl bg-highlightlt shadow-lg text-textlt no-underline transition hover:bg-highlightlt/80 cursor-pointer">
               Check it Out!
